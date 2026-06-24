@@ -1,0 +1,35 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { advanceTurnState, calculateTurnFinancials } from '../src/domain/turn.js';
+import { initState } from '../src/domain/state.js';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe('turn progression', () => {
+  it('returns the completed period while advancing the visible calendar', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const state = initState('beijing', 'era3');
+    state.ai = [];
+
+    const report = advanceTurnState(state);
+
+    expect(report.period).toEqual({ year: 2000, quarter: 1 });
+    expect(state.year).toBe(2000);
+    expect(state.quarter).toBe(2);
+    expect(state.history[0]).toMatchObject({ year: 2000, quarter: 1 });
+  });
+
+  it('includes overhead and lease cost in turn financials', () => {
+    const state = initState('beijing', 'era3');
+    state.routes.push({ revenue: 2, cost: 0.75 });
+    state.fleet.push({ isLease: false, leasePrice: 0 });
+    state.fleet.push({ isLease: true, leasePrice: 1.5 });
+
+    const result = calculateTurnFinancials(state);
+    expect(result.totalRev).toBe(2);
+    expect(result.totalCost).toBeCloseTo(2.85);
+    expect(result.profit).toBeCloseTo(-0.85);
+  });
+});

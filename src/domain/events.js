@@ -1,0 +1,57 @@
+import { NEWS_POOL } from '../data/news.js';
+import { clamp, fmtPct, getCity, rand, randInt } from './helpers.js';
+import { addCostModifier, addDemandModifier, addSuspensionModifier, advanceActiveModifiers, selectRouteKeys } from './modifiers.js';
+
+export function generateEvents(state) {
+  state.events = [];
+  state.newsItems = [];
+  state.prevOilPrice = state.oilPrice;
+  const oilChange = rand(-0.06, 0.06);
+  state.oilPrice = clamp(state.oilPrice * (1 + oilChange), 20, 180);
+  if (Math.abs(oilChange) > 0.03) {
+    state.events.push({
+      type: 'oil',
+      text: '油价' + (oilChange > 0 ? '上涨' : '下跌') + ' ' + fmtPct(oilChange * 100),
+      severity: Math.abs(oilChange) > 0.05 ? 'high' : 'low',
+    });
+  }
+  const numNews = randInt(2, 4);
+  const categories = Object.keys(NEWS_POOL);
+  const picked = new Set();
+  for (let i = 0; i < numNews; i++) {
+    let cat;
+    let news;
+    let tries = 0;
+    do {
+      cat = categories[randInt(0, categories.length - 1)];
+      news = NEWS_POOL[cat][randInt(0, NEWS_POOL[cat].length - 1)];
+      tries++;
+    } while (picked.has(news.title) && tries < 10);
+    if (picked.has(news.title)) continue;
+    picked.add(news.title);
+    const item = { category: cat, title: news.title, desc: news.desc, effect: news.effect };
+    state.newsItems.push(item);
+    try {
+      news.effectFn?.({
+        state,
+        getCity,
+        clamp,
+        addCostModifier,
+        addDemandModifier,
+        addSuspensionModifier,
+        selectRouteKeys,
+      });
+    } catch {
+      // News effects should not break turn progression.
+    }
+    state.events.push({ type: cat, text: news.title, severity: cat === 'disaster' ? 'high' : cat === 'economy' ? 'medium' : 'low' });
+  }
+}
+
+export function advanceTemporaryModifiers(state) {
+  advanceActiveModifiers(state);
+}
+
+export function advanceTemporaryRouteEffects(state) {
+  advanceTemporaryModifiers(state);
+}
