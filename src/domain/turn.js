@@ -2,6 +2,7 @@ import { aiTurn } from './ai.js';
 import { advanceTemporaryModifiers, generateEvents } from './events.js';
 import { advanceFleetAge } from './fleet.js';
 import { clamp } from './helpers.js';
+import { loanInterest } from './loans.js';
 import { updateRouteMetrics } from './routes.js';
 
 export function advanceTurnState(state) {
@@ -10,7 +11,7 @@ export function advanceTurnState(state) {
 
   advanceFleetAge(state);
   updateRouteMetrics(state);
-  const { totalRev, totalCost, profit } = calculateTurnFinancials(state);
+  const { totalRev, totalCost, profit, interest } = calculateTurnFinancials(state);
 
   state.cash += profit;
   state.turnRevenue = totalRev;
@@ -18,12 +19,19 @@ export function advanceTurnState(state) {
   state.turnProfit = profit;
   state.totalProfit += profit;
   state.turnsPlayed++;
-  state.brand = clamp(state.brand + (profit > 0 ? 0.05 : -0.02), 1, 10);
+  if (profit > 0) {
+    state.brand = clamp(state.brand + 0.05, 1, 10);
+    state.consecutiveProfit = (state.consecutiveProfit || 0) + 1;
+  } else {
+    state.brand = clamp(state.brand - 0.02, 1, 10);
+    state.consecutiveProfit = 0;
+  }
 
+  advanceCalendar(state);
+  const nextPeriod = { year: state.year, quarter: state.quarter };
   advanceTemporaryModifiers(state);
   generateEvents(state);
   state.ai.forEach((ai) => aiTurn(state, ai));
-  advanceCalendar(state);
 
   state.history.push({
     ...period,
@@ -31,12 +39,13 @@ export function advanceTurnState(state) {
     profit,
     rev: totalRev,
     cost: totalCost,
+    interest,
     routes: state.routes.length,
     fleet: state.fleet.length,
   });
 
   if (state.cash < -5) state.gameOver = true;
-  return { period, rev: totalRev, cost: totalCost, profit, gameOver: state.gameOver };
+  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit, interest, gameOver: state.gameOver };
 }
 
 export function calculateTurnFinancials(state) {
@@ -49,11 +58,13 @@ export function calculateTurnFinancials(state) {
   const leaseCost = state.fleet
     .filter((plane) => plane.isLease)
     .reduce((sum, plane) => sum + plane.leasePrice, 0);
-  const totalCost = routeTotals.totalCost + overhead + leaseCost;
+  const interest = loanInterest(state);
+  const totalCost = routeTotals.totalCost + overhead + leaseCost + interest;
   return {
     totalRev: routeTotals.totalRev,
     totalCost,
     profit: routeTotals.totalRev - totalCost,
+    interest,
   };
 }
 

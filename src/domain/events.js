@@ -1,4 +1,5 @@
 import { NEWS_POOL } from '../data/news.js';
+import { PLANES } from '../data/planes.js';
 import { clamp, fmtPct, getCity, rand, randInt } from './helpers.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, advanceActiveModifiers, selectRouteKeys } from './modifiers.js';
 
@@ -45,6 +46,23 @@ export function generateEvents(state) {
       // News effects should not break turn progression.
     }
     state.events.push({ type: cat, text: news.title, severity: cat === 'disaster' ? 'high' : cat === 'economy' ? 'medium' : 'low' });
+  }
+  const newService = PLANES.filter((plane) => plane.serviceStart === state.year);
+  const retiring = PLANES.filter((plane) => plane.serviceEnd === state.year);
+  if (newService.length > 0) {
+    state.newsItems.push({
+      category: 'aviation',
+      title: '新一代客机投入商业运营',
+      desc: `${newService.map((plane) => plane.name).join('、')}正式投入商业服务，多家航空公司已下达订单。`,
+      effect: '',
+    });
+  } else if (retiring.length > 0) {
+    state.newsItems.push({
+      category: 'aviation',
+      title: '经典机型正式退役',
+      desc: `${retiring.map((plane) => plane.name).join('、')}结束商业飞行生涯，正式退出航线运营。`,
+      effect: '',
+    });
   }
 }
 

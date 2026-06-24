@@ -16,6 +16,7 @@ describe('turn progression', () => {
     const report = advanceTurnState(state);
 
     expect(report.period).toEqual({ year: 2000, quarter: 1 });
+    expect(report.nextPeriod).toEqual({ year: 2000, quarter: 2 });
     expect(state.year).toBe(2000);
     expect(state.quarter).toBe(2);
     expect(state.history[0]).toMatchObject({ year: 2000, quarter: 1 });
@@ -31,5 +32,18 @@ describe('turn progression', () => {
     expect(result.totalRev).toBe(2);
     expect(result.totalCost).toBeCloseTo(2.85);
     expect(result.profit).toBeCloseTo(-0.85);
+  });
+
+  it('includes loan interest in turn financials', () => {
+    const state = initState('beijing', 'era3');
+    state.routes.push({ revenue: 5, cost: 1 });
+    state.loan = 100;
+    state.loanRate = 0.02;
+
+    const result = calculateTurnFinancials(state);
+
+    expect(result.interest).toBeCloseTo(2);
+    expect(result.totalCost).toBeCloseTo(3.5);
+    expect(result.profit).toBeCloseTo(1.5);
   });
 });

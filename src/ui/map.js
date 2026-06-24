@@ -70,25 +70,28 @@ export function renderMap(state, uiState) {
   let cityTouchTargets = '<div class="city-touch-layer" aria-hidden="false">';
   CITIES.forEach((c) => {
     const isHQ = (c.id === state.hq) || (uiState.hqSelectMode && uiState.selectedHQ === c.id);
-    const isSelected = !uiState.hqSelectMode && state.selectedCity === c.id;
+    const isBranch = (state.branches || []).includes(c.id);
+    const isBranchSelected = uiState.branchSelectMode && uiState.selectedBranch === c.id;
+    const isSelected = !uiState.hqSelectMode && !uiState.branchSelectMode && state.selectedCity === c.id;
     const hasRoute = routedCities.has(c.id);
-    const r = cityRadius(c, { isHQ, isSelected, hasRoute, zoom });
+    const r = cityRadius(c, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, zoom });
     const cy = cityY(c);
-    const classes = cityClasses(c, { isHQ, isSelected, hasRoute });
+    const classes = cityClasses(c, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute });
     worldOffsets.forEach((offset) => {
       const cx = cityX(c) + offset;
       if (!isPointNearViewport(cx, cy, ox, oy, vw, vh)) return;
       const xPct = ((cx - ox) / vw) * 100;
       const yPct = ((cy - oy) / vh) * 100;
-      if (isHQ || isSelected || hasRoute) {
-        svg += `<circle cx="${cx}" cy="${cy}" r="${r + cityHaloExtra({ isHQ, zoom })}" class="${cityHaloClasses({ isHQ, isSelected, hasRoute })}" />`;
+      if (isHQ || isBranch || isBranchSelected || isSelected || hasRoute) {
+        svg += `<circle cx="${cx}" cy="${cy}" r="${r + cityHaloExtra({ isHQ, isBranch, zoom })}" class="${cityHaloClasses({ isHQ, isBranch, isBranchSelected, isSelected, hasRoute })}" />`;
       }
       svg += `<circle cx="${cx}" cy="${cy}" r="${r}" class="${classes}" data-action="city-click" data-city-id="${c.id}" />`;
       cityTouchTargets += `<button class="city-touch-target" type="button" style="left:${xPct}%;top:${yPct}%" data-action="city-click" data-city-id="${c.id}" data-city-touch-target="true" aria-label="选择${c.name}" title="${c.name}"></button>`;
-      if (shouldShowCityLabel(c, { isHQ, isSelected, hasRoute, zoom })) {
-        cityLabels += renderCityLabel(c, { isHQ, isSelected, hasRoute, labelSize, offset, zoom });
+      if (shouldShowCityLabel(c, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, zoom })) {
+        cityLabels += renderCityLabel(c, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, labelSize, offset, zoom });
       }
       if (isHQ) cityLabels += `<text x="${cx}" y="${cy - radiusAwareOffset(10, zoom)}" font-size="${hqLabelSize}" text-anchor="middle" class="city-label city-label-hq">总部</text>`;
+      if (isBranch) cityLabels += `<text x="${cx}" y="${cy - radiusAwareOffset(10, zoom)}" font-size="${hqLabelSize}" text-anchor="middle" class="city-label city-label-branch">分部</text>`;
     });
   });
   cityTouchTargets += '</div>';
@@ -152,9 +155,10 @@ function cityY(city) {
   return projectCity(city).y * MAP_HEIGHT;
 }
 
-function cityRadius(city, { isHQ, isSelected, hasRoute, zoom }) {
+function cityRadius(city, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, zoom }) {
   let baseRadius = 2.3;
   if (isHQ) baseRadius = 6;
+  else if (isBranch || isBranchSelected) baseRadius = 4.8;
   else if (isSelected) baseRadius = 4.6;
   else if (hasRoute) baseRadius = 4;
   else if (city.level >= 3) baseRadius = 3.5;
@@ -162,8 +166,8 @@ function cityRadius(city, { isHQ, isSelected, hasRoute, zoom }) {
   return scaleRadiusForZoom(baseRadius, zoom);
 }
 
-function cityHaloExtra({ isHQ, zoom }) {
-  return scaleRadiusForZoom(isHQ ? 2.9 : 1.9, zoom);
+function cityHaloExtra({ isHQ, isBranch, zoom }) {
+  return scaleRadiusForZoom(isHQ ? 2.9 : isBranch ? 2.3 : 1.9, zoom);
 }
 
 function scaleRadiusForZoom(radius, zoom) {
@@ -179,39 +183,43 @@ function radiusAwareOffset(offset, zoom) {
   return Number((offset / Math.pow(Math.max(MIN_ZOOM, zoom || MIN_ZOOM), 0.55)).toFixed(2));
 }
 
-function cityClasses(city, { isHQ, isSelected, hasRoute }) {
+function cityClasses(city, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute }) {
   return [
     'city-node',
     city.level >= 3 ? 'city-node-major' : '',
     isHQ ? 'city-node-hq' : '',
+    isBranch ? 'city-node-branch' : '',
+    isBranchSelected ? 'city-node-branch-selected' : '',
     isSelected ? 'city-node-selected' : '',
     hasRoute ? 'city-node-routed' : '',
   ].filter(Boolean).join(' ');
 }
 
-function cityHaloClasses({ isHQ, isSelected, hasRoute }) {
+function cityHaloClasses({ isHQ, isBranch, isBranchSelected, isSelected, hasRoute }) {
   return [
     'city-halo',
     isHQ ? 'city-node-hq' : '',
+    isBranch ? 'city-node-branch' : '',
+    isBranchSelected ? 'city-node-branch-selected' : '',
     isSelected ? 'city-node-selected' : '',
     hasRoute ? 'city-node-routed' : '',
   ].filter(Boolean).join(' ');
 }
 
-function shouldShowCityLabel(city, { isHQ, isSelected, hasRoute, zoom }) {
-  if (isHQ || isSelected || hasRoute || city.level >= 3) return true;
+function shouldShowCityLabel(city, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, zoom }) {
+  if (isHQ || isBranch || isBranchSelected || isSelected || hasRoute || city.level >= 3) return true;
   if (zoom >= 1.5 && city.level >= 2) return true;
   return zoom >= 2;
 }
 
-function renderCityLabel(city, { isHQ, isSelected, hasRoute, labelSize, offset = 0, zoom }) {
+function renderCityLabel(city, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, labelSize, offset = 0, zoom }) {
   const cx = cityX(city) + offset;
   const cy = cityY(city);
   const projected = projectCity(city);
   const dx = projected.x > 0.88 ? -8 : projected.x < 0.12 ? 8 : 0;
   const anchor = dx < 0 ? 'end' : dx > 0 ? 'start' : 'middle';
-  const y = isHQ || isSelected || hasRoute ? cy + labelSize + radiusAwareOffset(4.5, zoom) : cy - radiusAwareOffset(7, zoom);
-  const classes = ['city-label', city.level >= 3 ? 'city-label-major' : '', isHQ ? 'city-label-hq' : ''].filter(Boolean).join(' ');
+  const y = isHQ || isBranch || isBranchSelected || isSelected || hasRoute ? cy + labelSize + radiusAwareOffset(4.5, zoom) : cy - radiusAwareOffset(7, zoom);
+  const classes = ['city-label', city.level >= 3 ? 'city-label-major' : '', isHQ ? 'city-label-hq' : '', isBranch ? 'city-label-branch' : ''].filter(Boolean).join(' ');
   return `<text x="${cx + dx}" y="${y}" font-size="${labelSize}" text-anchor="${anchor}" class="${classes}">${city.name}</text>`;
 }
 
@@ -537,10 +545,12 @@ function renderRouteLine(a, b, offset, color, className, points = routePoints(a,
   return `<line x1="${points.x1}" y1="${points.y1}" x2="${points.x2}" y2="${points.y2}" stroke="${color}" class="${className}"/>`;
 }
 
-export function describeRouteSelection(cityFrom, cityTo) {
+export function describeRouteSelection(cityFrom, cityTo, options = {}) {
+  const fromIsBase = options.fromIsBase ?? true;
+  const baseWarning = fromIsBase ? '' : '<span style="color:#f87171;font-size:11px;margin-left:6px">（非基地）</span>';
   if (!cityTo) {
-    return `<div style="font-size:13px"><div style="margin-bottom:6px"><span style="color:#7ba3cc">起飞：</span><span style="color:#e0e8f0;font-weight:700">${cityFrom.name}</span></div><div style="color:#556">点击地图选择到达城市</div></div>`;
+    return `<div style="font-size:13px"><div style="margin-bottom:6px"><span style="color:#7ba3cc">起飞：</span><span style="color:#e0e8f0;font-weight:700">${cityFrom.name}</span>${baseWarning}</div><div style="color:#556">点击地图选择到达城市${fromIsBase ? '' : '（仅查看距离，无法开通航线）'}</div></div>`;
   }
   const d = cityDist(cityFrom, cityTo);
-  return `<div style="font-size:13px"><div style="margin-bottom:4px"><span style="color:#7ba3cc">起飞：</span><span style="color:#e0e8f0;font-weight:700">${cityFrom.name}</span></div><div style="margin-bottom:4px"><span style="color:#7ba3cc">到达：</span><span style="color:#e0e8f0;font-weight:700">${cityTo.name}</span></div><div style="color:#7ba3cc">距离：${Math.round(d)} km</div></div>`;
+  return `<div style="font-size:13px"><div style="margin-bottom:4px"><span style="color:#7ba3cc">起飞：</span><span style="color:#e0e8f0;font-weight:700">${cityFrom.name}</span>${baseWarning}</div><div style="margin-bottom:4px"><span style="color:#7ba3cc">到达：</span><span style="color:#e0e8f0;font-weight:700">${cityTo.name}</span></div><div style="color:#7ba3cc">距离：${Math.round(d)} km</div>${fromIsBase ? '' : '<div style="color:#f87171;font-size:11px;margin-top:4px">起飞城市非基地，无法开通航线</div>'}</div>`;
 }

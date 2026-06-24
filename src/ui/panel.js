@@ -1,4 +1,5 @@
 import { CITIES } from '../data/cities.js';
+import { isBase } from '../domain/bases.js';
 import { availablePlanes } from '../domain/routes.js';
 import { byId, cityDist, fmt, fmtPct, getCity, routeKey } from '../domain/helpers.js';
 import { MODIFIER_TYPES } from '../domain/modifiers.js';
@@ -37,7 +38,7 @@ export function renderPanel(state, uiState) {
   }
   const mi = byId('market-info');
   const hq = getCity(state.hq);
-  mi.innerHTML = `<div class="panel-row"><span class="label">总部</span><span class="val">${hq ? hq.name : '待选择'}</span></div><div class="panel-row"><span class="label">可用飞机</span><span class="val">${availablePlanes(state).length} 架</span></div><div class="panel-row"><span class="label">品牌等级</span><span class="val">${'★'.repeat(Math.min(5, Math.floor(state.brand)))}</span></div><div class="panel-row"><span class="label">油价</span><span class="val">$${state.oilPrice.toFixed(0)}/桶</span></div><div style="margin-top:8px;font-size:13px;color:#556">竞争对手:</div>`;
+  mi.innerHTML = `<div class="panel-row"><span class="label">总部</span><span class="val">${hq ? hq.name : '待选择'}</span></div><div class="panel-row"><span class="label">分部</span><span class="val">${(state.branches || []).length} 个</span></div><div class="panel-row"><span class="label">可用飞机</span><span class="val">${availablePlanes(state).length} 架</span></div><div class="panel-row"><span class="label">品牌等级</span><span class="val">${'★'.repeat(Math.min(5, Math.floor(state.brand)))}</span></div><div class="panel-row"><span class="label">油价</span><span class="val">$${state.oilPrice.toFixed(0)}/桶</span></div>${(state.loan || 0) > 0 ? `<div class="panel-row"><span class="label" style="color:#f87171">贷款余额</span><span class="val" style="color:#f87171">${fmt(state.loan)}</span></div>` : ''}<div style="margin-top:8px;font-size:13px;color:#556">竞争对手:</div>`;
   state.ai.forEach((ai) => {
     mi.innerHTML += `<div class="panel-row"><span class="label" style="color:${ai.color}">${ai.name}</span><span class="val">${ai.routes.length} 线 | ${ai.fleet.length} 机</span></div>`;
   });
@@ -68,11 +69,14 @@ export function renderRouteCityPicker(state, selectedCityId = null) {
   const selectedCity = selectedCityId ? getCity(selectedCityId) : null;
   const existingRoutes = new Set(state.routes.map((route) => routeKey(route.from, route.to)));
   const recommended = routeRecommendedCities(state, selectedCityId);
-  const candidates = CITIES.filter((city) => city.id !== selectedCityId);
-  const title = selectedCity ? `选择 ${selectedCity.name} 的到达城市` : '选择起飞城市';
+  const bases = [state.hq, ...(state.branches || [])].filter(Boolean);
+  const candidates = selectedCity
+    ? CITIES.filter((city) => city.id !== selectedCityId)
+    : CITIES.filter((city) => bases.includes(city.id));
+  const title = selectedCity ? `选择 ${selectedCity.name} 的到达城市` : '选择起飞基地';
   const hint = selectedCity
     ? '从列表选择到达城市，或继续点击地图上的城市'
-    : '先选择一座城市作为起飞点，手机上推荐直接用列表';
+    : '航线只能从总部或分部起飞，手机上推荐直接用列表';
   const planeHint = planes.length > 0
     ? `可用飞机 ${planes.length} 架，最大航程 ${Math.round(maxRange)} km`
     : '没有可用飞机，请先购买或等待交付';
@@ -85,13 +89,13 @@ export function renderRouteCityPicker(state, selectedCityId = null) {
     ${renderCollapsibleCityGroup(
       '推荐城市',
       recommended,
-      (city) => renderRouteCityButton(city, selectedCity, maxRange, existingRoutes),
+      (city) => renderRouteCityButton(state, city, selectedCity, maxRange, existingRoutes),
       { open: true, className: 'city-picker-group-featured' },
     )}
     <div class="city-picker-title">全部城市</div>
     ${renderGroupedCityPicker(
       candidates,
-      (city) => renderRouteCityButton(city, selectedCity, maxRange, existingRoutes),
+      (city) => renderRouteCityButton(state, city, selectedCity, maxRange, existingRoutes),
       selectedCityId,
     )}
   </div>`;
@@ -170,8 +174,8 @@ function routeRecommendedCities(state, selectedCityId) {
       .sort((a, b) => routeCityScore(state, selectedCity, b) - routeCityScore(state, selectedCity, a))
       .slice(0, 10);
   }
-  const ids = new Set([state.hq, ...state.routes.flatMap((route) => [route.from, route.to])].filter(Boolean));
-  const preferred = CITIES.filter((city) => ids.has(city.id) || city.level >= 3);
+  const ids = new Set([state.hq, ...(state.branches || [])].filter(Boolean));
+  const preferred = CITIES.filter((city) => ids.has(city.id));
   return preferred.slice(0, 10);
 }
 
@@ -184,10 +188,13 @@ function routeCityScore(state, selectedCity, city) {
   return city.level * 100 - Math.abs(d - 2500) / 100 - rangePenalty;
 }
 
-function renderRouteCityButton(city, selectedCity, maxRange, existingRoutes) {
+function renderRouteCityButton(state, city, selectedCity, maxRange, existingRoutes) {
   let meta = REGION_NAMES[city.region] || city.region;
   let disabled = false;
-  if (selectedCity) {
+  if (!selectedCity) {
+    meta = city.id === state.hq ? '总部' : '分部';
+    disabled = !isBase(state, city.id);
+  } else {
     const d = cityDist(selectedCity, city);
     const key = routeKey(selectedCity.id, city.id);
     if (existingRoutes.has(key)) {

@@ -1,8 +1,11 @@
 import './styles/app.css';
 
 import { ERAS } from './data/eras.js';
-import { buyPlane, sellPlane } from './domain/fleet.js';
-import { byId, fmt, fmtPct, getCity, routeKey } from './domain/helpers.js';
+import { closeBranch as closeBranchDomain, isBase, openBranch } from './domain/bases.js';
+import { DEFAULT_COMPANY_NAME } from './domain/constants.js';
+import { buyPlane, returnLease, sellPlane } from './domain/fleet.js';
+import { byId, cityDist, fmt, fmtPct, getCity, routeKey } from './domain/helpers.js';
+import { claimRedPacket, repayLoan, takeLoan } from './domain/loans.js';
 import { loadGameState, saveGameState } from './domain/save.js';
 import { createSetupState, initState, seedInitialFleet } from './domain/state.js';
 import { adjustRoutePrice, closeRoute as closeRouteDomain, countCompetitors, openRoute } from './domain/routes.js';
@@ -12,14 +15,24 @@ import { closeModalRoot, showBanner, showModal } from './ui/modal.js';
 import { describeRouteSelection, initMapDrag, renderMap, setMapZoom } from './ui/map.js';
 import { showRouteCreateInfo as renderRouteCreateInfo, hideRouteCreateInfo, renderPanel, renderRouteCityPicker } from './ui/panel.js';
 import { applySeasonTheme } from './ui/season.js';
+import { removeBranchBanner, showBranchBanner, showSelectedBranch } from './ui/branches.js';
+import { updateOnboarding } from './ui/onboarding.js';
 import {
+  closeDeliveryPopup,
   showBuyPlaneModal,
-  showFinancialReport,
+  showBranchModal,
+  showCloseBranchConfirm,
+  showDeliveryPopup,
   showFleetPanel,
   showGameOver,
+  showLoanConfirm,
+  showLoanModal,
   showNewspaper,
+  showRedPacketConfirm,
+  showReportAlone,
   showRouteCreateModal,
   showRouteList,
+  showTurnSummary,
   updatePricePreview,
 } from './ui/modals.js';
 import {
@@ -37,6 +50,8 @@ const uiState = {
   selectedEra: ERAS[0].id,
   hqSelectMode: false,
   selectedHQ: null,
+  branchSelectMode: false,
+  selectedBranch: null,
 };
 
 function state() {
@@ -49,6 +64,7 @@ function renderGame() {
   updateHUD(G);
   renderMap(G, uiState);
   renderPanel(G, uiState);
+  updateOnboarding(G);
 }
 
 function renderMapOnly() {
@@ -57,18 +73,15 @@ function renderMapOnly() {
 
 function closeModal() {
   closeModalRoot();
+  closeDeliveryPopup();
+  if (uiState.branchSelectMode) cancelBranchSelect();
   if (G && !G.gameOver) {
     if (G.selectedCity) {
       G.selectedCity = null;
       renderMapOnly();
     }
     hideRouteCreateInfo();
-    byId('bottom-hint').textContent = '选择两个城市来开通航线';
-  }
-  if (G && G._pendingReport) {
-    const r = G._pendingReport;
-    G._pendingReport = null;
-    showFinancialReport(G, r.rev, r.cost, r.profit, r.period);
+    byId('bottom-hint').textContent = '选择总部或分部作为起飞城市';
   }
 }
 
@@ -95,8 +108,11 @@ function loadGame() {
     G = result.state;
     uiState.hqSelectMode = false;
     uiState.selectedHQ = null;
+    uiState.branchSelectMode = false;
+    uiState.selectedBranch = null;
     hideTutorial();
     removeHQBanner();
+    removeBranchBanner();
     renderGame();
     showBanner('存档已载入！' + G.companyName + ' - ' + G.year + ' Q' + G.quarter, '#16a34a');
   } catch (e) {
@@ -109,10 +125,11 @@ function tutorialNextStep() {
     showBanner('请先选择时代剧本', '#d97706');
     return;
   }
-  const name = byId('company-name').value.trim() || '云际航空';
+  const name = byId('company-name').value.trim() || DEFAULT_COMPANY_NAME;
   G = createSetupState(name, uiState.selectedEra);
   uiState.hqSelectMode = true;
   uiState.selectedHQ = null;
+  byId('app').classList.add('hq-selecting');
   hideTutorial();
   renderGame();
   showHQBanner();
@@ -123,6 +140,7 @@ function cancelHQSelect() {
   removeHQBanner();
   uiState.hqSelectMode = false;
   uiState.selectedHQ = null;
+  byId('app').classList.remove('hq-selecting');
   G = null;
   showTutorial();
 }
@@ -137,13 +155,14 @@ function confirmHQAndStart() {
 
 function startGame() {
   const hq = uiState.selectedHQ || 'beijing';
-  const name = byId('company-name') ? (byId('company-name').value.trim() || '云际航空') : '云际航空';
+  const name = byId('company-name') ? (byId('company-name').value.trim() || DEFAULT_COMPANY_NAME) : DEFAULT_COMPANY_NAME;
   const era = uiState.selectedEra || 'era1';
   G = initState(hq, era);
   G.companyName = name;
   seedInitialFleet(G);
   uiState.hqSelectMode = false;
   uiState.selectedHQ = null;
+  byId('app').classList.remove('hq-selecting');
   removeHQBanner();
   hideTutorial();
   renderGame();
@@ -153,7 +172,7 @@ function startGame() {
 function openRouteModal() {
   if (!G) return;
   G.selectedCity = null;
-  byId('bottom-hint').textContent = '选择起飞城市：可点地图，也可用下方面板列表';
+  byId('bottom-hint').textContent = '选择起飞基地：可点地图，也可用下方面板列表';
   renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
   renderMapOnly();
 }
@@ -161,6 +180,10 @@ function openRouteModal() {
 function openRouteCreateModal(from, to) {
   const a = getCity(from);
   const b = getCity(to);
+  if (!isBase(G, from)) {
+    showModal(`<h2>无法开通航线</h2><p style="color:#f87171">起飞城市必须是总部或分部。${a.name}不是你的基地。</p><p style="color:#7ba3cc;font-size:13px">可以在快捷操作中点击「开设分部」扩展基地网络。</p><button class="btn btn-primary" data-action="close-modal">确定</button>`);
+    return;
+  }
   const existing = G.routes.find((r) => routeKey(r.from, r.to) === routeKey(from, to));
   if (existing) {
     showModal(`<h2>航线已开通</h2><p>${a.name} → ${b.name} 已在运营中。</p><button class="btn btn-primary" data-action="close-modal">确定</button>`);
@@ -181,14 +204,64 @@ function confirmOpenRoute(from, to) {
   closeModal();
   hideRouteCreateInfo();
   showBanner('航线开通：' + getCity(from).name + ' → ' + getCity(to).name, '#16a34a');
+  updateOnboarding(G);
+}
+
+function startBranchSelect() {
+  if (!G) return;
+  closeModalRoot();
+  uiState.branchSelectMode = true;
+  uiState.selectedBranch = null;
+  G.selectedCity = null;
+  byId('app').classList.add('branch-selecting');
+  showBranchBanner(G);
+  renderMapOnly();
+  byId('bottom-hint').textContent = '点击地图上的城市选择分部';
+}
+
+function cancelBranchSelect() {
+  uiState.branchSelectMode = false;
+  uiState.selectedBranch = null;
+  byId('app').classList.remove('branch-selecting');
+  removeBranchBanner();
+  renderMapOnly();
+  if (G) byId('bottom-hint').textContent = '选择总部或分部作为起飞城市';
+}
+
+function confirmBranchFromMap() {
+  if (!G || !uiState.selectedBranch) {
+    showBanner('请先选择分部城市', '#d97706');
+    return;
+  }
+  const cityId = uiState.selectedBranch;
+  const result = openBranch(G, cityId);
+  if (!result.ok) {
+    showBanner(result.message, '#dc2626');
+    return;
+  }
+  cancelBranchSelect();
+  renderGame();
+  showBanner(`分部开设：${getCity(cityId).name}（花费 ${fmt(result.cost)}）`, '#7c3aed');
+}
+
+function closeBranch(cityId) {
+  const result = closeBranchDomain(G, cityId);
+  if (!result.ok) {
+    showBanner(result.message, '#dc2626');
+    return;
+  }
+  renderGame();
+  closeModalRoot();
+  showBanner(`已关闭分部：${getCity(cityId).name}`, '#dc2626');
 }
 
 function onMapEmptyClick() {
   if (!G || G.gameOver) return;
+  if (uiState.branchSelectMode) return;
   if (G.selectedCity) {
     G.selectedCity = null;
     renderMapOnly();
-    byId('bottom-hint').textContent = '选择起飞城市：可点地图，也可用下方面板列表';
+    byId('bottom-hint').textContent = '选择起飞基地：可点地图，也可用下方面板列表';
     renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
   }
 }
@@ -202,27 +275,50 @@ function onCityClick(cityId) {
     showSelectedHQ(getCity(cityId).name);
     return;
   }
+  if (uiState.branchSelectMode) {
+    const city = getCity(cityId);
+    if (isBase(G, cityId)) {
+      showBanner(city.name + ' 已是基地，无法重复开设', '#d97706');
+      return;
+    }
+    uiState.selectedBranch = cityId;
+    renderMapOnly();
+    showSelectedBranch(city.name);
+    return;
+  }
   if (G.gameOver) return;
   if (!G.selectedCity) {
     G.selectedCity = cityId;
     renderMapOnly();
-    byId('bottom-hint').textContent = '已选择 ' + getCity(cityId).name + '，继续选择到达城市';
-    renderRouteCreateInfo(getCity(cityId), null, `${describeRouteSelection(getCity(cityId), null)}${renderRouteCityPicker(G, cityId)}`);
+    const fromIsBase = isBase(G, cityId);
+    byId('bottom-hint').textContent = fromIsBase
+      ? '已选择 ' + getCity(cityId).name + '，继续选择到达城市'
+      : getCity(cityId).name + ' 非基地，选择到达城市可查看距离';
+    renderRouteCreateInfo(getCity(cityId), null, `${describeRouteSelection(getCity(cityId), null, { fromIsBase })}${renderRouteCityPicker(G, cityId)}`);
   } else if (G.selectedCity === cityId) {
     G.selectedCity = null;
     renderMapOnly();
-    byId('bottom-hint').textContent = '选择起飞城市：可点地图，也可用下方面板列表';
+    byId('bottom-hint').textContent = '选择起飞基地：可点地图，也可用下方面板列表';
     renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
   } else {
     const from = G.selectedCity;
+    const fromIsBase = isBase(G, from);
     G.selectedCity = null;
-    renderRouteCreateInfo(getCity(from), getCity(cityId), describeRouteSelection(getCity(from), getCity(cityId)));
+    renderRouteCreateInfo(getCity(from), getCity(cityId), describeRouteSelection(getCity(from), getCity(cityId), { fromIsBase }));
+    if (!fromIsBase) {
+      const d = Math.round(cityDist(getCity(from), getCity(cityId)));
+      byId('bottom-hint').textContent = `${getCity(from).name} → ${getCity(cityId).name} 距离 ${d}km（需从总部或分部起飞才能开通航线）`;
+      renderMapOnly();
+      return;
+    }
     openRouteCreateModal(from, cityId);
   }
 }
 
 function buySelectedPlane(target) {
-  const result = buyPlane(G, target.dataset.planeId, target.dataset.lease === 'true');
+  const qtyInput = byId('buy-qty-' + target.dataset.planeId);
+  const count = qtyInput ? parseInt(qtyInput.value, 10) : 1;
+  const result = buyPlane(G, target.dataset.planeId, target.dataset.lease === 'true', count);
   if (!result.ok) {
     showBanner(result.message, '#dc2626');
     return;
@@ -230,6 +326,8 @@ function buySelectedPlane(target) {
   closeModal();
   updateHUD(G);
   renderPanel(G, uiState);
+  showBanner(`${target.dataset.lease === 'true' ? '租赁' : '购买'} ${result.planes.length}架 ${result.plane.name}`, target.dataset.lease === 'true' ? '#d97706' : '#2563eb');
+  updateOnboarding(G);
 }
 
 function sellSelectedPlane(target) {
@@ -239,6 +337,15 @@ function sellSelectedPlane(target) {
   renderPanel(G, uiState);
   closeModal();
   showBanner(`出售 ${sold.plane.name}，获得 ${fmt(sold.sellPrice)}`, '#d97706');
+}
+
+function returnSelectedLease(target) {
+  const returned = returnLease(G, parseInt(target.dataset.uid, 10));
+  if (!returned) return;
+  updateHUD(G);
+  renderPanel(G, uiState);
+  closeModal();
+  showBanner(`退租 ${returned.plane.name}`, '#d97706');
 }
 
 function adjustPrice(target) {
@@ -272,6 +379,41 @@ function closeRoute(target) {
   closeModal();
 }
 
+function takeSelectedLoan(target) {
+  const amount = parseFloat(target.dataset.amount);
+  const result = takeLoan(G, amount);
+  if (!result.ok) {
+    showBanner(result.message, '#dc2626');
+    return;
+  }
+  updateHUD(G);
+  showLoanModal(G);
+  showBanner(`贷款 $${result.amount}M 已到账（手续费 ${fmt(result.fee)}）`, '#b45309');
+}
+
+function repaySelectedLoan(target) {
+  const amount = parseFloat(target.dataset.amount);
+  const result = repayLoan(G, amount);
+  if (!result.ok) {
+    showBanner(result.message, '#dc2626');
+    return;
+  }
+  updateHUD(G);
+  showLoanModal(G);
+  showBanner(`还款 ${fmt(result.amount)}`, '#16a34a');
+}
+
+function claimSelectedRedPacket() {
+  const result = claimRedPacket(G);
+  if (!result.ok) {
+    showBanner(result.message, '#dc2626');
+    return;
+  }
+  updateHUD(G);
+  showLoanModal(G);
+  showBanner(`辣豆红包 ${fmt(result.amount)} 已到账`, '#dc2626');
+}
+
 function advanceTurn() {
   if (!G || G.gameOver) return;
   const report = advanceTurnState(G);
@@ -281,8 +423,7 @@ function advanceTurn() {
     return;
   }
   renderGame();
-  showNewspaper(G);
-  G._pendingReport = report;
+  showTurnSummary(G, report);
 }
 
 function handleClick(event) {
@@ -290,6 +431,7 @@ function handleClick(event) {
   if (!target) return;
   const action = target.dataset.action;
   if (action === 'modal-backdrop' && event.target !== target) return;
+  if (action === 'delivery-backdrop' && event.target !== target) return;
   switch (action) {
     case 'save-game':
       saveGame();
@@ -322,6 +464,27 @@ function handleClick(event) {
     case 'open-buy-plane-modal':
       if (G) showBuyPlaneModal(G);
       break;
+    case 'open-loan-modal':
+      if (G) showLoanModal(G);
+      break;
+    case 'open-branch-modal':
+      if (G) showBranchModal(G);
+      break;
+    case 'start-branch-select':
+      startBranchSelect();
+      break;
+    case 'cancel-branch-select':
+      cancelBranchSelect();
+      break;
+    case 'confirm-branch':
+      confirmBranchFromMap();
+      break;
+    case 'close-branch':
+      if (G) showCloseBranchConfirm(G, target.dataset.cityId);
+      break;
+    case 'confirm-close-branch':
+      closeBranch(target.dataset.cityId);
+      break;
     case 'open-fleet-panel':
       if (G) showFleetPanel(G);
       break;
@@ -349,8 +512,39 @@ function handleClick(event) {
     case 'sell-plane':
       sellSelectedPlane(target);
       break;
+    case 'return-lease':
+      returnSelectedLease(target);
+      break;
     case 'close-route':
       closeRoute(target);
+      break;
+    case 'confirm-loan':
+      if (G) showLoanConfirm(G, parseFloat(target.dataset.amount));
+      break;
+    case 'take-loan':
+      takeSelectedLoan(target);
+      break;
+    case 'repay-loan':
+      repaySelectedLoan(target);
+      break;
+    case 'confirm-red-packet':
+      showRedPacketConfirm();
+      break;
+    case 'claim-red-packet':
+      claimSelectedRedPacket();
+      break;
+    case 'show-newspaper':
+      if (G) showNewspaper(G);
+      break;
+    case 'show-report':
+      if (G) showReportAlone(G);
+      break;
+    case 'show-delivery-popup':
+      if (G) showDeliveryPopup(G);
+      break;
+    case 'close-delivery-popup':
+    case 'delivery-backdrop':
+      closeDeliveryPopup();
       break;
     case 'reload-page':
       location.reload();

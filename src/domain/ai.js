@@ -1,6 +1,6 @@
 import { CITIES } from '../data/cities.js';
-import { PLANES } from '../data/planes.js';
 import { baseDemand, seasonModifier, suggestedPrice } from './economy.js';
+import { availablePlaneTemplates } from './fleet.js';
 import { cityDist, clamp, getCity, randInt, routeKey } from './helpers.js';
 
 export function aiTurn(state, ai) {
@@ -40,7 +40,9 @@ export function aiTurn(state, ai) {
     }
   }
   if (ai.fleet.length < 6 && ai.cash > 60 && Math.random() < 0.4) {
-    const pref = PLANES.find((p) => p.type === ai.prefType) || PLANES[0];
+    const planes = availablePlaneTemplates(state);
+    const pref = planes.find((p) => p.type === ai.prefType) || planes[0];
+    if (!pref) return;
     ai.fleet.push({ uid: ai.name + '_' + ai.fleet.length, ...pref, age: randInt(0, 5), assigned: false });
     ai.cash -= pref.buyPrice * 0.9;
   }

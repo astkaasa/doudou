@@ -1,50 +1,33 @@
 import { AI_PROFILES } from '../data/aiProfiles.js';
 import { ERAS } from '../data/eras.js';
-import { PLANES } from '../data/planes.js';
+import { DEFAULT_COMPANY_NAME } from './constants.js';
+import { availablePlaneTemplates } from './fleet.js';
 import { randInt } from './helpers.js';
 
 export function initState(hq, era) {
-  const e = ERAS.find((er) => er.id === era) || ERAS[2];
-  return {
-    companyName: '云际航空',
+  const e = findEra(era);
+  return createBaseState(e, {
     hq,
-    era,
-    cash: e.cash,
-    year: e.startYear,
-    quarter: 1,
-    endYear: e.endYear,
-    oilPrice: e.startOil,
-    prevOilPrice: e.startOil,
-    brand: 1,
-    routes: [],
-    fleet: [],
-    tech: { ops: 0, service: 0, eng: 0 },
+    era: e.id,
     ai: AI_PROFILES.map((p, i) => ({ ...p, cash: e.cash + i * 10, routes: [], fleet: [], brand: 1 + i })),
-    events: [],
-    newsItems: [],
-    activeModifiers: [],
-    modifierIdCounter: 1,
-    turnProfit: 0,
-    turnRevenue: 0,
-    turnCost: 0,
-    totalProfit: 0,
-    turnsPlayed: 0,
-    gameOver: false,
-    selectedCity: null,
-    planeIdCounter: 1,
-    history: [],
-    mapZoom: 1,
-    mapPanX: 0,
-    mapPanY: 0,
-  };
+  });
 }
 
 export function createSetupState(companyName, eraId) {
-  const era = ERAS.find((e) => e.id === eraId) || ERAS[0];
-  return {
-    companyName: companyName || '云际航空',
+  const era = findEra(eraId);
+  return createBaseState(era, {
+    companyName: companyName || DEFAULT_COMPANY_NAME,
     hq: null,
-    era: eraId,
+    era: era.id,
+    ai: [],
+  });
+}
+
+function createBaseState(era, overrides = {}) {
+  return {
+    companyName: DEFAULT_COMPANY_NAME,
+    hq: null,
+    era: era.id,
     cash: era.cash,
     year: era.startYear,
     quarter: 1,
@@ -54,6 +37,9 @@ export function createSetupState(companyName, eraId) {
     brand: 1,
     routes: [],
     fleet: [],
+    loan: 0,
+    loanRate: 0.02,
+    branches: [],
     tech: { ops: 0, service: 0, eng: 0 },
     ai: [],
     events: [],
@@ -65,6 +51,7 @@ export function createSetupState(companyName, eraId) {
     turnCost: 0,
     totalProfit: 0,
     turnsPlayed: 0,
+    consecutiveProfit: 0,
     gameOver: false,
     selectedCity: null,
     planeIdCounter: 1,
@@ -72,15 +59,26 @@ export function createSetupState(companyName, eraId) {
     mapZoom: 1,
     mapPanX: 0,
     mapPanY: 0,
+    onboardStep: 0,
+    deliveredThisTurn: [],
+    lastReportData: null,
+    redPacketClaimed: false,
+    ...overrides,
   };
 }
 
+function findEra(eraId) {
+  return ERAS.find((era) => era.id === eraId) || ERAS[0];
+}
+
 export function seedInitialFleet(state) {
-  state.fleet.push({ ...PLANES[0], uid: state.planeIdCounter++, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 });
-  state.fleet.push({ ...PLANES[0], uid: state.planeIdCounter++, age: 2, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 });
+  const availablePlanes = availablePlaneTemplates(state);
+  const starterPlane = availablePlanes.find((p) => p.type === 'narrow') || availablePlanes[0];
+  state.fleet.push({ ...starterPlane, uid: state.planeIdCounter++, age: 0, isLease: false, leasePrice: 0, leaseTurns: 0, maxLeaseTurns: 40, delivering: false, deliverIn: 0 });
+  state.fleet.push({ ...starterPlane, uid: state.planeIdCounter++, age: 2, isLease: false, leasePrice: 0, leaseTurns: 0, maxLeaseTurns: 40, delivering: false, deliverIn: 0 });
   state.ai.forEach((ai) => {
     for (let i = 0; i < 3; i++) {
-      const template = i < 2 ? PLANES[0] : PLANES[2];
+      const template = availablePlanes[i < 2 ? 0 : Math.min(availablePlanes.length - 1, Math.floor(availablePlanes.length / 2))] || starterPlane;
       ai.fleet.push({ uid: ai.name + '_' + i, ...template, age: randInt(1, 5), assigned: false });
     }
   });

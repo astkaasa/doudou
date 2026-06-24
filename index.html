@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>云际航空 - Skyline Airlines</title>
+  <title>空豆霸业</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
@@ -12,10 +12,11 @@
     <div class="hud-item"><span class="hud-label">资金</span><span class="hud-val" id="hud-cash">$0M</span></div>
     <div class="hud-item"><span class="hud-label">利润/回合</span><span class="hud-val" id="hud-profit">$0M</span></div>
     <div class="hud-item"><span class="hud-label">航线</span><span class="hud-val" id="hud-routes">0</span></div>
-    <div class="hud-item"><span class="hud-label">飞机</span><span class="hud-val" id="hud-fleet">0</span></div>
+    <div class="hud-item"><span class="hud-label">机队</span><span class="hud-val" id="hud-fleet">购0/租0</span></div>
     <div class="hud-item"><span class="hud-label">客座率</span><span class="hud-val" id="hud-load">0%</span></div>
     <div class="hud-item hud-hq"><span class="hud-label">总部</span><span class="hud-val" id="hud-hq">未定</span></div>
     <div id="hud-brand"><span class="hud-label">品牌</span><span class="hud-val" id="hud-brand-val">★</span></div>
+    <div class="hud-item" id="hud-loan-wrap" style="display:none"><span class="hud-label">贷款</span><span class="hud-val negative" id="hud-loan">$0M</span></div>
     <div id="hud-actions" style="display:flex;gap:4px;margin-left:8px">
       <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="save-game" title="保存存档">💾 存档</button>
       <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="load-game" title="载入存档">📂 读档</button>
@@ -32,6 +33,8 @@
           <button class="btn btn-primary btn-sm" data-action="open-buy-plane-modal">购买飞机</button>
           <button class="btn btn-warning btn-sm" data-action="open-fleet-panel">机队管理</button>
           <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="open-route-list">航线详情</button>
+          <button class="btn btn-sm" style="background:#b45309;color:#fff" data-action="open-loan-modal">银行贷款</button>
+          <button class="btn btn-sm" style="background:#7c3aed;color:#fff" data-action="open-branch-modal">开设分部</button>
         </div>
       </div>
       <div class="panel-section" id="panel-info">
@@ -51,11 +54,14 @@
   <div id="bottom">
     <span id="season-badge"></span>
     <span id="oil-badge" style="padding:2px 10px;border-radius:10px;font-size:13px;font-weight:600;background:#33415580;color:#fbbf24"></span>
-    <span style="font-size:13px;color:#7ba3cc" id="bottom-hint">选择两个城市来开通航线，或使用右侧按钮</span>
+    <span id="reread-news-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#1e3a5f80;color:#93c5fd;cursor:pointer" data-action="show-newspaper">📰 当季报纸</span>
+    <span id="reread-report-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#16a34a20;color:#4ade80;cursor:pointer" data-action="show-report">📊 当季财报</span>
+    <span style="font-size:13px;color:#7ba3cc" id="bottom-hint">选择总部或分部作为起飞城市</span>
     <div id="mobile-actions">
       <button class="mobile-action-btn" data-action="open-route-modal">开航线</button>
       <button class="mobile-action-btn" data-action="open-route-list">航线</button>
       <button class="mobile-action-btn" data-action="open-buy-plane-modal">飞机</button>
+      <button class="mobile-action-btn" data-action="open-branch-modal">分部</button>
       <button class="mobile-action-btn primary" data-action="advance-turn">下一季</button>
     </div>
     <div id="zoom-controls" style="display:flex;gap:2px;margin-left:auto;align-items:center">
@@ -69,13 +75,15 @@
 </div>
 <div id="event-banner"></div>
 <div id="modal-root"></div>
+<div id="delivery-root"></div>
+<div id="onboard-hint"><div class="hint-title"></div><div class="hint-body"></div><div class="hint-step"></div></div>
 <div id="tutorial">
   <div class="tutorial-box" id="tutorial-step1">
-    <h1>✈ 云际航空</h1>
+    <h1>✈ 空豆霸业</h1>
     <p>欢迎来到航空霸业的世界！<br>选择一个时代剧本开始你的航空帝国之旅。</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:16px 0" id="era-select"></div>
     <p style="font-size:12px;color:#556;margin-top:12px">为你的航空公司命名：</p>
-    <input type="text" id="company-name" value="云际航空" placeholder="输入公司名称" maxlength="20">
+    <input type="text" id="company-name" value="豆豆航空" placeholder="输入公司名称" maxlength="20">
     <br>
     <button class="btn btn-success" data-action="tutorial-next-step" id="era-next-btn" style="padding:10px 40px;font-size:15px">选择总部城市 →</button>
   </div>

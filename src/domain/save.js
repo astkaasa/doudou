@@ -1,8 +1,8 @@
-import { routeKey, STORAGE_KEYS } from './helpers.js';
+import { getCity, routeKey, STORAGE_KEYS } from './helpers.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, normalizeModifierState } from './modifiers.js';
 
 export function saveGameState(state, storage = localStorage) {
-  const saveData = JSON.stringify({ v: 5, ts: Date.now(), g: state });
+  const saveData = JSON.stringify({ v: 6, ts: Date.now(), g: serializeGameState(state) });
   storage.setItem(STORAGE_KEYS.save, saveData);
   const info = {
     ts: Date.now(),
@@ -16,6 +16,12 @@ export function saveGameState(state, storage = localStorage) {
   storage.setItem(STORAGE_KEYS.slots, JSON.stringify([info]));
 }
 
+function serializeGameState(state) {
+  const cleanState = { ...state };
+  delete cleanState._lastReportData;
+  return cleanState;
+}
+
 export function loadGameState(storage = localStorage) {
   const raw = storage.getItem(STORAGE_KEYS.save);
   if (!raw) return { ok: false, message: '没有找到存档' };
@@ -26,9 +32,41 @@ export function loadGameState(storage = localStorage) {
 }
 
 export function normalizeLoadedState(state) {
+  normalizeUpstreamStateFields(state);
   normalizeModifierState(state);
   migrateLegacyRouteModifiers(state);
   return state;
+}
+
+function normalizeUpstreamStateFields(state) {
+  if (state.loan === undefined) state.loan = 0;
+  if (state.loanRate === undefined) state.loanRate = 0.02;
+  state.branches = normalizeBranchIds(state);
+  if (!Array.isArray(state.deliveredThisTurn)) state.deliveredThisTurn = [];
+  if (state.redPacketClaimed === undefined) state.redPacketClaimed = false;
+  if (state.consecutiveProfit === undefined) state.consecutiveProfit = 0;
+  if (state.lastReportData === undefined) state.lastReportData = state._lastReportData || null;
+  delete state.lastNewspaperHtml;
+  delete state._lastReportData;
+  (state.routes || []).forEach((route) => {
+    if (!Array.isArray(route.assignedPlanes)) route.assignedPlanes = [];
+  });
+  (state.fleet || []).forEach((plane) => {
+    if (plane.leaseTurns === undefined) plane.leaseTurns = 0;
+    if (plane.maxLeaseTurns === undefined) plane.maxLeaseTurns = 40;
+    if (plane.delivering === undefined) plane.delivering = false;
+    if (plane.deliverIn === undefined) plane.deliverIn = 0;
+  });
+}
+
+function normalizeBranchIds(state) {
+  if (!Array.isArray(state.branches)) return [];
+  const seen = new Set();
+  return state.branches.filter((cityId) => {
+    if (!getCity(cityId) || cityId === state.hq || seen.has(cityId)) return false;
+    seen.add(cityId);
+    return true;
+  });
 }
 
 function migrateLegacyRouteModifiers(state) {
