@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
-const inputDir = resolve(projectRoot, process.argv[2] || 'tmp/natural-earth');
+const inputDir = resolve(projectRoot, process.argv[2] || 'data/natural-earth');
 const outputFile = resolve(projectRoot, 'src/data/worldMapPaths.js');
 
 const WIDTH = 1000;
@@ -12,8 +12,8 @@ const HEIGHT = 500;
 const DECIMALS = 1;
 
 const SOURCES = {
-  land: 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_land.geojson',
-  boundary: 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_boundary_lines_land.geojson',
+  land: 'data/natural-earth/ne_110m_land.geojson',
+  boundary: 'data/natural-earth/ne_110m_admin_0_boundary_lines_land.geojson',
   license: 'Natural Earth public domain data. Made with Natural Earth.',
 };
 
