@@ -16,7 +16,7 @@ import { describeRouteSelection, initMapDrag, renderMap, setMapZoom } from './ui
 import { showRouteCreateInfo as renderRouteCreateInfo, hideRouteCreateInfo, renderPanel, renderRouteCityPicker } from './ui/panel.js';
 import { applySeasonTheme } from './ui/season.js';
 import { removeBranchBanner, showBranchBanner, showSelectedBranch } from './ui/branches.js';
-import { updateOnboarding } from './ui/onboarding.js';
+import { acknowledgeOnboarding, dismissOnboarding, resetOnboarding, updateOnboarding } from './ui/onboarding.js';
 import {
   closeDeliveryPopup,
   showBuyPlaneModal,
@@ -64,7 +64,7 @@ function renderGame() {
   updateHUD(G);
   renderMap(G, uiState);
   renderPanel(G, uiState);
-  updateOnboarding(G);
+  updateOnboarding(G, uiState);
 }
 
 function renderMapOnly() {
@@ -83,6 +83,22 @@ function closeModal() {
     hideRouteCreateInfo();
     byId('bottom-hint').textContent = '选择总部或分部作为起飞城市';
   }
+}
+
+function showOnboardingHelp() {
+  showModal(`<h2>新手帮助</h2>
+    <div class="loan-info">
+      <div class="loan-row"><span>1. 选择总部</span><span>总部/分部决定起飞城市</span></div>
+      <div class="loan-row"><span>2. 购买飞机</span><span>看航程、座位和交付时间</span></div>
+      <div class="loan-row"><span>3. 开通航线</span><span>从基地出发，设置票价</span></div>
+      <div class="loan-row"><span>4. 推进季度</span><span>看报纸、财报和市场变化</span></div>
+      <div class="loan-row"><span>5. 扩张网络</span><span>用分部、租赁和贷款加速成长</span></div>
+    </div>
+    <p style="color:#7ba3cc;font-size:13px;line-height:1.5;margin-top:10px">移动端可以拖动地图，双指捏合缩放。点击城市可选择总部、分部或航线目的地。</p>
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn" style="background:#334155;color:#e0e8f0" data-action="reset-onboarding">重新开启新手提示</button>
+      <button class="btn btn-primary" data-action="close-modal">知道了</button>
+    </div>`);
 }
 
 function saveGame() {
@@ -204,7 +220,7 @@ function confirmOpenRoute(from, to) {
   closeModal();
   hideRouteCreateInfo();
   showBanner('航线开通：' + getCity(from).name + ' → ' + getCity(to).name, '#16a34a');
-  updateOnboarding(G);
+  updateOnboarding(G, uiState);
 }
 
 function startBranchSelect() {
@@ -216,6 +232,7 @@ function startBranchSelect() {
   byId('app').classList.add('branch-selecting');
   showBranchBanner(G);
   renderMapOnly();
+  updateOnboarding(G, uiState);
   byId('bottom-hint').textContent = '点击地图上的城市选择分部';
 }
 
@@ -225,6 +242,7 @@ function cancelBranchSelect() {
   byId('app').classList.remove('branch-selecting');
   removeBranchBanner();
   renderMapOnly();
+  updateOnboarding(G, uiState);
   if (G) byId('bottom-hint').textContent = '选择总部或分部作为起飞城市';
 }
 
@@ -491,6 +509,21 @@ function handleClick(event) {
     case 'open-route-list':
     case 'open-route-detail':
       if (G) showRouteList(G);
+      break;
+    case 'dismiss-onboarding':
+      dismissOnboarding();
+      break;
+    case 'acknowledge-onboarding':
+      acknowledgeOnboarding();
+      break;
+    case 'show-onboarding-help':
+      showOnboardingHelp();
+      break;
+    case 'reset-onboarding':
+      resetOnboarding();
+      closeModalRoot();
+      if (G) renderGame();
+      showBanner('新手提示已重新开启', '#16a34a');
       break;
     case 'set-map-zoom':
       setMapZoom(G, parseFloat(target.dataset.zoom));

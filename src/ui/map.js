@@ -22,6 +22,17 @@ const ZOOM_BUTTONS = {
 };
 
 let mapDrag = { dragging: false, startX: 0, startY: 0, startPanX: 0, startPanY: 0 };
+let mapTouch = {
+  mode: null,
+  startX: 0,
+  startY: 0,
+  startPanX: 0,
+  startPanY: 0,
+  startZoom: MIN_ZOOM,
+  startDistance: 0,
+  startCenterX: 0,
+  startCenterY: 0,
+};
 let edgeScroll = { x: 0, y: 0, frame: null, lastTime: 0 };
 
 export function renderMap(state, uiState) {
@@ -321,6 +332,60 @@ export function initMapDrag(getState, render) {
     renderMap();
   }, { passive: false });
 
+  mc.addEventListener('click', normalizeCityTouchClick, true);
+
+  mc.addEventListener('touchstart', (e) => {
+    const state = getState();
+    if (!state) return;
+    const stage = mc.querySelector('.map-stage') || mc;
+    const rect = stage.getBoundingClientRect();
+    if (e.touches.length >= 2) {
+      beginTouchPinch(state, e.touches, rect);
+      mapDrag.dragging = false;
+      stopEdgeScroll();
+      e.preventDefault();
+      return;
+    }
+    if (e.touches.length !== 1) return;
+    if (e.target.closest('[data-city-touch-target]')) return;
+    if (!e.target.closest('.map-stage')) return;
+    if (!canPan(state, rect)) return;
+    const touch = e.touches[0];
+    beginTouchPan(state, touch);
+    stopEdgeScroll();
+    e.preventDefault();
+  }, { passive: false });
+
+  mc.addEventListener('touchmove', (e) => {
+    const state = getState();
+    if (!state || !mapTouch.mode) return;
+    const stage = mc.querySelector('.map-stage') || mc;
+    const rect = stage.getBoundingClientRect();
+    if (e.touches.length >= 2) {
+      if (mapTouch.mode !== 'pinch') beginTouchPinch(state, e.touches, rect);
+      updateTouchPinch(state, e.touches, rect);
+      renderMap();
+      e.preventDefault();
+      return;
+    }
+    if (mapTouch.mode === 'pan' && e.touches.length === 1) {
+      updateTouchPan(state, e.touches[0], rect);
+      renderMap();
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  mc.addEventListener('touchend', (e) => {
+    const state = getState();
+    if (state && mapTouch.mode === 'pinch' && e.touches.length === 1) {
+      beginTouchPan(state, e.touches[0]);
+      return;
+    }
+    if (e.touches.length === 0) resetMapTouch();
+  });
+
+  mc.addEventListener('touchcancel', resetMapTouch);
+
   window.addEventListener('mousemove', (e) => {
     const state = getState();
     if (!state) return;
@@ -370,15 +435,28 @@ function clampZoom(zoom) {
 }
 
 function setMapZoomAtPoint(state, nextZoom, event, stageRect) {
-  const oldZoom = state.mapZoom || MIN_ZOOM;
-  const oldViewport = viewportFor(stageRect, oldZoom, state.mapPanX || 0, state.mapPanY || 0);
-  const pctX = clamp((event.clientX - stageRect.left) / stageRect.width, 0, 1);
-  const pctY = clamp((event.clientY - stageRect.top) / stageRect.height, 0, 1);
-  const anchorX = oldViewport.ox + pctX * oldViewport.vw;
-  const anchorY = oldViewport.oy + pctY * oldViewport.vh;
+  setMapZoomBetweenPoints(state, nextZoom, stageRect, {
+    oldZoom: state.mapZoom || MIN_ZOOM,
+    oldPanX: state.mapPanX || 0,
+    oldPanY: state.mapPanY || 0,
+    anchorClientX: event.clientX,
+    anchorClientY: event.clientY,
+    targetClientX: event.clientX,
+    targetClientY: event.clientY,
+  });
+}
+
+function setMapZoomBetweenPoints(state, nextZoom, stageRect, anchor) {
+  const oldViewport = viewportFor(stageRect, anchor.oldZoom, anchor.oldPanX, anchor.oldPanY);
+  const anchorPctX = clamp((anchor.anchorClientX - stageRect.left) / stageRect.width, 0, 1);
+  const anchorPctY = clamp((anchor.anchorClientY - stageRect.top) / stageRect.height, 0, 1);
+  const targetPctX = clamp((anchor.targetClientX - stageRect.left) / stageRect.width, 0, 1);
+  const targetPctY = clamp((anchor.targetClientY - stageRect.top) / stageRect.height, 0, 1);
+  const anchorX = oldViewport.ox + anchorPctX * oldViewport.vw;
+  const anchorY = oldViewport.oy + anchorPctY * oldViewport.vh;
   const { vw: newVw, vh: newVh } = viewportSizeFor(stageRect, nextZoom);
-  const newOx = anchorX - pctX * newVw;
-  const newOy = anchorY - pctY * newVh;
+  const newOx = anchorX - targetPctX * newVw;
+  const newOy = anchorY - targetPctY * newVh;
 
   state.mapZoom = nextZoom;
   state.mapPanX = wrapPanX(((MAP_WIDTH - newVw) / 2 - newOx) * nextZoom, nextZoom);
@@ -387,11 +465,117 @@ function setMapZoomAtPoint(state, nextZoom, event, stageRect) {
 }
 
 function stageFromEvent(event) {
+  return stageFromClientPoint(event.clientX, event.clientY);
+}
+
+function stageFromClientPoint(clientX, clientY) {
   const stage = byId('map-container')?.querySelector('.map-stage');
   if (!stage) return null;
   const rect = stage.getBoundingClientRect();
-  if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) return null;
+  if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) return null;
   return stage;
+}
+
+function normalizeCityTouchClick(event) {
+  const target = event.target.closest('[data-city-touch-target]');
+  if (!target) return;
+  const stage = target.closest('.map-stage');
+  if (!stage) return;
+  const nearest = nearestCityTouchTarget(stage, event.clientX, event.clientY);
+  if (!nearest || nearest === target) return;
+  const originalCityId = target.dataset.cityId;
+  target.dataset.cityId = nearest.dataset.cityId;
+  queueMicrotask(() => {
+    if (target.isConnected && target.dataset.cityId === nearest.dataset.cityId) {
+      target.dataset.cityId = originalCityId;
+    }
+  });
+}
+
+function nearestCityTouchTarget(stage, clientX, clientY) {
+  let nearest = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  stage.querySelectorAll('[data-city-touch-target]').forEach((target) => {
+    const rect = target.getBoundingClientRect();
+    const dx = clientX - (rect.left + rect.width / 2);
+    const dy = clientY - (rect.top + rect.height / 2);
+    const distance = dx * dx + dy * dy;
+    if (distance < nearestDistance) {
+      nearest = target;
+      nearestDistance = distance;
+    }
+  });
+  return nearest;
+}
+
+function beginTouchPan(state, touch) {
+  mapTouch = {
+    mode: 'pan',
+    startX: touch.clientX,
+    startY: touch.clientY,
+    startPanX: state.mapPanX || 0,
+    startPanY: state.mapPanY || 0,
+    startZoom: state.mapZoom || MIN_ZOOM,
+    startDistance: 0,
+    startCenterX: touch.clientX,
+    startCenterY: touch.clientY,
+  };
+}
+
+function updateTouchPan(state, touch, rect) {
+  const zoom = state.mapZoom || MIN_ZOOM;
+  const viewport = viewportSizeFor(rect, zoom);
+  const dx = (touch.clientX - mapTouch.startX) * (viewport.vw / rect.width) * zoom;
+  const dy = (touch.clientY - mapTouch.startY) * (viewport.vh / rect.height) * zoom;
+  state.mapPanX = wrapPanX(mapTouch.startPanX + dx, zoom);
+  state.mapPanY = clampPanY(mapTouch.startPanY + dy, zoom, rect);
+}
+
+function beginTouchPinch(state, touches, rect) {
+  const center = touchCenter(touches);
+  if (!stageFromClientPoint(center.clientX, center.clientY)) return;
+  mapTouch = {
+    mode: 'pinch',
+    startX: 0,
+    startY: 0,
+    startPanX: state.mapPanX || 0,
+    startPanY: state.mapPanY || 0,
+    startZoom: state.mapZoom || MIN_ZOOM,
+    startDistance: touchDistance(touches) || 1,
+    startCenterX: center.clientX,
+    startCenterY: center.clientY,
+  };
+}
+
+function updateTouchPinch(state, touches, rect) {
+  const center = touchCenter(touches);
+  const distance = touchDistance(touches);
+  if (!distance || !mapTouch.startDistance) return;
+  const nextZoom = clampZoom(mapTouch.startZoom * (distance / mapTouch.startDistance));
+  setMapZoomBetweenPoints(state, nextZoom, rect, {
+    oldZoom: mapTouch.startZoom,
+    oldPanX: mapTouch.startPanX,
+    oldPanY: mapTouch.startPanY,
+    anchorClientX: mapTouch.startCenterX,
+    anchorClientY: mapTouch.startCenterY,
+    targetClientX: center.clientX,
+    targetClientY: center.clientY,
+  });
+}
+
+function resetMapTouch() {
+  mapTouch.mode = null;
+}
+
+function touchCenter(touches) {
+  return {
+    clientX: (touches[0].clientX + touches[1].clientX) / 2,
+    clientY: (touches[0].clientY + touches[1].clientY) / 2,
+  };
+}
+
+function touchDistance(touches) {
+  return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
 }
 
 function updateCityTooltip(event) {
