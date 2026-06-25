@@ -308,8 +308,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
   .btn{min-height:36px}
   .btn-sm{padding:6px 10px}
   #bottom{min-height:92px;height:auto;padding:6px 10px;gap:6px;flex-wrap:wrap}
-  #bottom-hint{flex:1 1 auto;font-size:12px;line-height:1.35;white-space:normal;order:1}
-  #help-btn{width:32px;height:32px;order:1;margin-left:auto}
+  #bottom-hint{flex:1 1 100%;width:100%;font-size:12px;line-height:1.35;white-space:normal;order:3}
+  #help-btn{width:32px;height:32px;order:0;margin-left:auto}
   #mobile-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;width:100%;order:2}
   #zoom-controls{display:none!important}
   #advance-btn{display:none}
