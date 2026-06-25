@@ -45,6 +45,9 @@ import {
   showTutorial,
 } from './ui/tutorial.js';
 
+const APP_SETTINGS_KEY = 'doudou.appSettings';
+const appSettings = loadAppSettings();
+
 let G = null;
 const uiState = {
   selectedEra: ERAS[0].id,
@@ -52,6 +55,7 @@ const uiState = {
   selectedHQ: null,
   branchSelectMode: false,
   selectedBranch: null,
+  showBoundaries: appSettings.showBoundaries,
 };
 
 function state() {
@@ -77,6 +81,47 @@ function setBottomHint(message = '') {
   const text = message.trim();
   hint.textContent = text;
   hint.hidden = !text;
+}
+
+function loadAppSettings() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(APP_SETTINGS_KEY) || '{}');
+    return {
+      showBoundaries: stored.showBoundaries !== false,
+    };
+  } catch {
+    return { showBoundaries: true };
+  }
+}
+
+function saveAppSettings() {
+  try {
+    localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings));
+  } catch {
+    // Ignore storage failures; settings still apply in the current session.
+  }
+}
+
+function showSettings() {
+  const checked = appSettings.showBoundaries ? 'checked' : '';
+  showModal(`<h2>设置</h2>
+    <label class="settings-toggle">
+      <span>
+        <strong>显示国界</strong>
+        <small>关闭后地图更简洁，只保留陆地轮廓、城市和航线。</small>
+      </span>
+      <input type="checkbox" data-action="toggle-map-boundaries" ${checked}>
+    </label>
+    <div style="margin-top:14px;display:flex;justify-content:flex-end">
+      <button class="btn btn-primary" data-action="close-modal">完成</button>
+    </div>`);
+}
+
+function toggleMapBoundaries(checked) {
+  appSettings.showBoundaries = checked;
+  uiState.showBoundaries = checked;
+  saveAppSettings();
+  renderMapOnly();
 }
 
 function closeModal() {
@@ -529,6 +574,12 @@ function handleClick(event) {
       break;
     case 'show-onboarding-help':
       showOnboardingHelp();
+      break;
+    case 'show-settings':
+      showSettings();
+      break;
+    case 'toggle-map-boundaries':
+      toggleMapBoundaries(target.checked);
       break;
     case 'reset-onboarding':
       resetOnboarding();

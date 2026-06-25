@@ -44,7 +44,7 @@ export function renderMap(state, uiState) {
   const worldOffsets = visibleWorldOffsets(ox, vw);
   let svg = `<svg viewBox="${ox} ${oy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%" id="map-svg" role="img" aria-label="航空经营世界地图">`;
 
-  svg += renderBaseMap(worldOffsets);
+  svg += renderBaseMap(worldOffsets, uiState.showBoundaries !== false);
   svg += `<rect x="${ox - vw}" y="${oy - vh}" width="${vw * 3}" height="${vh * 3}" fill="transparent" data-action="map-empty"/>`;
 
   state.ai.forEach((ai) => {
@@ -111,8 +111,8 @@ export function renderMap(state, uiState) {
   container.innerHTML = `<div class="map-stage" style="${mapStageStyle()}">${svg}${cityTouchTargets}<div class="map-tooltip" hidden></div></div>`;
 }
 
-function renderBaseMap(worldOffsets) {
-  return `${renderMapDefs()}${worldOffsets.map((offset) => renderBaseMapTile(offset)).join('')}`;
+function renderBaseMap(worldOffsets, showBoundaries) {
+  return `${renderMapDefs()}${worldOffsets.map((offset) => renderBaseMapTile(offset, showBoundaries)).join('')}`;
 }
 
 function renderMapDefs() {
@@ -133,14 +133,15 @@ function renderMapDefs() {
   </defs>`;
 }
 
-function renderBaseMapTile(offset) {
+function renderBaseMapTile(offset, showBoundaries) {
   const transform = offset ? ` transform="translate(${offset} 0)"` : '';
+  const boundaryPath = showBoundaries ? `<path d="${WORLD_BOUNDARY_PATH}" class="map-boundary"/>` : '';
   return `<g${transform}>
   <rect x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}" class="map-ocean"/>
   <rect x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}" fill="url(#map-ocean-light)"/>
   ${renderGraticule()}
   <path d="${WORLD_LAND_PATH}" class="map-land" fill-rule="evenodd"/>
-  <path d="${WORLD_BOUNDARY_PATH}" class="map-boundary"/>
+  ${boundaryPath}
   </g>`;
 }
 
