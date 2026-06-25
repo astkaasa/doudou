@@ -56,6 +56,7 @@ const uiState = {
   branchSelectMode: false,
   selectedBranch: null,
   showBoundaries: appSettings.showBoundaries,
+  mapStyle: appSettings.mapStyle,
 };
 
 function state() {
@@ -88,9 +89,10 @@ function loadAppSettings() {
     const stored = JSON.parse(localStorage.getItem(APP_SETTINGS_KEY) || '{}');
     return {
       showBoundaries: stored.showBoundaries !== false,
+      mapStyle: stored.mapStyle === 'terrain' ? 'terrain' : 'classic',
     };
   } catch {
-    return { showBoundaries: true };
+    return { showBoundaries: true, mapStyle: 'classic' };
   }
 }
 
@@ -104,7 +106,19 @@ function saveAppSettings() {
 
 function showSettings() {
   const checked = appSettings.showBoundaries ? 'checked' : '';
+  const classicActive = appSettings.mapStyle === 'terrain' ? '' : ' active';
+  const terrainActive = appSettings.mapStyle === 'terrain' ? ' active' : '';
   showModal(`<h2>设置</h2>
+    <div class="settings-field">
+      <div>
+        <strong>地图样式</strong>
+        <small>经典适合清晰查看航线，地形使用 Natural Earth II 官方地形底图。</small>
+      </div>
+      <div class="settings-choice-row">
+        <button class="settings-choice${classicActive}" data-action="set-map-style" data-map-style="classic">经典</button>
+        <button class="settings-choice${terrainActive}" data-action="set-map-style" data-map-style="terrain">地形</button>
+      </div>
+    </div>
     <label class="settings-toggle">
       <span>
         <strong>显示国界</strong>
@@ -122,6 +136,14 @@ function toggleMapBoundaries(checked) {
   uiState.showBoundaries = checked;
   saveAppSettings();
   renderMapOnly();
+}
+
+function setMapStyle(style) {
+  appSettings.mapStyle = style === 'terrain' ? 'terrain' : 'classic';
+  uiState.mapStyle = appSettings.mapStyle;
+  saveAppSettings();
+  renderMapOnly();
+  showSettings();
 }
 
 function closeModal() {
@@ -577,6 +599,9 @@ function handleClick(event) {
       break;
     case 'show-settings':
       showSettings();
+      break;
+    case 'set-map-style':
+      setMapStyle(target.dataset.mapStyle);
       break;
     case 'toggle-map-boundaries':
       toggleMapBoundaries(target.checked);

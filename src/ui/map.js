@@ -1,6 +1,7 @@
 import { CITIES, projectCity } from '../data/cities.js';
 import { WORLD_BOUNDARY_PATH, WORLD_LAND_PATH } from '../data/worldMapPaths.js';
 import { byId, cityDist, clamp, fmt, getCity } from '../domain/helpers.js';
+import terrainMapUrl from '../assets/natural-earth-2-50m.jpg';
 
 const MAP_WIDTH = 1000;
 const MAP_HEIGHT = 500;
@@ -44,7 +45,7 @@ export function renderMap(state, uiState) {
   const worldOffsets = visibleWorldOffsets(ox, vw);
   let svg = `<svg viewBox="${ox} ${oy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%" id="map-svg" role="img" aria-label="航空经营世界地图">`;
 
-  svg += renderBaseMap(worldOffsets, uiState.showBoundaries !== false);
+  svg += renderBaseMap(worldOffsets, uiState.showBoundaries !== false, uiState.mapStyle || 'classic');
   svg += `<rect x="${ox - vw}" y="${oy - vh}" width="${vw * 3}" height="${vh * 3}" fill="transparent" data-action="map-empty"/>`;
 
   state.ai.forEach((ai) => {
@@ -111,8 +112,8 @@ export function renderMap(state, uiState) {
   container.innerHTML = `<div class="map-stage" style="${mapStageStyle()}">${svg}${cityTouchTargets}<div class="map-tooltip" hidden></div></div>`;
 }
 
-function renderBaseMap(worldOffsets, showBoundaries) {
-  return `${renderMapDefs()}${worldOffsets.map((offset) => renderBaseMapTile(offset, showBoundaries)).join('')}`;
+function renderBaseMap(worldOffsets, showBoundaries, mapStyle) {
+  return `${renderMapDefs()}${worldOffsets.map((offset) => renderBaseMapTile(offset, showBoundaries, mapStyle)).join('')}`;
 }
 
 function renderMapDefs() {
@@ -130,17 +131,26 @@ function renderMapDefs() {
     <filter id="map-land-glow" x="-5%" y="-5%" width="110%" height="110%">
       <feDropShadow dx="0" dy="0" stdDeviation="1.4" flood-color="#5eead4" flood-opacity="0.18"/>
     </filter>
+    <clipPath id="map-land-clip">
+      <path d="${WORLD_LAND_PATH}" fill-rule="evenodd"/>
+    </clipPath>
   </defs>`;
 }
 
-function renderBaseMapTile(offset, showBoundaries) {
+function renderBaseMapTile(offset, showBoundaries, mapStyle) {
   const transform = offset ? ` transform="translate(${offset} 0)"` : '';
-  const boundaryPath = showBoundaries ? `<path d="${WORLD_BOUNDARY_PATH}" class="map-boundary"/>` : '';
+  const isTerrain = mapStyle === 'terrain';
+  const landLayer = isTerrain
+    ? `<image href="${terrainMapUrl}" x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}" preserveAspectRatio="none" class="map-terrain-image" clip-path="url(#map-land-clip)"/>
+  <path d="${WORLD_LAND_PATH}" class="map-land-outline" fill-rule="evenodd"/>`
+    : `<path d="${WORLD_LAND_PATH}" class="map-land" fill-rule="evenodd"/>`;
+  const boundaryClass = isTerrain ? 'map-boundary map-boundary-terrain' : 'map-boundary';
+  const boundaryPath = showBoundaries ? `<path d="${WORLD_BOUNDARY_PATH}" class="${boundaryClass}"/>` : '';
   return `<g${transform}>
   <rect x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}" class="map-ocean"/>
   <rect x="0" y="0" width="${MAP_WIDTH}" height="${MAP_HEIGHT}" fill="url(#map-ocean-light)"/>
   ${renderGraticule()}
-  <path d="${WORLD_LAND_PATH}" class="map-land" fill-rule="evenodd"/>
+  ${landLayer}
   ${boundaryPath}
   </g>`;
 }

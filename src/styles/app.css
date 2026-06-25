@@ -29,7 +29,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .map-grid{stroke:#33516a;stroke-width:0.6;opacity:0.34;vector-effect:non-scaling-stroke}
 .map-grid-equator,.map-grid-prime{stroke:#5b7d93;opacity:0.5}
 .map-land{fill:#183d35;stroke:#7dd3a8;stroke-width:0.75;opacity:0.96;filter:url(#map-land-glow);vector-effect:non-scaling-stroke}
+.map-terrain-image{opacity:0.86;filter:saturate(0.9) contrast(1.05)}
+.map-land-outline{fill:none;stroke:#9de7bd;stroke-width:0.55;opacity:0.78;filter:url(#map-land-glow);vector-effect:non-scaling-stroke}
 .map-boundary{fill:none;stroke:#a7c8c2;stroke-width:0.45;opacity:0.26;vector-effect:non-scaling-stroke}
+.map-boundary-terrain{stroke:#e8f5d0;stroke-width:0.85;opacity:0.78;paint-order:stroke;filter:drop-shadow(0 0 1px rgba(0,0,0,0.85))}
 /* City nodes */
 .city-node{cursor:pointer;fill:#dbeafe;stroke:#0b1626;stroke-width:1.25;transition:filter 0.2s,opacity 0.2s;vector-effect:non-scaling-stroke}
 .city-node-major{fill:#f8fafc;stroke:#93c5fd;stroke-width:1.4}
@@ -138,6 +141,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .modal h2{font-size:22px;margin-bottom:16px;color:#4ade80}
 .modal h3{font-size:14px;margin:12px 0 8px;color:#7ba3cc}
 .modal-close{position:absolute;top:12px;right:16px;background:none;border:none;color:#7ba3cc;font-size:20px;cursor:pointer}
+.settings-field{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border:1px solid #1e3a5f;border-radius:10px;background:#0a1628;padding:12px 14px;margin-bottom:10px}
+.settings-field strong{display:block;color:#e0e8f0;font-size:14px;margin-bottom:4px}
+.settings-field small{display:block;color:#7ba3cc;font-size:12px;line-height:1.35}
+.settings-choice-row{display:flex;gap:6px;flex:0 0 auto}
+.settings-choice{border:1px solid #1e3a5f;border-radius:999px;background:#111d33;color:#93c5fd;font-size:12px;font-weight:800;padding:6px 12px;cursor:pointer}
+.settings-choice.active{background:#2563eb;border-color:#60a5fa;color:#fff}
+.settings-choice:hover,.settings-choice:focus-visible{border-color:#60a5fa;outline:none}
 .settings-toggle{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid #1e3a5f;border-radius:10px;background:#0a1628;padding:12px 14px}
 .settings-toggle strong{display:block;color:#e0e8f0;font-size:14px;margin-bottom:4px}
 .settings-toggle small{display:block;color:#7ba3cc;font-size:12px;line-height:1.35}
