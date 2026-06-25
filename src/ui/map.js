@@ -12,7 +12,6 @@ const EDGE_SCROLL_SIZE = 32;
 const EDGE_SCROLL_SPEED = 360;
 const CITY_RADIUS_ZOOM_EXPONENT = 0.88;
 const LABEL_ZOOM_EXPONENT = 0.82;
-const TOUCH_RENDER_INTERVAL = 32;
 const GRID_LONGITUDES = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150];
 const GRID_LATITUDES = [-60, -30, 0, 30, 60];
 
@@ -301,26 +300,35 @@ export function updateZoomButtons(zoom) {
 export function initMapDrag(getState, render) {
   const mc = byId('map-container');
   const renderMap = () => render();
-  let touchRenderFrame = null;
-  let lastTouchRenderTime = 0;
-  const scheduleTouchRender = () => {
-    if (touchRenderFrame) return;
-    touchRenderFrame = requestAnimationFrame((time) => {
-      touchRenderFrame = null;
-      if (time - lastTouchRenderTime < TOUCH_RENDER_INTERVAL) {
-        scheduleTouchRender();
-        return;
-      }
-      lastTouchRenderTime = time;
-      renderMap();
-    });
+  const previewTouchPan = (touch) => {
+    const stage = mc.querySelector('.map-stage');
+    if (!stage) return;
+    const dx = touch.clientX - mapTouch.startX;
+    const dy = touch.clientY - mapTouch.startY;
+    stage.style.willChange = 'transform';
+    stage.style.transformOrigin = '0 0';
+    stage.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
   };
-  const flushTouchRender = () => {
-    if (touchRenderFrame) {
-      cancelAnimationFrame(touchRenderFrame);
-      touchRenderFrame = null;
-    }
-    lastTouchRenderTime = performance.now();
+  const previewTouchPinch = (state, touches, rect) => {
+    const stage = mc.querySelector('.map-stage');
+    if (!stage) return;
+    const center = touchCenter(touches);
+    const dx = center.clientX - mapTouch.startCenterX;
+    const dy = center.clientY - mapTouch.startCenterY;
+    const scale = (state.mapZoom || MIN_ZOOM) / (mapTouch.startZoom || MIN_ZOOM);
+    stage.style.willChange = 'transform';
+    stage.style.transformOrigin = `${mapTouch.startCenterX - rect.left}px ${mapTouch.startCenterY - rect.top}px`;
+    stage.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
+  };
+  const resetTouchPreview = () => {
+    const stage = mc.querySelector('.map-stage');
+    if (!stage) return;
+    stage.style.transform = '';
+    stage.style.transformOrigin = '';
+    stage.style.willChange = '';
+  };
+  const commitTouchRender = () => {
+    resetTouchPreview();
     renderMap();
   };
 
@@ -387,13 +395,13 @@ export function initMapDrag(getState, render) {
     if (e.touches.length >= 2) {
       if (mapTouch.mode !== 'pinch') beginTouchPinch(state, e.touches, rect);
       updateTouchPinch(state, e.touches, rect);
-      scheduleTouchRender();
+      previewTouchPinch(state, e.touches, rect);
       e.preventDefault();
       return;
     }
     if (mapTouch.mode === 'pan' && e.touches.length === 1) {
       updateTouchPan(state, e.touches[0], rect);
-      scheduleTouchRender();
+      previewTouchPan(e.touches[0]);
       e.preventDefault();
     }
   }, { passive: false });
@@ -401,16 +409,20 @@ export function initMapDrag(getState, render) {
   mc.addEventListener('touchend', (e) => {
     const state = getState();
     if (state && mapTouch.mode === 'pinch' && e.touches.length === 1) {
+      commitTouchRender();
       beginTouchPan(state, e.touches[0]);
       return;
     }
     if (e.touches.length === 0) {
       resetMapTouch();
-      flushTouchRender();
+      commitTouchRender();
     }
   });
 
-  mc.addEventListener('touchcancel', resetMapTouch);
+  mc.addEventListener('touchcancel', () => {
+    resetMapTouch();
+    commitTouchRender();
+  });
 
   window.addEventListener('mousemove', (e) => {
     const state = getState();
