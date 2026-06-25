@@ -12,6 +12,7 @@ const EDGE_SCROLL_SIZE = 32;
 const EDGE_SCROLL_SPEED = 360;
 const CITY_RADIUS_ZOOM_EXPONENT = 0.88;
 const LABEL_ZOOM_EXPONENT = 0.82;
+const TOUCH_RENDER_INTERVAL = 32;
 const GRID_LONGITUDES = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150];
 const GRID_LATITUDES = [-60, -30, 0, 30, 60];
 
@@ -300,6 +301,28 @@ export function updateZoomButtons(zoom) {
 export function initMapDrag(getState, render) {
   const mc = byId('map-container');
   const renderMap = () => render();
+  let touchRenderFrame = null;
+  let lastTouchRenderTime = 0;
+  const scheduleTouchRender = () => {
+    if (touchRenderFrame) return;
+    touchRenderFrame = requestAnimationFrame((time) => {
+      touchRenderFrame = null;
+      if (time - lastTouchRenderTime < TOUCH_RENDER_INTERVAL) {
+        scheduleTouchRender();
+        return;
+      }
+      lastTouchRenderTime = time;
+      renderMap();
+    });
+  };
+  const flushTouchRender = () => {
+    if (touchRenderFrame) {
+      cancelAnimationFrame(touchRenderFrame);
+      touchRenderFrame = null;
+    }
+    lastTouchRenderTime = performance.now();
+    renderMap();
+  };
 
   mc.addEventListener('mousedown', (e) => {
     const state = getState();
@@ -364,13 +387,13 @@ export function initMapDrag(getState, render) {
     if (e.touches.length >= 2) {
       if (mapTouch.mode !== 'pinch') beginTouchPinch(state, e.touches, rect);
       updateTouchPinch(state, e.touches, rect);
-      renderMap();
+      scheduleTouchRender();
       e.preventDefault();
       return;
     }
     if (mapTouch.mode === 'pan' && e.touches.length === 1) {
       updateTouchPan(state, e.touches[0], rect);
-      renderMap();
+      scheduleTouchRender();
       e.preventDefault();
     }
   }, { passive: false });
@@ -381,7 +404,10 @@ export function initMapDrag(getState, render) {
       beginTouchPan(state, e.touches[0]);
       return;
     }
-    if (e.touches.length === 0) resetMapTouch();
+    if (e.touches.length === 0) {
+      resetMapTouch();
+      flushTouchRender();
+    }
   });
 
   mc.addEventListener('touchcancel', resetMapTouch);
