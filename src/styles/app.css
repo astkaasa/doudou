@@ -311,6 +311,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
   #bottom{min-height:56px;height:auto;padding:6px 10px;gap:6px;flex-wrap:wrap}
   #bottom-hint{flex:1 1 100%;width:100%;font-size:12px;line-height:1.35;white-space:normal;order:3}
   #help-btn{width:32px;height:32px;order:2;margin-left:0}
+  .hq-selecting #help-btn,
+  .branch-selecting #help-btn{margin-left:auto}
   #mobile-actions{display:flex;gap:6px;width:auto;order:1;margin-left:auto;flex:0 0 auto}
   #mobile-actions .mobile-action-btn{min-width:96px;min-height:36px;border-radius:999px;padding:6px 14px}
   #zoom-controls{display:none!important}
