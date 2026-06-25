@@ -71,6 +71,14 @@ function renderMapOnly() {
   if (G) renderMap(G, uiState);
 }
 
+function setBottomHint(message = '') {
+  const hint = byId('bottom-hint');
+  if (!hint) return;
+  const text = message.trim();
+  hint.textContent = text;
+  hint.hidden = !text;
+}
+
 function closeModal() {
   closeModalRoot();
   closeDeliveryPopup();
@@ -81,7 +89,7 @@ function closeModal() {
       renderMapOnly();
     }
     hideRouteCreateInfo();
-    byId('bottom-hint').textContent = '选择总部或分部作为起飞城市';
+    setBottomHint();
   }
 }
 
@@ -149,7 +157,7 @@ function tutorialNextStep() {
   hideTutorial();
   renderGame();
   showHQBanner();
-  byId('bottom-hint').textContent = '点击地图上的城市选择总部';
+  setBottomHint('点击地图上的城市选择总部');
 }
 
 function cancelHQSelect() {
@@ -183,12 +191,13 @@ function startGame() {
   hideTutorial();
   renderGame();
   showBanner('欢迎经营 ' + name + '！(' + G.year + '-' + G.endYear + ') 试试开通第一条航线吧', '#2563eb');
+  setBottomHint();
 }
 
 function openRouteModal() {
   if (!G) return;
   G.selectedCity = null;
-  byId('bottom-hint').textContent = '选择起飞基地：可点地图，也可用下方面板列表';
+  setBottomHint('选择起飞基地：可点地图，也可用下方面板列表');
   renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
   renderMapOnly();
 }
@@ -233,7 +242,7 @@ function startBranchSelect() {
   showBranchBanner(G);
   renderMapOnly();
   updateOnboarding(G, uiState);
-  byId('bottom-hint').textContent = '点击地图上的城市选择分部';
+  setBottomHint('点击地图上的城市选择分部');
 }
 
 function cancelBranchSelect() {
@@ -243,7 +252,7 @@ function cancelBranchSelect() {
   removeBranchBanner();
   renderMapOnly();
   updateOnboarding(G, uiState);
-  if (G) byId('bottom-hint').textContent = '选择总部或分部作为起飞城市';
+  if (G) setBottomHint();
 }
 
 function confirmBranchFromMap() {
@@ -279,7 +288,7 @@ function onMapEmptyClick() {
   if (G.selectedCity) {
     G.selectedCity = null;
     renderMapOnly();
-    byId('bottom-hint').textContent = '选择起飞基地：可点地图，也可用下方面板列表';
+    setBottomHint('选择起飞基地：可点地图，也可用下方面板列表');
     renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
   }
 }
@@ -290,7 +299,9 @@ function onCityClick(cityId) {
     uiState.selectedHQ = cityId;
     renderMapOnly();
     renderPanel(G, uiState);
-    showSelectedHQ(getCity(cityId).name);
+    const cityName = getCity(cityId).name;
+    showSelectedHQ(cityName);
+    setBottomHint(`已选择 ${cityName}，点击确认开始`);
     return;
   }
   if (uiState.branchSelectMode) {
@@ -309,14 +320,14 @@ function onCityClick(cityId) {
     G.selectedCity = cityId;
     renderMapOnly();
     const fromIsBase = isBase(G, cityId);
-    byId('bottom-hint').textContent = fromIsBase
+    setBottomHint(fromIsBase
       ? '已选择 ' + getCity(cityId).name + '，继续选择到达城市'
-      : getCity(cityId).name + ' 非基地，选择到达城市可查看距离';
+      : getCity(cityId).name + ' 非基地，选择到达城市可查看距离');
     renderRouteCreateInfo(getCity(cityId), null, `${describeRouteSelection(getCity(cityId), null, { fromIsBase })}${renderRouteCityPicker(G, cityId)}`);
   } else if (G.selectedCity === cityId) {
     G.selectedCity = null;
     renderMapOnly();
-    byId('bottom-hint').textContent = '选择起飞基地：可点地图，也可用下方面板列表';
+    setBottomHint('选择起飞基地：可点地图，也可用下方面板列表');
     renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
   } else {
     const from = G.selectedCity;
@@ -325,7 +336,7 @@ function onCityClick(cityId) {
     renderRouteCreateInfo(getCity(from), getCity(cityId), describeRouteSelection(getCity(from), getCity(cityId), { fromIsBase }));
     if (!fromIsBase) {
       const d = Math.round(cityDist(getCity(from), getCity(cityId)));
-      byId('bottom-hint').textContent = `${getCity(from).name} → ${getCity(cityId).name} 距离 ${d}km（需从总部或分部起飞才能开通航线）`;
+      setBottomHint(`${getCity(from).name} → ${getCity(cityId).name} 距离 ${d}km（需从总部或分部起飞才能开通航线）`);
       renderMapOnly();
       return;
     }
