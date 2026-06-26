@@ -16,12 +16,14 @@ export function createFinancialReportSnapshot(state) {
     leasedCount: countLeasedPlanes(safeState),
     brand: state.brand,
     oilPrice: state.oilPrice,
+    traitFund: state._lastTraitFund || 0,
     deliveredThisTurn: deliveredThisTurn.map((plane) => ({ ...plane })),
     routes: routes.map((route) => ({
       fromName: getCity(route.from)?.name || route.from,
       toName: getCity(route.to)?.name || route.to,
       profit: route.profit,
       loadFactor: route.loadFactor,
+      suspended: Boolean(route.suspended),
     })),
   };
 }

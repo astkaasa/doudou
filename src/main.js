@@ -1,14 +1,24 @@
 import './styles/app.css';
 
 import { ERAS } from './data/eras.js';
+import { normalizePlayerTrait } from './data/playerTraits.js';
 import { closeBranch as closeBranchDomain, isBase, openBranch } from './domain/bases.js';
 import { DEFAULT_COMPANY_NAME } from './domain/constants.js';
 import { buyPlane, returnLease, sellPlane } from './domain/fleet.js';
-import { byId, cityDist, fmt, fmtPct, getCity, routeKey } from './domain/helpers.js';
+import { byId, cityDist, fmt, getCity, routeKey } from './domain/helpers.js';
 import { claimRedPacket, repayLoan, takeLoan } from './domain/loans.js';
 import { loadGameState, saveGameState } from './domain/save.js';
 import { createSetupState, initState, seedInitialFleet } from './domain/state.js';
-import { adjustRoutePrice, closeRoute as closeRouteDomain, countCompetitors, openRoute } from './domain/routes.js';
+import {
+  adjustRoutePrice,
+  changeRoutePlane,
+  closeRoute as closeRouteDomain,
+  countCompetitors,
+  findRoute,
+  openRoute,
+  resumeRoute,
+  suspendRoute,
+} from './domain/routes.js';
 import { advanceTurnState } from './domain/turn.js';
 import { updateHUD } from './ui/hud.js';
 import { closeModalRoot, showBanner, showModal } from './ui/modal.js';
@@ -30,8 +40,17 @@ import {
   showNewspaper,
   showRedPacketConfirm,
   showReportAlone,
+  setAdjustPricePreset,
+  setRoutePricePreset,
+  showRouteChangePlaneModal,
+  showRouteCloseConfirm,
   showRouteCreateModal,
   showRouteList,
+  showRoutePriceAdjust,
+  showRouteResumeConfirm,
+  showRouteSuspendConfirm,
+  toggleRouteListSort,
+  updateAdjustedPriceDisplay,
   showTurnSummary,
   updatePricePreview,
 } from './ui/modals.js';
@@ -44,6 +63,7 @@ import {
   showSelectedHQ,
   showTutorial,
 } from './ui/tutorial.js';
+import { openTraitCoins, removeTraitOverlay, revealSelectedTrait, showTraitEnvelope } from './ui/traits.js';
 
 const APP_SETTINGS_KEY = 'doudou.appSettings';
 const appSettings = loadAppSettings();
@@ -165,7 +185,7 @@ function showOnboardingHelp() {
     <div class="loan-info">
       <div class="loan-row"><span>1. 选择总部</span><span>总部/分部决定起飞城市</span></div>
       <div class="loan-row"><span>2. 购买飞机</span><span>看航程、座位和交付时间</span></div>
-      <div class="loan-row"><span>3. 开通航线</span><span>从基地出发，设置票价</span></div>
+      <div class="loan-row"><span>3. 开通航线</span><span>从基地出发，预留开航费用并设置票价</span></div>
       <div class="loan-row"><span>4. 推进季度</span><span>看报纸、财报和市场变化</span></div>
       <div class="loan-row"><span>5. 扩张网络</span><span>用分部、租赁和贷款加速成长</span></div>
     </div>
@@ -204,7 +224,9 @@ function loadGame() {
     hideTutorial();
     removeHQBanner();
     removeBranchBanner();
+    removeTraitOverlay();
     renderGame();
+    showTraitEnvelope(G);
     showBanner('存档已载入！' + G.companyName + ' - ' + G.year + ' Q' + G.quarter, '#16a34a');
   } catch (e) {
     showBanner('读档失败：' + e.message, '#dc2626');
@@ -257,7 +279,7 @@ function startGame() {
   removeHQBanner();
   hideTutorial();
   renderGame();
-  showBanner('欢迎经营 ' + name + '！(' + G.year + '-' + G.endYear + ') 试试开通第一条航线吧', '#2563eb');
+  showTraitEnvelope(G);
   setBottomHint();
 }
 
@@ -290,12 +312,15 @@ function confirmOpenRoute(from, to) {
   if (!select || !slider) return;
   const planeUid = parseInt(select.value, 10);
   const price = parseInt(slider.value, 10);
-  const opened = openRoute(G, from, to, planeUid, price);
-  if (!opened) return;
+  const result = openRoute(G, from, to, planeUid, price);
+  if (!result.ok) {
+    showBanner(result.message, '#dc2626');
+    return;
+  }
   renderGame();
   closeModal();
   hideRouteCreateInfo();
-  showBanner('航线开通：' + getCity(from).name + ' → ' + getCity(to).name, '#16a34a');
+  showBanner(`航线开通：${getCity(from).name} → ${getCity(to).name}  开通费用 ${fmt(result.cost)}`, '#16a34a');
   updateOnboarding(G, uiState);
 }
 
@@ -444,35 +469,77 @@ function returnSelectedLease(target) {
   showBanner(`退租 ${returned.plane.name}`, '#d97706');
 }
 
-function adjustPrice(target) {
-  const route = adjustRoutePrice(G, target.dataset.from, target.dataset.to, target.value);
+function adjustPrice(from, to, price) {
+  const route = adjustRoutePrice(G, from, to, price);
   if (!route) return;
-  const span = target.nextElementSibling;
-  if (span) span.textContent = '$' + route.price;
-  const row = target.closest('.route-item');
-  if (row) {
-    const profitEl = row.querySelector('[data-route-profit]');
-    if (profitEl) {
-      profitEl.textContent = fmt(route.profit);
-      profitEl.style.color = route.profit >= 0 ? '#4ade80' : '#f0a0a0';
-    }
-    const priceEl = row.querySelector('[data-route-price]');
-    if (priceEl) priceEl.textContent = '票价$' + route.price;
-    const loadEl = row.querySelector('[data-route-load]');
-    if (loadEl) loadEl.textContent = '客座率' + fmtPct(route.loadFactor * 100);
-    const revenueEl = row.querySelector('[data-route-revenue]');
-    if (revenueEl) revenueEl.textContent = '收入' + fmt(route.revenue);
-    const costEl = row.querySelector('[data-route-cost]');
-    if (costEl) costEl.textContent = '成本' + fmt(route.cost);
-  }
-  updateHUD(G);
-  renderPanel(G, uiState);
+  renderGame();
+  showRouteList(G);
+  showBanner(`${getCity(route.from).name}→${getCity(route.to).name} 票价调整为 $${route.price}`, '#2563eb');
 }
 
 function closeRoute(target) {
   closeRouteDomain(G, target.dataset.from, target.dataset.to);
   renderGame();
-  closeModal();
+  showRouteList(G);
+}
+
+function toggleRouteSuspend(target) {
+  const route = findRoute(G, target.dataset.from, target.dataset.to);
+  if (!route) return;
+  if (route.suspended) showRouteResumeConfirm(G, route.from, route.to);
+  else showRouteSuspendConfirm(G, route.from, route.to);
+}
+
+function confirmSuspendRoute(target) {
+  const result = suspendRoute(G, target.dataset.from, target.dataset.to);
+  if (!result.ok) {
+    showBanner(result.message, '#d97706');
+    showRouteList(G);
+    return;
+  }
+  renderGame();
+  showBanner(`航线已停飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, '#d97706');
+  showRouteList(G);
+}
+
+function confirmResumeRoute(target) {
+  const result = resumeRoute(G, target.dataset.from, target.dataset.to);
+  if (!result.ok) {
+    showBanner(result.message, '#d97706');
+    showRouteList(G);
+    return;
+  }
+  renderGame();
+  showBanner(`航线已复飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, '#16a34a');
+  showRouteList(G);
+}
+
+function changeSelectedRoutePlane(target) {
+  const result = changeRoutePlane(G, target.dataset.from, target.dataset.to, target.dataset.uid);
+  if (!result.ok) {
+    showBanner(result.message, '#dc2626');
+    showRouteList(G);
+    return;
+  }
+  renderGame();
+  showBanner(`${getCity(result.route.from).name}→${getCity(result.route.to).name} 已更换执飞机型`, '#d97706');
+  showRouteList(G);
+}
+
+function confirmTrait(target) {
+  const trait = normalizePlayerTrait(target.dataset.trait);
+  const isPendingChoice = !Array.isArray(G.pendingTraitChoices) || G.pendingTraitChoices.includes(trait);
+  if (!trait || !isPendingChoice) {
+    showBanner('特质选择无效，请重新选择', '#dc2626');
+    showTraitEnvelope(G);
+    return;
+  }
+  G.playerTrait = trait;
+  G.traitChosen = true;
+  G.pendingTraitChoices = null;
+  removeTraitOverlay();
+  renderGame();
+  showBanner('欢迎经营 ' + G.companyName + '！(' + G.year + '-' + G.endYear + ') 试试开通第一条航线吧', '#2563eb');
 }
 
 function takeSelectedLoan(target) {
@@ -586,7 +653,22 @@ function handleClick(event) {
       break;
     case 'open-route-list':
     case 'open-route-detail':
+      if (G) showRouteList(G, { reset: action === 'open-route-list' });
+      break;
+    case 'return-route-list':
       if (G) showRouteList(G);
+      break;
+    case 'route-list-sort':
+      if (G) {
+        toggleRouteListSort(target.dataset.sortKey);
+        showRouteList(G);
+      }
+      break;
+    case 'route-list-page':
+      if (G) showRouteList(G, { page: target.dataset.page });
+      break;
+    case 'route-list-page-size':
+      if (G) showRouteList(G, { pageSize: target.dataset.pageSize });
       break;
     case 'dismiss-onboarding':
       dismissOnboarding();
@@ -626,6 +708,38 @@ function handleClick(event) {
     case 'confirm-open-route':
       confirmOpenRoute(target.dataset.from, target.dataset.to);
       break;
+    case 'set-route-price-preset':
+      setRoutePricePreset(Number(target.dataset.basePrice), Number(target.dataset.pct));
+      break;
+    case 'open-route-price-adjust':
+      if (G) showRoutePriceAdjust(G, target.dataset.from, target.dataset.to);
+      break;
+    case 'set-adjust-price-preset':
+      setAdjustPricePreset(Number(target.dataset.basePrice), Number(target.dataset.pct));
+      break;
+    case 'confirm-price-adjust': {
+      const slider = byId('adj-price-slider');
+      if (slider) adjustPrice(target.dataset.from, target.dataset.to, slider.value);
+      break;
+    }
+    case 'toggle-route-suspend':
+      if (G) toggleRouteSuspend(target);
+      break;
+    case 'confirm-suspend-route':
+      if (G) confirmSuspendRoute(target);
+      break;
+    case 'confirm-resume-route':
+      if (G) confirmResumeRoute(target);
+      break;
+    case 'confirm-close-route':
+      if (G) showRouteCloseConfirm(G, target.dataset.from, target.dataset.to);
+      break;
+    case 'open-route-change-plane':
+      if (G) showRouteChangePlaneModal(G, target.dataset.from, target.dataset.to);
+      break;
+    case 'change-route-plane':
+      if (G) changeSelectedRoutePlane(target);
+      break;
     case 'buy-plane':
       buySelectedPlane(target);
       break;
@@ -637,6 +751,17 @@ function handleClick(event) {
       break;
     case 'close-route':
       closeRoute(target);
+      break;
+    case 'open-trait-coins':
+      openTraitCoins(G);
+      break;
+    case 'select-trait-coin':
+      revealSelectedTrait(target.dataset.trait, target.dataset.coinIndex);
+      break;
+    case 'confirm-trait':
+      if (G) confirmTrait(target);
+      break;
+    case 'noop':
       break;
     case 'confirm-loan':
       if (G) showLoanConfirm(G, parseFloat(target.dataset.amount));
@@ -681,8 +806,8 @@ function handleInput(event) {
     case 'route-price-preview':
       updatePricePreview(G);
       break;
-    case 'adjust-price':
-      adjustPrice(target);
+    case 'adjust-price-preview':
+      updateAdjustedPriceDisplay();
       break;
     default:
       break;

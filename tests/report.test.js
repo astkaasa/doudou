@@ -28,7 +28,7 @@ describe('financial report snapshots', () => {
       boughtCount: 1,
       leasedCount: 1,
     });
-    expect(snapshot.routes).toEqual([{ fromName: '北京', toName: '上海', profit: 7, loadFactor: 0.8 }]);
+    expect(snapshot.routes).toEqual([{ fromName: '北京', toName: '上海', profit: 7, loadFactor: 0.8, suspended: false }]);
     expect(snapshot.deliveredThisTurn).toEqual([{ name: 'A320', uid: 1 }]);
   });
 });

@@ -63,13 +63,13 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
   const color = profit >= 0 ? '#4ade80' : '#f87171';
   const interest = reportInterest;
   let html = `<h2>财报 — ${reportPeriod.year} Q${reportPeriod.quarter} ${seasonEmoji(reportPeriod.quarter)}${seasonName(reportPeriod.quarter)}</h2>
-    <div class="report-section"><div class="report-row"><span>航线收入</span><span style="color:#4ade80">${fmt(rev)}</span></div><div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
+    <div class="report-section"><div class="report-row"><span>营业收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span style="color:#4ade80">+${fmt(snapshot.traitFund)}</span></div>` : ''}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
     <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(snapshot.loan)}</span></div>` : ''}<div class="report-row"><span>航线数</span><span>${snapshot.routeCount}</span></div><div class="report-row"><span>机队规模</span><span>${snapshot.fleetCount} 架 (购${snapshot.boughtCount} / 租${snapshot.leasedCount})</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5, Math.floor(snapshot.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${snapshot.oilPrice.toFixed(0)}/桶</span></div></div>`;
   if (snapshot.routes.length > 0) {
     html += '<h3>航线明细</h3><div class="report-section">';
     snapshot.routes.forEach((r) => {
       const rc = r.profit >= 0 ? '#4ade80' : '#f87171';
-      html += `<div class="report-row"><span>${r.fromName}→${r.toName}</span><span style="color:${rc}">${fmt(r.profit)} (LF ${fmtPct(r.loadFactor * 100)})</span></div>`;
+      html += `<div class="report-row"><span>${r.fromName}→${r.toName}${r.suspended ? '（停飞）' : ''}</span><span style="color:${rc}">${r.suspended ? '--' : `${fmt(r.profit)} (LF ${fmtPct(r.loadFactor * 100)})`}</span></div>`;
     });
     html += '</div>';
   }

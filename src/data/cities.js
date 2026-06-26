@@ -770,6 +770,17 @@ export const CITIES = [
     "capital": false
   },
   {
+    "id": "honolulu",
+    "name": "檀香山",
+    "lat": 21.31,
+    "lon": -157.86,
+    "pop": 1000,
+    "level": 2,
+    "region": "namerica",
+    "subRegion": "west_namerica",
+    "capital": false
+  },
+  {
     "id": "havana",
     "name": "哈瓦那",
     "lat": 25.02,

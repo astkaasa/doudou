@@ -1,8 +1,10 @@
 import { getCity, routeKey, STORAGE_KEYS } from './helpers.js';
+import { suggestedPrice } from './economy.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, normalizeModifierState } from './modifiers.js';
+import { PLAYER_TRAIT_SYMBOLS, normalizePlayerTrait } from '../data/playerTraits.js';
 
 export function saveGameState(state, storage = localStorage) {
-  const saveData = JSON.stringify({ v: 6, ts: Date.now(), g: serializeGameState(state) });
+  const saveData = JSON.stringify({ v: 7, ts: Date.now(), g: serializeGameState(state) });
   storage.setItem(STORAGE_KEYS.save, saveData);
   const info = {
     ts: Date.now(),
@@ -41,22 +43,61 @@ export function normalizeLoadedState(state) {
 function normalizeUpstreamStateFields(state) {
   if (state.loan === undefined) state.loan = 0;
   if (state.loanRate === undefined) state.loanRate = 0.02;
+  if (!Array.isArray(state.routes)) state.routes = [];
+  if (!Array.isArray(state.fleet)) state.fleet = [];
+  if (!Array.isArray(state.ai)) state.ai = [];
   state.branches = normalizeBranchIds(state);
   if (!Array.isArray(state.deliveredThisTurn)) state.deliveredThisTurn = [];
   if (state.redPacketClaimed === undefined) state.redPacketClaimed = false;
+  state.playerTrait = normalizePlayerTrait(state.playerTrait);
+  if (!state.playerTrait) state.traitChosen = false;
+  else if (state.traitChosen === undefined) state.traitChosen = true;
+  if (state.playerTrait) {
+    state.pendingTraitChoices = null;
+  } else {
+    state.pendingTraitChoices = normalizePendingTraitChoices(state.pendingTraitChoices);
+  }
+  if (state._lastTraitFund === undefined) state._lastTraitFund = 0;
   if (state.consecutiveProfit === undefined) state.consecutiveProfit = 0;
+  if (state.turnsPlayed === undefined) state.turnsPlayed = 0;
   if (state.lastReportData === undefined) state.lastReportData = state._lastReportData || null;
   delete state.lastNewspaperHtml;
   delete state._lastReportData;
-  (state.routes || []).forEach((route) => {
+  state.routes = state.routes.filter((route) => getCity(route.from) && getCity(route.to) && route.from !== route.to);
+  state.routes.forEach((route) => {
     if (!Array.isArray(route.assignedPlanes)) route.assignedPlanes = [];
+    if (route.suspended === undefined) route.suspended = false;
+    if (route.isNew === undefined) route.isNew = false;
+    if (!isPositiveNumber(route.frequency)) route.frequency = 1;
+    if (!isPositiveNumber(route.suggestedPrice)) route.suggestedPrice = suggestedPrice(route.from, route.to);
+    if (!isPositiveNumber(route.price)) route.price = route.suggestedPrice;
+    if (!isFiniteNumber(route.loadFactor)) route.loadFactor = 0;
+    if (!isFiniteNumber(route.revenue)) route.revenue = 0;
+    if (!isFiniteNumber(route.cost)) route.cost = 0;
+    if (!isFiniteNumber(route.profit)) route.profit = 0;
   });
-  (state.fleet || []).forEach((plane) => {
+  state.fleet.forEach((plane) => {
     if (plane.leaseTurns === undefined) plane.leaseTurns = 0;
     if (plane.maxLeaseTurns === undefined) plane.maxLeaseTurns = 40;
     if (plane.delivering === undefined) plane.delivering = false;
     if (plane.deliverIn === undefined) plane.deliverIn = 0;
   });
+}
+
+function isFiniteNumber(value) {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isPositiveNumber(value) {
+  return isFiniteNumber(value) && value > 0;
+}
+
+function normalizePendingTraitChoices(value) {
+  if (!Array.isArray(value)) return null;
+  const normalized = value.map(normalizePlayerTrait).filter(Boolean);
+  const unique = [...new Set(normalized)];
+  if (unique.length !== PLAYER_TRAIT_SYMBOLS.length) return null;
+  return unique.every((trait) => PLAYER_TRAIT_SYMBOLS.includes(trait)) ? unique : null;
 }
 
 function normalizeBranchIds(state) {

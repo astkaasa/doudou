@@ -60,4 +60,32 @@ describe('economy model', () => {
     expect(routeRevenue(state, route).total).toBe(0);
     expect(routeCost(state, route).total).toBe(0);
   });
+
+  it('applies player trait cost reductions to fuel and maintenance', () => {
+    const baseState = initState('beijing', 'era3');
+    const fuelState = initState('beijing', 'era3');
+    const maintState = initState('beijing', 'era3');
+    const plane = { ...PLANES[0], uid: 1, age: 3, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 };
+    [baseState, fuelState, maintState].forEach((state) => {
+      state.fleet.push({ ...plane });
+    });
+    fuelState.playerTrait = '豆';
+    maintState.playerTrait = '机';
+    const route = {
+      from: 'beijing',
+      to: 'shanghai',
+      price: suggestedPrice('beijing', 'shanghai'),
+      suggestedPrice: suggestedPrice('beijing', 'shanghai'),
+      frequency: 1,
+      assignedPlanes: [1],
+      loadFactor: 0.7,
+    };
+
+    const baseCost = routeCost(baseState, route);
+    const fuelCost = routeCost(fuelState, route);
+    const maintCost = routeCost(maintState, route);
+
+    expect(fuelCost.fuel).toBeCloseTo(baseCost.fuel * 0.9);
+    expect(maintCost.maint).toBeCloseTo(baseCost.maint * 0.9);
+  });
 });

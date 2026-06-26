@@ -9,6 +9,11 @@
 <body>
 <div id="app">
   <div id="hud">
+    <div id="hud-company">
+      <span class="hud-company-icon">✈</span>
+      <span id="hud-company-name">豆豆航空</span>
+      <span id="hud-trait-badge" style="display:none"></span>
+    </div>
     <div class="hud-item"><span class="hud-label">资金</span><span class="hud-val" id="hud-cash">$0M</span></div>
     <div class="hud-item"><span class="hud-label">利润/回合</span><span class="hud-val" id="hud-profit">$0M</span></div>
     <div class="hud-item"><span class="hud-label">航线</span><span class="hud-val" id="hud-routes">0</span></div>
@@ -32,7 +37,7 @@
           <button class="btn btn-primary btn-sm" data-action="open-route-modal">开通航线</button>
           <button class="btn btn-primary btn-sm" data-action="open-buy-plane-modal">购买飞机</button>
           <button class="btn btn-warning btn-sm" data-action="open-fleet-panel">机队管理</button>
-          <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="open-route-list">航线详情</button>
+          <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="open-route-list">航线管理</button>
           <button class="btn btn-sm" style="background:#b45309;color:#fff" data-action="open-loan-modal">银行贷款</button>
           <button class="btn btn-sm" style="background:#7c3aed;color:#fff" data-action="open-branch-modal">开设分部</button>
         </div>
@@ -88,7 +93,10 @@
     <p style="font-size:12px;color:#556;margin-top:12px">为你的航空公司命名：</p>
     <input type="text" id="company-name" value="豆豆航空" placeholder="输入公司名称" maxlength="20">
     <br>
-    <button class="btn btn-success" data-action="tutorial-next-step" id="era-next-btn" style="padding:10px 40px;font-size:15px">选择总部城市 →</button>
+    <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;align-items:center">
+      <button class="btn btn-success" data-action="tutorial-next-step" id="era-next-btn" style="padding:10px 40px;font-size:15px">开始游戏</button>
+      <button class="btn" style="background:#7c3aed;color:#fff;padding:8px 20px;font-size:13px;font-weight:600;border-radius:6px" data-action="load-game">📂 读取存档</button>
+    </div>
   </div>
 </div>
 <script type="module" src="/src/main.js"></script>

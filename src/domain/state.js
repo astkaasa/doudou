@@ -35,6 +35,9 @@ function createBaseState(era, overrides = {}) {
     oilPrice: era.startOil,
     prevOilPrice: era.startOil,
     brand: 1,
+    playerTrait: null,
+    traitChosen: false,
+    pendingTraitChoices: null,
     routes: [],
     fleet: [],
     loan: 0,
@@ -63,6 +66,7 @@ function createBaseState(era, overrides = {}) {
     deliveredThisTurn: [],
     lastReportData: null,
     redPacketClaimed: false,
+    _lastTraitFund: 0,
     ...overrides,
   };
 }

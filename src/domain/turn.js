@@ -11,13 +11,15 @@ export function advanceTurnState(state) {
 
   advanceFleetAge(state);
   updateRouteMetrics(state);
-  const { totalRev, totalCost, profit, interest } = calculateTurnFinancials(state);
+  const traitFund = rollTraitFund(state);
+  const { totalRev, totalCost, profit, interest } = calculateTurnFinancials(state, traitFund);
 
   state.cash += profit;
   state.turnRevenue = totalRev;
   state.turnCost = totalCost;
   state.turnProfit = profit;
   state.totalProfit += profit;
+  state._lastTraitFund = traitFund;
   state.turnsPlayed++;
   if (profit > 0) {
     state.brand = clamp(state.brand + 0.05, 1, 10);
@@ -40,15 +42,22 @@ export function advanceTurnState(state) {
     rev: totalRev,
     cost: totalCost,
     interest,
+    traitFund,
     routes: state.routes.length,
     fleet: state.fleet.length,
   });
+  state.routes.forEach((route) => {
+    route.isNew = false;
+    route._priceAdjusted = false;
+    route._planeChanged = false;
+    route._reopened = false;
+  });
 
   if (state.cash < -5) state.gameOver = true;
-  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit, interest, gameOver: state.gameOver };
+  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit, interest, traitFund, gameOver: state.gameOver };
 }
 
-export function calculateTurnFinancials(state) {
+export function calculateTurnFinancials(state, extraRevenue = 0) {
   const routeTotals = state.routes.reduce((totals, route) => {
     totals.totalRev += route.revenue;
     totals.totalCost += route.cost;
@@ -60,12 +69,19 @@ export function calculateTurnFinancials(state) {
     .reduce((sum, plane) => sum + plane.leasePrice, 0);
   const interest = loanInterest(state);
   const totalCost = routeTotals.totalCost + overhead + leaseCost + interest;
+  const totalRev = routeTotals.totalRev + extraRevenue;
   return {
-    totalRev: routeTotals.totalRev,
+    totalRev,
     totalCost,
-    profit: routeTotals.totalRev - totalCost,
+    profit: totalRev - totalCost,
     interest,
+    traitFund: extraRevenue,
   };
+}
+
+function rollTraitFund(state) {
+  if (state.playerTrait !== '辣') return 0;
+  return Math.floor(Math.random() * 100) + 1;
 }
 
 function advanceCalendar(state) {

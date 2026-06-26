@@ -46,4 +46,18 @@ describe('turn progression', () => {
     expect(result.totalCost).toBeCloseTo(3.5);
     expect(result.profit).toBeCloseTo(1.5);
   });
+
+  it('adds spicy bean trait fund to quarterly revenue', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    const state = initState('beijing', 'era3');
+    state.ai = [];
+    state.playerTrait = '辣';
+
+    const report = advanceTurnState(state);
+
+    expect(report.traitFund).toBe(1);
+    expect(state._lastTraitFund).toBe(1);
+    expect(state.turnRevenue).toBe(1);
+    expect(state.history[0].traitFund).toBe(1);
+  });
 });

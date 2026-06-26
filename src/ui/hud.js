@@ -1,6 +1,27 @@
+import { PLAYER_TRAITS } from '../data/playerTraits.js';
 import { byId, fmt, fmtPct, getCity } from '../domain/helpers.js';
 
 export function updateHUD(state) {
+  const companyEl = byId('hud-company-name');
+  if (companyEl) {
+    companyEl.textContent = state.companyName || '豆豆航空';
+    companyEl.title = state.companyName || '豆豆航空';
+  }
+  const traitBadge = byId('hud-trait-badge');
+  if (traitBadge) {
+    const trait = PLAYER_TRAITS[state.playerTrait];
+    if (trait) {
+      traitBadge.style.display = 'inline-flex';
+      traitBadge.className = 'hud-trait';
+      traitBadge.innerHTML = `${trait.symbol}<span class="trait-tooltip">${trait.name}</span>`;
+      traitBadge.title = `${trait.name}：${trait.desc}`;
+    } else {
+      traitBadge.style.display = 'none';
+      traitBadge.className = '';
+      traitBadge.textContent = '';
+      traitBadge.removeAttribute('title');
+    }
+  }
   const cashEl = byId('hud-cash');
   cashEl.textContent = fmt(state.cash);
   cashEl.className = 'hud-val ' + (state.cash >= 0 ? 'positive' : 'negative');

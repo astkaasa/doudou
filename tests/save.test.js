@@ -58,11 +58,13 @@ describe('save migration', () => {
       v: 5,
       g: {
         hq: 'beijing',
-        routes: [],
         branches: ['shanghai', 'missing-city', 'shanghai', 'beijing'],
         lastNewspaperHtml: '<p>legacy</p>',
         _lastReportData: { rev: 1 },
         fleet: [{ uid: 1, name: 'A320', isLease: true }],
+        playerTrait: '豆',
+        pendingTraitChoices: ['辣', 'bad', '机'],
+        routes: [{ from: 'beijing', to: 'shanghai' }],
       },
     });
 
@@ -76,12 +78,42 @@ describe('save migration', () => {
     expect(result.state._lastReportData).toBeUndefined();
     expect(result.state.lastReportData).toEqual({ rev: 1 });
     expect(result.state.redPacketClaimed).toBe(false);
+    expect(result.state.playerTrait).toBe('豆');
+    expect(result.state.traitChosen).toBe(true);
+    expect(result.state.pendingTraitChoices).toBeNull();
+    expect(result.state.routes[0]).toMatchObject({ assignedPlanes: [], suspended: false, isNew: false });
+    expect(result.state.routes[0].suggestedPrice).toBeGreaterThan(0);
+    expect(result.state.routes[0].price).toBe(result.state.routes[0].suggestedPrice);
     expect(result.state.fleet[0]).toMatchObject({
       leaseTurns: 0,
       maxLeaseTurns: 40,
       delivering: false,
       deliverIn: 0,
     });
+  });
+
+  it('keeps only complete valid pending trait choices in older saves', () => {
+    const validRaw = JSON.stringify({
+      v: 6,
+      g: {
+        hq: 'beijing',
+        routes: [],
+        fleet: [],
+        pendingTraitChoices: ['辣', '机', '豆'],
+      },
+    });
+    const invalidRaw = JSON.stringify({
+      v: 6,
+      g: {
+        hq: 'beijing',
+        routes: [],
+        fleet: [],
+        pendingTraitChoices: ['辣', 'bad'],
+      },
+    });
+
+    expect(loadGameState(memoryStorage(validRaw)).state.pendingTraitChoices).toEqual(['辣', '机', '豆']);
+    expect(loadGameState(memoryStorage(invalidRaw)).state.pendingTraitChoices).toBeNull();
   });
 
   it('persists official report data while dropping legacy transient report cache', () => {

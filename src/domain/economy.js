@@ -15,7 +15,7 @@ export function seasonModifier(q) {
   return [0.85, 0.9, 1.0, 0.95][q - 1] ?? 1;
 }
 
-export function calcLoadFactor(state, route, price, brand, competitors) {
+export function calcLoadFactor(state, route, price, brand, competitors, assignedPlanes = getRouteAssignedPlanes(state, route)) {
   const cityA = getCity(route.from);
   const cityB = getCity(route.to);
   const baseDemandVal = baseDemand(cityA, cityB) * seasonModifier(state.quarter) * routeDemandMultiplier(state, route);
@@ -24,7 +24,7 @@ export function calcLoadFactor(state, route, price, brand, competitors) {
   const priceEffect = Math.pow(priceRatio, -0.8);
   const brandEffect = 1 + (brand - 1) * 0.05;
   const compEffect = 1 / (1 + competitors * 0.3);
-  const totalSeats = routeSeatCapacity(state, route);
+  const totalSeats = routeSeatCapacity(state, route, assignedPlanes);
   if (totalSeats === 0) return 0;
   const lf = (baseDemandVal * priceEffect * brandEffect * compEffect) / totalSeats;
   return clamp(lf, 0, 1);
@@ -35,27 +35,28 @@ export function suggestedPrice(from, to) {
   return Math.round(d * 0.06 + 50);
 }
 
-export function routeRevenue(state, route) {
+export function routeRevenue(state, route, assignedPlanes = getRouteAssignedPlanes(state, route)) {
   const lf = route.loadFactor;
-  const totalSeats = routeSeatCapacity(state, route);
+  const totalSeats = routeSeatCapacity(state, route, assignedPlanes);
   const pax = Math.round(totalSeats * lf);
   const rev = pax * route.price / 1000;
   const cargoRev = pax * 0.02 * route.price * 0.3 / 1000;
   return { pax, rev, cargoRev, total: rev + cargoRev };
 }
 
-export function routeCost(state, route) {
+export function routeCost(state, route, assignedPlanes = getRouteAssignedPlanes(state, route)) {
   const cityA = getCity(route.from);
   const cityB = getCity(route.to);
   const d = cityDist(cityA, cityB);
   const frequency = effectiveFrequency(state, route);
-  const assignedPlanes = routeAssignedPlanes(state, route);
   let fuelCost = 0;
   let maintCost = 0;
   let crewCost = 0;
   for (const plane of assignedPlanes) {
-    fuelCost += plane.fuel * (state.oilPrice / 80) * (d / 5000) * frequency;
-    maintCost += plane.maint * (1 + 0.05 * plane.age) * frequency;
+    const fuelRate = state.playerTrait === '豆' ? plane.fuel * 0.9 : plane.fuel;
+    const maintRate = state.playerTrait === '机' ? plane.maint * 0.9 : plane.maint;
+    fuelCost += fuelRate * (state.oilPrice / 80) * (d / 5000) * frequency;
+    maintCost += maintRate * (1 + 0.05 * plane.age) * frequency;
     crewCost += 0.02 * (plane.seats / 180) * frequency;
   }
   const landingFee = (cityA.level + cityB.level) * 0.05 * frequency;
@@ -72,11 +73,10 @@ export function routeCost(state, route) {
   };
 }
 
-export function routeSeatCapacity(state, route) {
-  return routeAssignedPlanes(state, route).reduce((sum, plane) => sum + plane.seats, 0) * effectiveFrequency(state, route);
+export function routeSeatCapacity(state, route, assignedPlanes = getRouteAssignedPlanes(state, route)) {
+  return assignedPlanes.reduce((sum, plane) => sum + plane.seats, 0) * effectiveFrequency(state, route);
 }
 
-function routeAssignedPlanes(state, route) {
-  const fleetByUid = new Map(state.fleet.map((plane) => [plane.uid, plane]));
+export function getRouteAssignedPlanes(state, route, fleetByUid = new Map(state.fleet.map((plane) => [plane.uid, plane]))) {
   return (route.assignedPlanes || []).map((uid) => fleetByUid.get(uid)).filter(Boolean);
 }
