@@ -7,14 +7,39 @@ import { MODIFIER_TYPES } from '../domain/modifiers.js';
 const REGION_NAMES = {
   africa: '非洲',
   asia: '亚洲',
+  caribbean: '加勒比',
+  central_africa: '中非',
+  central_namerica: '北美中部',
+  east_asia: '东亚',
+  east_namerica: '北美东部',
   europe: '欧洲',
   mideast: '中东',
   namerica: '北美',
+  north_africa: '北非',
   oceania: '大洋洲',
   samerica: '南美',
+  south_africa: '南非',
+  south_asia: '南亚',
+  southeast_asia: '东南亚',
+  west_namerica: '北美西部',
 };
 
-const REGION_ORDER = ['asia', 'mideast', 'europe', 'africa', 'namerica', 'samerica', 'oceania'];
+const REGION_ORDER = [
+  'east_asia',
+  'southeast_asia',
+  'south_asia',
+  'mideast',
+  'europe',
+  'north_africa',
+  'central_africa',
+  'south_africa',
+  'east_namerica',
+  'central_namerica',
+  'west_namerica',
+  'caribbean',
+  'samerica',
+  'oceania',
+];
 
 export function renderPanel(state, uiState) {
   const rs = byId('route-summary');
@@ -155,7 +180,7 @@ function renderCollapsibleCityGroup(title, cities, renderButton, options = {}) {
 function groupCitiesByRegion(cities) {
   const byRegion = new Map();
   cities.forEach((city) => {
-    const region = city.region || 'other';
+    const region = city.subRegion || city.region || 'other';
     if (!byRegion.has(region)) byRegion.set(region, []);
     byRegion.get(region).push(city);
   });
@@ -189,7 +214,7 @@ function routeCityScore(state, selectedCity, city) {
 }
 
 function renderRouteCityButton(state, city, selectedCity, maxRange, existingRoutes) {
-  let meta = REGION_NAMES[city.region] || city.region;
+  let meta = REGION_NAMES[city.subRegion] || REGION_NAMES[city.region] || city.region;
   let disabled = false;
   if (!selectedCity) {
     meta = city.id === state.hq ? '总部' : '分部';
@@ -222,6 +247,6 @@ function renderCityButton(city, selectedCityId) {
   const selectedClass = city.id === selectedCityId ? ' selected' : '';
   return `<button class="city-picker-btn${selectedClass}" type="button" data-action="city-click" data-city-id="${city.id}">
     <span>${city.name}</span>
-    <small>${REGION_NAMES[city.region] || city.region}</small>
+    <small>${REGION_NAMES[city.subRegion] || REGION_NAMES[city.region] || city.region}</small>
   </button>`;
 }

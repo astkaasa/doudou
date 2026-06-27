@@ -1,6 +1,6 @@
 export { showBranchModal, showCloseBranchConfirm } from './branchModals.js';
 export { showBuyPlaneModal, showFleetPanel } from './fleetModals.js';
-export { showLoanConfirm, showLoanModal, showRedPacketConfirm } from './financeModals.js';
+export { showLoanConfirm, showLoanModal } from './financeModals.js';
 export {
   closeDeliveryPopup,
   showDeliveryPopup,

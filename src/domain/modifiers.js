@@ -72,6 +72,8 @@ export function routeMatchesScope(route, scope = { kind: 'all' }) {
       return true;
     case 'region':
       return routeCities(route).some((city) => (scope.regions || []).includes(city.region));
+    case 'subRegion':
+      return routeCities(route).some((city) => (scope.subRegions || []).includes(city.subRegion));
     case 'cityIds':
       return (scope.cityIds || []).includes(route.from) || (scope.cityIds || []).includes(route.to);
     case 'connectsCitySets':

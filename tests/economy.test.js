@@ -12,7 +12,7 @@ describe('economy model', () => {
     const shanghai = getCity('shanghai');
 
     expect(Math.round(cityDist(beijing, shanghai))).toBeGreaterThan(1000);
-    expect(suggestedPrice('beijing', 'shanghai')).toBeGreaterThan(100);
+    expect(suggestedPrice('beijing', 'shanghai')).toBeGreaterThan(50);
   });
 
   it('derives positive demand for major city pairs', () => {

@@ -6,7 +6,7 @@ import { closeBranch as closeBranchDomain, isBase, openBranch } from './domain/b
 import { DEFAULT_COMPANY_NAME } from './domain/constants.js';
 import { buyPlane, returnLease, sellPlane } from './domain/fleet.js';
 import { byId, cityDist, fmt, getCity, routeKey } from './domain/helpers.js';
-import { claimRedPacket, repayLoan, takeLoan } from './domain/loans.js';
+import { repayLoan, takeLoan } from './domain/loans.js';
 import { loadGameState, saveGameState } from './domain/save.js';
 import { createSetupState, initState, seedInitialFleet } from './domain/state.js';
 import {
@@ -38,7 +38,6 @@ import {
   showLoanConfirm,
   showLoanModal,
   showNewspaper,
-  showRedPacketConfirm,
   showReportAlone,
   setAdjustPricePreset,
   setRoutePricePreset,
@@ -566,17 +565,6 @@ function repaySelectedLoan(target) {
   showBanner(`还款 ${fmt(result.amount)}`, '#16a34a');
 }
 
-function claimSelectedRedPacket() {
-  const result = claimRedPacket(G);
-  if (!result.ok) {
-    showBanner(result.message, '#dc2626');
-    return;
-  }
-  updateHUD(G);
-  showLoanModal(G);
-  showBanner(`辣豆红包 ${fmt(result.amount)} 已到账`, '#dc2626');
-}
-
 function advanceTurn() {
   if (!G || G.gameOver) return;
   const report = advanceTurnState(G);
@@ -771,12 +759,6 @@ function handleClick(event) {
       break;
     case 'repay-loan':
       repaySelectedLoan(target);
-      break;
-    case 'confirm-red-packet':
-      showRedPacketConfirm();
-      break;
-    case 'claim-red-packet':
-      claimSelectedRedPacket();
       break;
     case 'show-newspaper':
       if (G) showNewspaper(G);

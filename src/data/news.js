@@ -1,36 +1,33 @@
 const CHINA_CITY_IDS = ['beijing', 'shanghai', 'hongkong', 'chengdu', 'wuhan', 'urumqi', 'lhasa', 'harbin', 'xian', 'taipei'];
-const US_CITY_IDS = ['newyork', 'losangeles', 'chicago', 'miami', 'washington', 'dallas', 'denver', 'atlanta', 'houston', 'seattle'];
-const SEA_CITY_IDS = ['singapore', 'bangkok', 'manila', 'jakarta', 'brunei'];
+const US_CITY_IDS = ['newyork', 'losangeles', 'chicago', 'miami', 'washington', 'dallas', 'denver', 'atlanta', 'houston', 'seattle', 'sanfrancisco'];
+const SEA_CITY_IDS = ['singapore', 'bangkok', 'manila', 'jakarta', 'brunei', 'hanoi'];
 const ISLAND_CITY_IDS = ['male', 'guam', 'saipan', 'okinawa', 'singapore', 'wellington'];
-const JAPAN_CITY_IDS = ['tokyo', 'sapporo', 'fukuoka', 'okinawa'];
-const SOUTH_ASIA_CITY_IDS = ['delhi', 'mumbai', 'kolkata'];
-
 const scopeAll = () => ({ kind: 'all' });
 const scopeRegion = (...regions) => ({ kind: 'region', regions });
+const scopeSubRegion = (...subRegions) => ({ kind: 'subRegion', subRegions });
 const scopeCityIds = (cityIds) => ({ kind: 'cityIds', cityIds });
 const scopeConnects = (setA, setB) => ({ kind: 'connectsCitySets', setA, setB });
 const scopeCrossRegion = () => ({ kind: 'crossRegion' });
 const scopeRouteKeys = (routeKeys) => ({ kind: 'routeKeys', routeKeys });
 
-function routeCities(route, getCity) {
-  return [getCity(route.from), getCity(route.to)].filter(Boolean);
-}
-
-function routeTouchesAnyRegion(route, regions, getCity) {
-  return routeCities(route, getCity).some((city) => regions.includes(city.region));
-}
-
-function routeTouchesRegion(route, region, getCity) {
-  return routeTouchesAnyRegion(route, [region], getCity);
-}
-
 function randomRouteScope(state, predicate, selectRouteKeys) {
   return scopeRouteKeys(selectRouteKeys(state.routes, predicate));
 }
 
+function regionalDisaster({ title, desc, subRegion, label }) {
+  return {
+    title,
+    desc,
+    effect: `${label}航线遭受巨大影响`,
+    effectFn: ({ state: G, addSuspensionModifier }) => {
+      addSuspensionModifier(G, title, scopeSubRegion(subRegion), 1);
+    },
+  };
+}
+
 export const NEWS_POOL = {
   politics: [
-    {title:'中东局势紧张，多国发布旅行警告',desc:'区域冲突升级，多国政府建议公民避免前往中东部分地区。航空公司纷纷调整航线。',effect:'中东航线需求下降15%',effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'中东局势紧张',scopeRegion('mideast'),0.85);}},
+    {title:'中东局势紧张，多国发布旅行警告',desc:'区域冲突升级，多国政府建议公民避免前往中东部分地区。航空公司纷纷调整航线。',effect:'中东航线需求下降15%',effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'中东局势紧张',scopeSubRegion('mideast'),0.85);}},
     {title:'欧盟通过新的航空碳排放法规',desc:'欧盟议会以微弱多数通过扩大碳排放交易体系，航空公司额外成本上升。',effect:'欧洲航线运营成本增加3%',effectFn:({state:G,addCostModifier})=>{addCostModifier(G,'欧盟航空碳排放法规',scopeRegion('europe'),1.03);}},
     {title:'中美签署新航空协议，增加航班配额',desc:'两国达成新的双边航空服务协定，每周航班限额大幅提升，市场迎来利好。',effect:'中美航线需求上升20%',effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'中美新航空协议',scopeConnects(CHINA_CITY_IDS,US_CITY_IDS),1.2);}},
     {title:'某国爆发大规模抗议活动',desc:'东南亚某国政局动荡，街头抗议持续数周，外国游客锐减。',effect:'东南亚航线客座率下降10%',effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'东南亚抗议活动',scopeCityIds(SEA_CITY_IDS),0.9);}},
@@ -43,11 +40,48 @@ export const NEWS_POOL = {
     {title:'国际电子竞技总决赛吸引全球观众',desc:'赛事在亚洲举行，数万粉丝跨国观赛，周边酒店一房难求。',effect:'亚洲航线短期需求上升',effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'电竞总决赛',scopeRegion('asia'),1.1);}},
   ],
   disaster: [
-    {title:'太平洋超强台风季，多机场临时关闭',desc:'连续3个超强台风席卷西太平洋，多个机场被迫关闭超过48小时。',effect:'亚太航线中断2回合',effectFn:({state:G,getCity,addSuspensionModifier,selectRouteKeys})=>{addSuspensionModifier(G,'太平洋超强台风季',randomRouteScope(G,(r)=>routeTouchesAnyRegion(r,['asia','oceania'],getCity)&&Math.random()<0.25,selectRouteKeys),2);}},
-    {title:'冰岛火山喷发，欧洲空域大范围关闭',desc:'火山灰云扩散至北欧上空，类似2010年情景，数百航班取消。',effect:'欧洲航线受阻，成本上升',effectFn:({state:G,addCostModifier,addSuspensionModifier})=>{addSuspensionModifier(G,'冰岛火山喷发',scopeRegion('europe'),1);addCostModifier(G,'冰岛火山喷发',scopeRegion('europe'),1.1);}},
-    {title:'日本发生强烈地震，新干线及航班停运',desc:'7.2级地震袭击日本中部，机场跑道受损，预计修复需数日。',effect:'日本航线暂时停飞',effectFn:({state:G,addSuspensionModifier})=>{addSuspensionModifier(G,'日本强烈地震',scopeCityIds(JAPAN_CITY_IDS),1);}},
-    {title:'北美暴风雪致数千航班取消',desc:'罕见暴风雪席卷美国东海岸，三大枢纽机场全部关闭超过24小时。',effect:'北美航线中断1回合',effectFn:({state:G,getCity,addSuspensionModifier,selectRouteKeys})=>{addSuspensionModifier(G,'北美暴风雪',randomRouteScope(G,(r)=>routeTouchesRegion(r,'namerica',getCity)&&Math.random()<0.3,selectRouteKeys),1);}},
-    {title:'南亚特大洪灾，机场跑道被淹',desc:'季风暴雨引发百年一遇洪灾，多个机场积水严重，航班全面停摆。',effect:'南亚航线暂停',effectFn:({state:G,addSuspensionModifier})=>{addSuspensionModifier(G,'南亚特大洪灾',scopeCityIds(SOUTH_ASIA_CITY_IDS),1);}},
+    regionalDisaster({title:'超强台风席卷东亚沿海',desc:'连续超强台风登陆东亚沿岸，多个国际机场被迫关闭超过48小时，大量航班延误或取消。',subRegion:'east_asia',label:'东亚'}),
+    regionalDisaster({title:'东亚暴雪致大面积航班取消',desc:'罕见暴风雪袭击东亚多国，跑道积雪严重，数百航班被迫取消。',subRegion:'east_asia',label:'东亚'}),
+    regionalDisaster({title:'沙尘暴笼罩东亚空域',desc:'大规模沙尘暴从内陆席卷而来，能见度骤降，多个机场被迫关闭。',subRegion:'east_asia',label:'东亚'}),
+    regionalDisaster({title:'超强台风横扫东南亚',desc:'猛烈台风登陆东南亚沿海地区，机场设施受损严重，航班全面停运。',subRegion:'southeast_asia',label:'东南亚'}),
+    regionalDisaster({title:'东南亚洪灾致航空运输受阻',desc:'持续暴雨引发大范围洪涝，多个机场跑道被淹，航班大面积取消。',subRegion:'southeast_asia',label:'东南亚'}),
+    regionalDisaster({title:'东南亚火山喷发扰乱航运',desc:'火山猛烈喷发，火山灰云扩散至高空，影响飞机起降安全。',subRegion:'southeast_asia',label:'东南亚'}),
+    regionalDisaster({title:'南亚季风暴雨致航线受阻',desc:'持续季风暴雨袭击南亚次大陆，多个主要机场运营受阻，航班大量取消。',subRegion:'south_asia',label:'南亚'}),
+    regionalDisaster({title:'南亚极端热浪冲击航空运营',desc:'罕见高温使空气密度下降，飞机无法满载起飞，多个机场限制航班密度。',subRegion:'south_asia',label:'南亚'}),
+    regionalDisaster({title:'孟加拉湾气旋侵袭南亚',desc:'强气旋席卷南亚沿海，狂风暴雨导致机场关闭，航班全面停运。',subRegion:'south_asia',label:'南亚'}),
+    regionalDisaster({title:'中东特大沙尘暴瘫痪航空',desc:'巨型沙尘暴覆盖中东大部分地区，能见度降至近零，所有航班停飞。',subRegion:'mideast',label:'中东'}),
+    regionalDisaster({title:'中东极端高温危及飞行安全',desc:'气温飙升至50度以上，空气密度不足导致飞机无法安全起降，航班大面积取消。',subRegion:'mideast',label:'中东'}),
+    regionalDisaster({title:'中东罕见暴雨引发洪灾',desc:'多年未遇的暴雨袭击中东干旱地区，机场排水系统瘫痪，航班停运。',subRegion:'mideast',label:'中东'}),
+    regionalDisaster({title:'冰岛火山喷发，欧洲空域关闭',desc:'火山灰云扩散至北欧上空，危及飞行安全，数百航班被迫取消。',subRegion:'europe',label:'欧洲'}),
+    regionalDisaster({title:'欧洲暴风雪致航空瘫痪',desc:'强寒潮席卷欧洲大陆，三大枢纽机场全部关闭，数千旅客滞留。',subRegion:'europe',label:'欧洲'}),
+    regionalDisaster({title:'大西洋风暴横扫西欧',desc:'强烈低气压风暴袭击西欧，狂风导致机场跑道无法使用，航班全面停飞。',subRegion:'europe',label:'欧洲'}),
+    regionalDisaster({title:'撒哈拉沙尘暴侵袭北非空域',desc:'大规模沙尘暴从撒哈拉沙漠席卷北非，多个机场因能见度过低而关闭。',subRegion:'north_africa',label:'北非'}),
+    regionalDisaster({title:'北非极端热浪冲击航空',desc:'北非多地气温突破50度，高温导致飞机性能受限，航班大面积减少。',subRegion:'north_africa',label:'北非'}),
+    regionalDisaster({title:'北非暴雨引发洪涝灾害',desc:'突发暴雨袭击北非干旱地区，机场被淹，航空运输暂时中断。',subRegion:'north_africa',label:'北非'}),
+    regionalDisaster({title:'中部非洲暴雨洪灾致航空受阻',desc:'持续强降雨导致中非多国洪涝，机场跑道被淹，航班被迫取消。',subRegion:'central_africa',label:'中非'}),
+    regionalDisaster({title:'中非热带风暴肆虐',desc:'强烈热带风暴席卷中部非洲，多个机场设施受损，运营受阻。',subRegion:'central_africa',label:'中非'}),
+    regionalDisaster({title:'中非火山喷发冲击航空运输',desc:'尼拉贡戈火山剧烈喷发，火山灰威胁飞行安全，周边机场紧急关闭。',subRegion:'central_africa',label:'中非'}),
+    regionalDisaster({title:'南非罕见暴风雪致交通瘫痪',desc:'南非遭遇异常寒潮暴雪，机场跑道积雪无法起降，航班全部停运。',subRegion:'south_africa',label:'南非'}),
+    regionalDisaster({title:'南非极端干旱引发山火',desc:'持续干旱引发大规模山火，浓烟弥漫机场周边空域，航班受到影响。',subRegion:'south_africa',label:'南非'}),
+    regionalDisaster({title:'莫桑比克海峡气旋袭击南非',desc:'强热带气旋从东海岸登陆，狂风暴雨摧毁机场设施，航空运输中断。',subRegion:'south_africa',label:'南非'}),
+    regionalDisaster({title:'北美东海岸遭遇超级暴风雪',desc:'超强暴风雪席卷北美东部，三大枢纽机场全部关闭超过24小时。',subRegion:'east_namerica',label:'北美东部'}),
+    regionalDisaster({title:'飓风袭击北美东海岸',desc:'大型飓风登陆东部沿海，多个机场遭洪水侵袭，航班全面停运。',subRegion:'east_namerica',label:'北美东部'}),
+    regionalDisaster({title:'东北风暴致北美东部航空瘫痪',desc:'强力东北风暴横扫东海岸，暴风雪和冰雨导致机场关闭。',subRegion:'east_namerica',label:'北美东部'}),
+    regionalDisaster({title:'北美中部龙卷风摧毁机场设施',desc:'大规模龙卷风横扫北美中部，多个机场航站楼受损，运营受阻。',subRegion:'central_namerica',label:'北美中部'}),
+    regionalDisaster({title:'北美中部暴风雪致大范围停飞',desc:'强暴风雪席卷大平原地区，多个枢纽机场被迫关闭，航班大面积取消。',subRegion:'central_namerica',label:'北美中部'}),
+    regionalDisaster({title:'冰暴袭击北美中部机场',desc:'冻雨形成严重冰灾，飞机机体积冰严重，机场跑道结冰，航班停运。',subRegion:'central_namerica',label:'北美中部'}),
+    regionalDisaster({title:'北美西海岸地震致机场关闭',desc:'强震袭击北美西海岸，旧金山和洛杉矶机场紧急关闭检查受损情况。',subRegion:'west_namerica',label:'北美西部'}),
+    regionalDisaster({title:'加州山火蔓延至机场周边',desc:'大规模山火产生的浓烟严重影响机场能见度，多个航班被迫取消。',subRegion:'west_namerica',label:'北美西部'}),
+    regionalDisaster({title:'太平洋风暴袭击西海岸',desc:'强烈太平洋风暴登陆，暴雨和狂风迫使多个西海岸机场关闭。',subRegion:'west_namerica',label:'北美西部'}),
+    regionalDisaster({title:'加勒比飓风致多机场关闭',desc:'超强飓风横扫加勒比海地区，多个海岛机场遭严重破坏，航班全面停运。',subRegion:'caribbean',label:'加勒比'}),
+    regionalDisaster({title:'加勒比火山喷发扰乱航空',desc:'加勒比海岛火山剧烈喷发，火山灰云升至高空，周边航班全部取消。',subRegion:'caribbean',label:'加勒比'}),
+    regionalDisaster({title:'加勒比暴雨引发山体滑坡',desc:'持续暴雨引发山体滑坡，多个机场道路中断，运营受到影响。',subRegion:'caribbean',label:'加勒比'}),
+    regionalDisaster({title:'南美洲强震破坏基础设施',desc:'7.8级强震袭击南美西海岸，机场和道路受损严重，航班大面积取消。',subRegion:'samerica',label:'南美'}),
+    regionalDisaster({title:'南美亚马逊流域洪灾',desc:'持续暴雨导致亚马逊流域严重洪涝，多个城市机场被淹，航班停运。',subRegion:'samerica',label:'南美'}),
+    regionalDisaster({title:'南美火山喷发致空域关闭',desc:'南美安第斯山脉火山猛烈喷发，火山灰云威胁飞行安全，航班停飞。',subRegion:'samerica',label:'南美'}),
+    regionalDisaster({title:'南太平洋气旋袭击大洋洲',desc:'强烈热带气旋席卷大洋洲，多处机场设施遭破坏，航班全面停运。',subRegion:'oceania',label:'大洋洲'}),
+    regionalDisaster({title:'大洋洲暴风雨致航空中断',desc:'罕见暴风雨席卷大洋洲多国，机场跑道积水严重，航班大面积取消。',subRegion:'oceania',label:'大洋洲'}),
+    regionalDisaster({title:'新西兰火山喷发威胁航运',desc:'新西兰北岛火山突然喷发，火山灰危及飞行安全，周边空域紧急关闭。',subRegion:'oceania',label:'大洋洲'}),
   ],
   economy: [
     {title:'全球股市暴跌，经济衰退预警',desc:'主要经济体PMI数据集体下滑，投资者恐慌抛售，消费信心指数创新低。',effect:'商务出行需求下降15%',effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'全球经济衰退预警',scopeAll(),0.85);}},

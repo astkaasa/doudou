@@ -10,6 +10,7 @@ describe('active modifiers', () => {
     expect(routeMatchesScope(route, { kind: 'cityIds', cityIds: ['tokyo'] })).toBe(true);
     expect(routeMatchesScope(route, { kind: 'connectsCitySets', setA: ['tokyo'], setB: ['beijing'] })).toBe(true);
     expect(routeMatchesScope(route, { kind: 'region', regions: ['asia'] })).toBe(true);
+    expect(routeMatchesScope(route, { kind: 'subRegion', subRegions: ['east_asia'] })).toBe(true);
     expect(routeMatchesScope(route, { kind: 'routeKeys', routeKeys: ['beijing-tokyo'] })).toBe(true);
   });
 

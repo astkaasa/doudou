@@ -3,10 +3,11 @@ import { loanInterest } from '../domain/loans.js';
 import { createFinancialReportSnapshot } from '../domain/report.js';
 import { showModal } from './modal.js';
 
-function buildNewspaperHtml(state, includeFooter = true) {
-  const q = state.quarter;
+function buildNewspaperHtml(state, includeFooter = true, period = null) {
+  const reportPeriod = period || { year: state.year, quarter: state.quarter };
+  const q = reportPeriod.quarter;
   const seasonTxt = seasonName(q) + seasonEmoji(q);
-  const dateStr = state.year + '年 第' + q + '季度 · ' + seasonTxt;
+  const dateStr = reportPeriod.year + '年 第' + q + '季度 · ' + seasonTxt;
   const newsItems = state.newsItems || [];
   let html = `<div class="newspaper">
     <div class="newspaper-header">
@@ -52,7 +53,7 @@ function buildNewspaperHtml(state, includeFooter = true) {
 }
 
 export function showNewspaper(state) {
-  const html = buildNewspaperHtml(state, true);
+  const html = buildNewspaperHtml(state, true, state?.lastReportData?.period || null);
   byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop" style="align-items:flex-start;padding-top:40px">${html}</div>`;
   const reread = byId('reread-news-btn');
   if (reread) reread.style.display = '';
@@ -62,7 +63,7 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
   const reportPeriod = period || { year: state.year, quarter: state.quarter };
   const color = profit >= 0 ? '#4ade80' : '#f87171';
   const interest = reportInterest;
-  let html = `<h2>财报 — ${reportPeriod.year} Q${reportPeriod.quarter} ${seasonEmoji(reportPeriod.quarter)}${seasonName(reportPeriod.quarter)}</h2>
+  let html = `<h2>上季财报 — ${reportPeriod.year} Q${reportPeriod.quarter} ${seasonEmoji(reportPeriod.quarter)}${seasonName(reportPeriod.quarter)}</h2>
     <div class="report-section"><div class="report-row"><span>营业收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span style="color:#4ade80">+${fmt(snapshot.traitFund)}</span></div>` : ''}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
     <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(snapshot.loan)}</span></div>` : ''}<div class="report-row"><span>航线数</span><span>${snapshot.routeCount}</span></div><div class="report-row"><span>机队规模</span><span>${snapshot.fleetCount} 架 (购${snapshot.boughtCount} / 租${snapshot.leasedCount})</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5, Math.floor(snapshot.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${snapshot.oilPrice.toFixed(0)}/桶</span></div></div>`;
   if (snapshot.routes.length > 0) {
@@ -87,10 +88,9 @@ export function showFinancialReport(state, rev, cost, profit, period = null, int
 export function showTurnSummary(state, report) {
   const snapshot = createFinancialReportSnapshot(state);
   state.lastReportData = { ...report, snapshot };
-  const newsHtml = buildNewspaperHtml(state, false);
+  const newsHtml = buildNewspaperHtml(state, false, report.period);
   const reportHtml = buildFinancialReportHtml(state, report.rev, report.cost, report.profit, report.period, report.interest, snapshot);
-  const nextPeriodText = report.nextPeriod ? `${report.nextPeriod.year} Q${report.nextPeriod.quarter}` : `${state.year} Q${state.quarter}`;
-  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div style="font-size:11px;color:#7ba3cc;text-align:center;margin-top:8px">左侧报纸为新季度 ${nextPeriodText}，右侧财报为刚结算季度。</div><div class="report-footer"><button class="btn btn-primary" data-action="close-modal" style="padding:10px 40px;border-radius:8px">知道了，继续经营</button></div></div></div></div>`;
+  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" data-action="close-modal" style="padding:10px 40px;border-radius:8px">知道了，继续经营</button></div></div></div></div>`;
   const newsBtn = byId('reread-news-btn');
   const reportBtn = byId('reread-report-btn');
   if (newsBtn) newsBtn.style.display = '';

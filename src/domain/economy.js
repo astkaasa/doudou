@@ -22,7 +22,7 @@ export function calcLoadFactor(state, route, price, brand, competitors, assigned
   const refPrice = route.suggestedPrice;
   const priceRatio = price / refPrice;
   const priceEffect = Math.pow(priceRatio, -0.8);
-  const brandEffect = 1 + (brand - 1) * 0.05;
+  const brandEffect = 1 + (brand - 1) * 0.06;
   const compEffect = 1 / (1 + competitors * 0.3);
   const totalSeats = routeSeatCapacity(state, route, assignedPlanes);
   if (totalSeats === 0) return 0;
@@ -32,7 +32,7 @@ export function calcLoadFactor(state, route, price, brand, competitors, assigned
 
 export function suggestedPrice(from, to) {
   const d = cityDist(getCity(from), getCity(to));
-  return Math.round(d * 0.06 + 50);
+  return Math.round(d * 0.035 + 20);
 }
 
 export function routeRevenue(state, route, assignedPlanes = getRouteAssignedPlanes(state, route)) {
@@ -59,7 +59,7 @@ export function routeCost(state, route, assignedPlanes = getRouteAssignedPlanes(
     maintCost += maintRate * (1 + 0.05 * plane.age) * frequency;
     crewCost += 0.02 * (plane.seats / 180) * frequency;
   }
-  const landingFee = (cityA.level + cityB.level) * 0.05 * frequency;
+  const landingFee = (cityA.level + cityB.level) * 0.70 * frequency;
   const catering = assignedPlanes.length * 0.01 * frequency;
   const subtotal = fuelCost + maintCost + crewCost + landingFee + catering;
   const costMultiplier = routeCostMultiplier(state, route);

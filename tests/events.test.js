@@ -16,23 +16,23 @@ function stateWithRoute(from, to) {
 }
 
 describe('news event effects', () => {
-  it('suspends matching routes regardless of direction', () => {
-    const japanEarthquake = NEWS_POOL.disaster.find((item) => item.title.includes('日本发生强烈地震'));
+  it('suspends matching sub-region routes regardless of direction', () => {
+    const eastAsiaTyphoon = NEWS_POOL.disaster.find((item) => item.title.includes('台风席卷东亚'));
     const outbound = stateWithRoute('beijing', 'tokyo');
     const inbound = stateWithRoute('tokyo', 'beijing');
 
-    japanEarthquake.effectFn({ state: outbound, getCity, clamp, addSuspensionModifier, selectRouteKeys });
-    japanEarthquake.effectFn({ state: inbound, getCity, clamp, addSuspensionModifier, selectRouteKeys });
+    eastAsiaTyphoon.effectFn({ state: outbound, getCity, clamp, addSuspensionModifier, selectRouteKeys });
+    eastAsiaTyphoon.effectFn({ state: inbound, getCity, clamp, addSuspensionModifier, selectRouteKeys });
 
     expect(outbound.activeModifiers[0]).toMatchObject({
       type: 'suspension',
       turnsRemaining: 1,
-      scope: { kind: 'cityIds' },
+      scope: { kind: 'subRegion', subRegions: ['east_asia'] },
     });
     expect(inbound.activeModifiers[0]).toMatchObject({
       type: 'suspension',
       turnsRemaining: 1,
-      scope: { kind: 'cityIds' },
+      scope: { kind: 'subRegion', subRegions: ['east_asia'] },
     });
   });
 

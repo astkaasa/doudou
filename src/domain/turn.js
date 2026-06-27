@@ -63,7 +63,7 @@ export function calculateTurnFinancials(state, extraRevenue = 0) {
     totals.totalCost += route.cost;
     return totals;
   }, { totalRev: 0, totalCost: 0 });
-  const overhead = state.fleet.length * 0.05 + 0.5;
+  const overhead = state.fleet.length * 0.20 + 1.2;
   const leaseCost = state.fleet
     .filter((plane) => plane.isLease)
     .reduce((sum, plane) => sum + plane.leasePrice, 0);

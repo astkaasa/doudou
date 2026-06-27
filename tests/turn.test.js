@@ -30,8 +30,8 @@ describe('turn progression', () => {
 
     const result = calculateTurnFinancials(state);
     expect(result.totalRev).toBe(2);
-    expect(result.totalCost).toBeCloseTo(2.85);
-    expect(result.profit).toBeCloseTo(-0.85);
+    expect(result.totalCost).toBeCloseTo(3.85);
+    expect(result.profit).toBeCloseTo(-1.85);
   });
 
   it('includes loan interest in turn financials', () => {
@@ -43,8 +43,8 @@ describe('turn progression', () => {
     const result = calculateTurnFinancials(state);
 
     expect(result.interest).toBeCloseTo(2);
-    expect(result.totalCost).toBeCloseTo(3.5);
-    expect(result.profit).toBeCloseTo(1.5);
+    expect(result.totalCost).toBeCloseTo(4.2);
+    expect(result.profit).toBeCloseTo(0.8);
   });
 
   it('adds spicy bean trait fund to quarterly revenue', () => {
