@@ -1,0 +1,118 @@
+// ===== MILESTONE DATA =====
+// Pure data definitions — no UI, no reward logic.
+// Source of truth: docs/milestone_design.xlsx
+// Design principle: reward what the player is ALREADY doing, never add chores.
+
+const MILESTONES = [
+  // --- 航线 ---
+  {id:'first_route', cat:'航线', lv:1, title:'初次启航', desc:'开通第1条航线',
+   notify:'芜湖！你的航空公司正式起飞了！',
+   check:()=>G.routes.length>=1},
+  {id:'routes_5', cat:'航线', lv:2, title:'翱翔天际', desc:'拥有5条航线',
+   notify:'恭喜！你的航线图越来越像样了！',
+   check:()=>G.routes.length>=5},
+  {id:'routes_10', cat:'航线', lv:3, title:'航线帝国', desc:'拥有10条航线',
+   notify:'你是个真正的航空人了！',
+   check:()=>G.routes.length>=10},
+  {id:'routes_20', cat:'航线', lv:4, title:'全球网络', desc:'拥有20条航线',
+   notify:'20条航线织就空中天网！',
+   check:()=>G.routes.length>=20},
+  {id:'routes_50', cat:'航线', lv:5, title:'SPACE X', desc:'拥有50条航线',
+   notify:'你的航线比星星还多！SPACE X！',
+   check:()=>G.routes.length>=50, secret:true},
+
+  // --- 经济 ---
+  {id:'first_profit', cat:'经济', lv:1, title:'首次盈利', desc:'首次季度利润 > 0',
+   notify:'哦豁！终于赚到钱了！',
+   check:()=>G.turnProfit>0},
+  {id:'streak_4', cat:'经济', lv:2, title:'稳步前行', desc:'连续4个季度盈利',
+   notify:'连续四季盈利，稳如老豆！',
+   check:()=>(G.consecutiveProfit||0)>=4},
+  {id:'profit_100', cat:'经济', lv:3, title:'日进豆金', desc:'单季利润 ≥ $100M',
+   notify:'日进豆金，财源滚滚！',
+   check:()=>G.turnProfit>=100},
+  {id:'profit_500', cat:'经济', lv:4, title:'千金一掷', desc:'单季利润 ≥ $500M',
+   notify:'千金一掷，就是豪气！',
+   check:()=>G.turnProfit>=500},
+  {id:'profit_1000', cat:'经济', lv:5, title:'亿柱擎天', desc:'单季利润 ≥ $1000M（$1B）',
+   notify:'OMG！你已经是天空传奇！',
+   check:()=>G.turnProfit>=1000},
+
+  // --- 机队 ---
+  {id:'first_wide', cat:'机队', lv:1, title:'热狗肠', desc:'购买首架宽体客机',
+   notify:'宽体客机入列！双通道时代开启！',
+   check:()=>G.fleet.some(p=>p.type==='wide'&&!p.isLease)},
+  {id:'first_superjumbo', cat:'机队', lv:2, title:'巨无霸', desc:'购买首架超宽体客机',
+   notify:'超宽体降临！天空之王来了！',
+   check:()=>G.fleet.some(p=>p.type==='superjumbo'&&!p.isLease)},
+  {id:'fleet_10', cat:'机队', lv:3, title:'崭露机角', desc:'拥有10架购买飞机',
+   notify:'10架自有机队！初具规模！',
+   check:()=>countBoughtPlanes()>=10},
+  {id:'fleet_20', cat:'机队', lv:4, title:'小有规模', desc:'拥有20架购买飞机',
+   notify:'20架飞机的机队！你是真正的航空大亨了！',
+   check:()=>countBoughtPlanes()>=20},
+  {id:'fleet_100', cat:'机队', lv:5, title:'百翼齐飞', desc:'拥有100架购买飞机',
+   notify:'100架飞机！天空都被你承包了！',
+   check:()=>countBoughtPlanes()>=100, secret:true},
+
+  // --- 分部 ---
+  {id:'first_branch', cat:'分部', lv:1, title:'开疆拓土', desc:'开设第1个分部',
+   notify:'第一个分部建立了！版图开始扩张！',
+   check:()=>G.branches.length>=1},
+  {id:'branches_3', cat:'分部', lv:2, title:'三星拱月', desc:'拥有3个分部',
+   notify:'三分部拱卫总部！格局已成！',
+   check:()=>G.branches.length>=3},
+  {id:'branches_5', cat:'分部', lv:3, title:'四海为家', desc:'拥有5个分部',
+   notify:'五大分部！你的航空帝国遍布各地！',
+   check:()=>G.branches.length>=5},
+  {id:'branches_7', cat:'分部', lv:4, title:'王下七空', desc:'拥有7个分部',
+   notify:'七大分部！你才是天空的王者！',
+   check:()=>G.branches.length>=7},
+  {id:'branches_10', cat:'分部', lv:5, title:'十面威风', desc:'拥有10个分部（上限）',
+   notify:'十个分部满编！版图已达极限！',
+   check:()=>G.branches.length>=10},
+
+  // --- 财富 ---
+  {id:'cash_500', cat:'财富', lv:1, title:'小土豪', desc:'现金 ≥ $500M',
+   notify:'现金五亿！小有积蓄！',
+   check:()=>G.cash>=500},
+  {id:'cash_1000', cat:'财富', lv:2, title:'千金在手', desc:'现金 ≥ $1000M（$1B）',
+   notify:'现金十亿！手握千金！',
+   check:()=>G.cash>=1000},
+  {id:'cash_2000', cat:'财富', lv:3, title:'千千万万', desc:'现金 ≥ $2000M（$2B）',
+   notify:'现金二十亿！金玉满堂！',
+   check:()=>G.cash>=2000},
+  {id:'cash_4000', cat:'财富', lv:4, title:'四十石狮', desc:'现金 ≥ $4000M（$4B）',
+   notify:'现金四十亿！富可敌国！',
+   check:()=>G.cash>=4000},
+  {id:'cash_10b', cat:'财富', lv:5, title:'亿个目标', desc:'现金 ≥ $10000M（$10B）',
+   notify:'现金破百亿！不能提现！',
+   check:()=>G.cash>=10000},
+
+  // --- 生涯 ---
+  {id:'survive_20', cat:'生涯', lv:1, title:'五载光阴', desc:'经营20个季度（5年）',
+   notify:'航空路漫漫，而你还在飞！',
+   check:()=>G.turnsPlayed>=20},
+  {id:'survive_40', cat:'生涯', lv:2, title:'朝花夕拾', desc:'经营40个季度（10年）',
+   notify:'你是否还记得十年之前！',
+   check:()=>G.turnsPlayed>=40},
+  {id:'survive_60', cat:'生涯', lv:3, title:'束发及笄', desc:'经营60个季度（15年）',
+   notify:'你的航空故事正在书写！',
+   check:()=>G.turnsPlayed>=60},
+  {id:'survive_76', cat:'生涯', lv:4, title:'还有一年', desc:'经营接近尾声（76/80季度）',
+   notify:'还有一年就到终点了，再飞最后一程吧！',
+   check:()=>G.turnsPlayed>=76, secret:true},
+  {id:'survive_236', cat:'生涯', lv:5, title:'还在玩啊', desc:'在沙盒模式中经营236个季度',
+   notify:'你还在玩啊？！',
+   check:()=>G.turnsPlayed>=236, secret:true},
+];
+
+// Category display order & metadata
+const MILESTONE_CATS = [
+  {id:'航线', icon:'🗺'},
+  {id:'经济', icon:'💰'},
+  {id:'机队', icon:'✈'},
+  {id:'分部', icon:'🏢'},
+  {id:'财富', icon:'🏦'},
+  {id:'生涯', icon:'🎖'},
+];

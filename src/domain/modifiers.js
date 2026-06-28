@@ -49,7 +49,7 @@ export function isRouteSuspended(state, route) {
 }
 
 export function effectiveFrequency(state, route) {
-  return isRouteSuspended(state, route) ? 0 : route.frequency;
+  return isRouteSuspended(state, route) ? 0 : (route.frequency || 1);
 }
 
 export function advanceActiveModifiers(state) {

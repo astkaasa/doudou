@@ -83,27 +83,29 @@ export function renderMap(state, uiState) {
   CITIES.forEach((c) => {
     const isHQ = (c.id === state.hq) || (uiState.hqSelectMode && uiState.selectedHQ === c.id);
     const isBranch = (state.branches || []).includes(c.id);
+    const isBranchBuilding = (state.branchesConstructing || []).some((branch) => branch.cityId === c.id);
     const isBranchSelected = uiState.branchSelectMode && uiState.selectedBranch === c.id;
     const isSelected = !uiState.hqSelectMode && !uiState.branchSelectMode && state.selectedCity === c.id;
     const hasRoute = routedCities.has(c.id);
-    const r = cityRadius(c, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, zoom });
+    const r = cityRadius(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom });
     const cy = cityY(c);
-    const classes = cityClasses(c, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute });
+    const classes = cityClasses(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute });
     worldOffsets.forEach((offset) => {
       const cx = cityX(c) + offset;
       if (!isPointNearViewport(cx, cy, ox, oy, vw, vh)) return;
       const xPct = ((cx - ox) / vw) * 100;
       const yPct = ((cy - oy) / vh) * 100;
-      if (isHQ || isBranch || isBranchSelected || isSelected || hasRoute) {
-        svg += `<circle cx="${cx}" cy="${cy}" r="${r + cityHaloExtra({ isHQ, isBranch, zoom })}" class="${cityHaloClasses({ isHQ, isBranch, isBranchSelected, isSelected, hasRoute })}" />`;
+      if (isHQ || isBranch || isBranchBuilding || isBranchSelected || isSelected || hasRoute) {
+        svg += `<circle cx="${cx}" cy="${cy}" r="${r + cityHaloExtra({ isHQ, isBranch: isBranch || isBranchBuilding, zoom })}" class="${cityHaloClasses({ isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute })}" />`;
       }
       svg += `<circle cx="${cx}" cy="${cy}" r="${r}" class="${classes}" data-action="city-click" data-city-id="${c.id}" />`;
       cityTouchTargets += `<button class="city-touch-target" type="button" style="left:${xPct}%;top:${yPct}%" data-action="city-click" data-city-id="${c.id}" data-city-touch-target="true" aria-label="选择${c.name}" title="${c.name}"></button>`;
-      if (shouldShowCityLabel(c, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, zoom })) {
-        cityLabels += renderCityLabel(c, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, labelSize, offset, zoom });
+      if (shouldShowCityLabel(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom })) {
+        cityLabels += renderCityLabel(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, labelSize, offset, zoom });
       }
       if (isHQ) cityLabels += `<text x="${cx}" y="${cy - radiusAwareOffset(10, zoom)}" font-size="${hqLabelSize}" text-anchor="middle" class="city-label city-label-hq">总部</text>`;
       if (isBranch) cityLabels += `<text x="${cx}" y="${cy - radiusAwareOffset(10, zoom)}" font-size="${hqLabelSize}" text-anchor="middle" class="city-label city-label-branch">分部</text>`;
+      if (isBranchBuilding) cityLabels += `<text x="${cx}" y="${cy - radiusAwareOffset(10, zoom)}" font-size="${hqLabelSize}" text-anchor="middle" class="city-label city-label-branch-building">施工</text>`;
     });
   });
   cityTouchTargets += '</div>';
@@ -177,10 +179,10 @@ function cityY(city) {
   return projectCity(city).y * MAP_HEIGHT;
 }
 
-function cityRadius(city, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, zoom }) {
+function cityRadius(city, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom }) {
   let baseRadius = 2.3;
   if (isHQ) baseRadius = 6;
-  else if (isBranch || isBranchSelected) baseRadius = 4.8;
+  else if (isBranch || isBranchBuilding || isBranchSelected) baseRadius = 4.8;
   else if (isSelected) baseRadius = 4.6;
   else if (hasRoute) baseRadius = 4;
   else if (city.level >= 3) baseRadius = 3.5;
@@ -205,43 +207,45 @@ function radiusAwareOffset(offset, zoom) {
   return Number((offset / Math.pow(Math.max(MIN_ZOOM, zoom || MIN_ZOOM), 0.55)).toFixed(2));
 }
 
-function cityClasses(city, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute }) {
+function cityClasses(city, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute }) {
   return [
     'city-node',
     city.level >= 3 ? 'city-node-major' : '',
     isHQ ? 'city-node-hq' : '',
     isBranch ? 'city-node-branch' : '',
+    isBranchBuilding ? 'city-node-branch-building' : '',
     isBranchSelected ? 'city-node-branch-selected' : '',
     isSelected ? 'city-node-selected' : '',
     hasRoute ? 'city-node-routed' : '',
   ].filter(Boolean).join(' ');
 }
 
-function cityHaloClasses({ isHQ, isBranch, isBranchSelected, isSelected, hasRoute }) {
+function cityHaloClasses({ isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute }) {
   return [
     'city-halo',
     isHQ ? 'city-node-hq' : '',
     isBranch ? 'city-node-branch' : '',
+    isBranchBuilding ? 'city-node-branch-building' : '',
     isBranchSelected ? 'city-node-branch-selected' : '',
     isSelected ? 'city-node-selected' : '',
     hasRoute ? 'city-node-routed' : '',
   ].filter(Boolean).join(' ');
 }
 
-function shouldShowCityLabel(city, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, zoom }) {
-  if (isHQ || isBranch || isBranchSelected || isSelected || hasRoute || city.level >= 3) return true;
+function shouldShowCityLabel(city, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom }) {
+  if (isHQ || isBranch || isBranchBuilding || isBranchSelected || isSelected || hasRoute || city.level >= 3) return true;
   if (zoom >= 1.5 && city.level >= 2) return true;
   return zoom >= 2;
 }
 
-function renderCityLabel(city, { isHQ, isBranch, isBranchSelected, isSelected, hasRoute, labelSize, offset = 0, zoom }) {
+function renderCityLabel(city, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, labelSize, offset = 0, zoom }) {
   const cx = cityX(city) + offset;
   const cy = cityY(city);
   const projected = projectCity(city);
   const dx = projected.x > 0.88 ? -8 : projected.x < 0.12 ? 8 : 0;
   const anchor = dx < 0 ? 'end' : dx > 0 ? 'start' : 'middle';
-  const y = isHQ || isBranch || isBranchSelected || isSelected || hasRoute ? cy + labelSize + radiusAwareOffset(4.5, zoom) : cy - radiusAwareOffset(7, zoom);
-  const classes = ['city-label', city.level >= 3 ? 'city-label-major' : '', isHQ ? 'city-label-hq' : '', isBranch ? 'city-label-branch' : ''].filter(Boolean).join(' ');
+  const y = isHQ || isBranch || isBranchBuilding || isBranchSelected || isSelected || hasRoute ? cy + labelSize + radiusAwareOffset(4.5, zoom) : cy - radiusAwareOffset(7, zoom);
+  const classes = ['city-label', city.level >= 3 ? 'city-label-major' : '', isHQ ? 'city-label-hq' : '', isBranch ? 'city-label-branch' : '', isBranchBuilding ? 'city-label-branch-building' : ''].filter(Boolean).join(' ');
   return `<text x="${cx + dx}" y="${y}" font-size="${labelSize}" text-anchor="${anchor}" class="${classes}">${city.name}</text>`;
 }
 

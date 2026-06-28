@@ -1,0 +1,281 @@
+// ===== CITY ERA DATA =====
+// Per-city starting values for pop/biz/tour at each era start
+// Format: cityId: [[pop,biz,tour_era1], [pop,biz,tour_era2], [pop,biz,tour_era3]]
+// era1=1960Q1, era2=1975Q1, era3=2000Q1, era4=era1
+// pop: travel market size (millions M) | biz: 0-100 | tour: 0-100
+// All values are numeric (pop: float M, biz/tour: int)
+
+const CITY_ERA_DATA = {
+  // ===== 亚洲-东亚 =====
+  beijing: [[5.5,30,22], [8,34,25], [10.5,68,47]],
+  shanghai: [[5.8,36,13], [7.5,38,14], [11,71,47]],
+  tokyo: [[9.8,55,31], [11,73,35], [12.5,72,53]],
+  seoul: [[2.4,14,9], [5.5,28,16], [9.5,65,43]],
+  hongkong: [[3,49,25], [4,64,38], [6.7,77,49]],
+  urumqi: [[0.7,5,20], [1,11,22], [1.8,15,22]],
+  lhasa: [[0.15,6,18], [0.2,11,24], [0.35,18,35]],
+  chengdu: [[2.5,15,5], [3.5,22,14], [6,54,36]],
+  wuhan: [[2.2,10,2], [3.2,20,5], [5.5,46,22]],
+  harbin: [[1.8,9,2], [2.5,12,5], [4.2,35,15]],
+  xian: [[1.5,10,22], [2.2,12,25], [4.5,39,32]],
+  taipei: [[1.2,25,11], [2.8,45,18], [5,67,38]],
+  fukuoka: [[1.2,21,11], [1.5,33,21], [2.2,43,24]],
+  sapporo: [[0.8,17,40], [1.2,24,49], [1.8,31,47]],
+  okinawa: [[0.5,1,40], [0.7,8,45], [1,13,55]],
+  ulanbator: [[0.35,2,5], [0.45,8,5], [0.7,10,10]],
+
+  // ===== 亚洲-东南亚 =====
+  singapore: [[1.6,40,20], [2.2,57,28], [4,82,54]],
+  bangkok: [[1.8,12,21], [3,25,30], [6.5,40,52]],
+  manila: [[2.4,22,11], [3.5,21,17], [10,38,19]],
+  jakarta: [[2.8,14,4], [5,18,10], [8.5,36,15]],
+  brunei: [[0.08,7,1], [0.1,15,3], [0.25,20,10]],
+  guam: [[0.06,5,44], [0.08,9,47], [0.12,10,54]],
+  saipan: [[0.01,5,40], [0.01,5,45], [0.04,10,50]],
+  male: [[0.02,3,42], [0.03,0,42], [0.08,10,55]],
+  hanoi: [[0.8,7,4], [1.2,12,2], [2.8,24,18]],
+
+  // ===== 亚洲-南亚 =====
+  delhi: [[2.8,25,10], [4.5,26,15], [12,47,27]],
+  mumbai: [[3.5,27,10], [5.5,31,11], [14,51,22]],
+  kolkata: [[3,17,7], [4.5,18,7], [11,32,11]],
+  karachi: [[2,19,5], [4,25,8], [10,31,13]],
+
+  // ===== 亚洲-中东 =====
+  dubai: [[0.04,15,6], [0.2,36,11], [0.8,69,56]],
+  baghdad: [[1.2,16,5], [2.2,21,10], [4.5,14,10]],
+  tehran: [[2,19,10], [3.5,29,15], [7,34,13]],
+  islamabad: [[0.1,9,1], [0.2,10,2], [0.5,17,10]],
+  mecca: [[0.2,4,38], [0.35,2,48], [0.8,10,61]],
+  riyadh: [[0.15,13,2], [0.6,22,11], [2.5,40,15]],
+  tashkent: [[1,11,4], [1.5,11,2], [2.2,11,10]],
+
+  // ===== 欧洲 =====
+  london: [[8,75,42], [7.5,74,48], [7.8,85,58]],
+  paris: [[2.8,56,55], [2.6,56,64], [2.5,64,75]],
+  istanbul: [[1.8,24,40], [2.8,26,51], [8.8,47,56]],
+  moscow: [[5,42,23], [7,45,27], [9,47,35]],
+  berlin: [[3.2,38,12], [3.1,38,15], [3.4,50,30]],
+  copenhagen: [[1,34,16], [1.1,40,22], [1.2,51,30]],
+  stockholm: [[0.8,28,16], [0.9,35,21], [1,52,29]],
+  oslo: [[0.5,20,13], [0.55,25,14], [0.65,42,22]],
+  rome: [[2.2,30,53], [2.8,33,54], [3,41,63]],
+  madrid: [[2.5,23,23], [3.5,29,31], [4.2,41,45]],
+  lisbon: [[1.3,13,18], [1.5,20,23], [2,30,38]],
+  athens: [[1.5,16,44], [2,20,52], [3,26,55]],
+  warsaw: [[1.2,9,8], [1.4,16,10], [1.7,26,16]],
+  minsk: [[0.8,11,2], [1,11,3], [1.2,13,10]],
+  kyiv: [[1.1,11,3], [1.3,17,4], [2.2,28,16]],
+  amsterdam: [[0.9,46,28], [1,48,38], [1.1,62,47]],
+  zurich: [[0.4,57,24], [0.42,59,22], [0.45,71,32]],
+  vienna: [[1.6,26,43], [1.7,33,49], [1.8,41,55]],
+  rostov: [[0.6,11,20], [0.7,12,22], [0.8,12,22]],
+  barcelona: [[1.5,24,19], [1.8,28,32], [2.2,41,54]],
+  marseille: [[0.7,20,12], [0.75,18,21], [0.8,24,22]],
+  munich: [[1.2,29,15], [1.3,39,20], [1.5,54,33]],
+  stpetersburg: [[3,26,15], [3.5,30,20], [4.2,32,24]],
+
+  // ===== 非洲-北部 =====
+  algiers: [[1.2,15,9], [1.8,12,10], [2.8,17,12]],
+  dakar: [[0.5,11,5], [0.7,10,9], [1.2,16,11]],
+  abuja: [[0.1,4,5], [0.2,10,1], [0.8,18,10]],
+  casablanca: [[1.2,12,11], [1.8,17,14], [3.2,25,21]],
+  tunis: [[0.5,13,7], [0.7,13,11], [0.9,15,16]],
+  cairo: [[3.5,20,40], [6,23,47], [10,32,53]],
+
+  // ===== 非洲-中部 =====
+  nairobi: [[0.35,15,8], [0.6,18,13], [2.2,24,19]],
+  addisababa: [[0.5,6,2], [0.8,9,9], [2,16,12]],
+  daressalaam: [[0.3,2,0], [0.5,7,3], [1.5,16,10]],
+  kinshasa: [[0.4,8,3], [1.2,8,2], [5,9,10]],
+  lagos: [[0.8,8,6], [2.5,14,4], [8,22,10]],
+
+  // ===== 非洲-南部 =====
+  johannesburg: [[1.2,24,9], [1.8,32,11], [3.2,37,12]],
+  capetown: [[0.8,16,9], [1.1,16,13], [2,22,21]],
+
+  // ===== 北美-东部 =====
+  newyork: [[7.8,85,41], [7.6,83,45], [8,87,58]],
+  chicago: [[3.5,52,17], [3.2,51,23], [2.8,54,22]],
+  miami: [[0.3,19,29], [0.5,28,43], [0.8,41,56]],
+  washington: [[0.75,45,20], [0.9,46,29], [1.2,50,31]],
+  ottawa: [[0.35,21,13], [0.45,27,13], [0.55,29,17]],
+  atlanta: [[0.5,19,15], [0.7,30,18], [1,42,23]],
+
+  // ===== 加勒比 =====
+  havana: [[1.2,11,28], [1.5,4,25], [2,10,30]],
+  kingston: [[0.3,8,24], [0.4,9,26], [0.55,10,32]],
+  santodomingo: [[0.4,3,25], [0.6,11,26], [0.9,17,30]],
+
+  // ===== 北美-中部 =====
+  mexicocity: [[5,21,20], [8,28,19], [12,36,32]],
+  dallas: [[0.7,23,8], [1,32,7], [1.4,41,15]],
+  denver: [[0.4,12,9], [0.55,21,12], [0.7,28,13]],
+  houston: [[0.6,17,5], [1,27,8], [1.6,42,15]],
+
+  // ===== 北美-西部 =====
+  losangeles: [[2.5,47,43], [3.2,53,51], [3.7,63,58]],
+  vancouver: [[0.8,15,15], [1.1,25,20], [1.8,40,25]],
+  seattle: [[0.5,18,10], [0.7,19,10], [1,35,19]],
+  honolulu: [[0.3,8,45], [0.35,12,48], [0.4,18,52]],
+  sanfrancisco: [[0.7,32,26], [0.8,39,30], [0.9,65,41]],
+
+  // ===== 南美洲 =====
+  saopaulo: [[3.5,28,13], [7,37,11], [12,59,23]],
+  buenosaires: [[3.5,25,13], [4.5,25,16], [5.5,42,32]],
+  brasilia: [[0.15,7,3], [0.3,21,5], [0.8,31,15]],
+  lima: [[1.5,10,9], [2.5,13,15], [5,26,21]],
+  bogota: [[1.2,12,3], [2,17,11], [4,34,14]],
+  santiago: [[1.2,13,6], [1.8,25,9], [3.5,46,27]],
+  caracas: [[1.2,16,6], [2,24,10], [3.5,31,10]],
+  quito: [[0.35,3,4], [0.5,5,9], [0.8,22,19]],
+
+  // ===== 大洋洲 =====
+  sydney: [[2,27,24], [2.8,41,31], [3.8,51,41]],
+  perth: [[0.4,13,11], [0.6,15,14], [0.9,25,20]],
+  melbourne: [[1.8,26,16], [2.5,31,25], [3.2,42,34]],
+  wellington: [[0.12,13,10], [0.14,17,8], [0.16,15,10]],
+};
+
+// ===== SUB-REGION GROWTH PROFILES =====
+// Quarterly growth rates applied during gameplay
+// pop: multiplicative per quarter (e.g. 0.006 = +0.6%/Q)
+// biz/tour: additive per quarter with diminishing returns (closer to 100 -> slower)
+// growCities() applies Math.round to keep values integer
+// era4 uses dynamic rates based on current year
+
+const SUB_REGION_GROWTH = {
+  // ---- 东亚: 日本先发→四小龙→中国爆发 ----
+  east_asia: {
+    era1: { pop: 0.006, biz: 0.08, tour: 0.06 },
+    era2: { pop: 0.010, biz: 0.22, tour: 0.12 },
+    era3: { pop: 0.012, biz: 0.18, tour: 0.20 },
+  },
+  // ---- 东南亚: 旅游腾飞+制造中心转移 ----
+  southeast_asia: {
+    era1: { pop: 0.008, biz: 0.06, tour: 0.10 },
+    era2: { pop: 0.012, biz: 0.15, tour: 0.18 },
+    era3: { pop: 0.014, biz: 0.12, tour: 0.22 },
+  },
+  // ---- 南亚: 稳步增长，IT外包兴起 ----
+  south_asia: {
+    era1: { pop: 0.010, biz: 0.05, tour: 0.04 },
+    era2: { pop: 0.012, biz: 0.10, tour: 0.06 },
+    era3: { pop: 0.014, biz: 0.15, tour: 0.10 },
+  },
+  // ---- 中东: 石油繁荣→多元化→区域枢纽 ----
+  mideast: {
+    era1: { pop: 0.012, biz: 0.18, tour: 0.05 },
+    era2: { pop: 0.016, biz: 0.15, tour: 0.10 },
+    era3: { pop: 0.014, biz: 0.10, tour: 0.18 },
+  },
+  // ---- 欧洲: 成熟稳定，一体化进程 ----
+  europe: {
+    era1: { pop: 0.003, biz: 0.06, tour: 0.10 },
+    era2: { pop: 0.002, biz: 0.08, tour: 0.12 },
+    era3: { pop: 0.002, biz: 0.06, tour: 0.08 },
+  },
+  // ---- 北非: 独立后发展缓慢，旅游渐兴 ----
+  north_africa: {
+    era1: { pop: 0.010, biz: 0.04, tour: 0.06 },
+    era2: { pop: 0.012, biz: 0.06, tour: 0.10 },
+    era3: { pop: 0.014, biz: 0.05, tour: 0.08 },
+  },
+  // ---- 中非: 人口爆炸，经济滞后 ----
+  central_africa: {
+    era1: { pop: 0.014, biz: 0.03, tour: 0.02 },
+    era2: { pop: 0.018, biz: 0.05, tour: 0.04 },
+    era3: { pop: 0.020, biz: 0.06, tour: 0.05 },
+  },
+  // ---- 南非: 种族隔离→转型→缓慢增长 ----
+  south_africa: {
+    era1: { pop: 0.010, biz: 0.05, tour: 0.04 },
+    era2: { pop: 0.012, biz: 0.06, tour: 0.08 },
+    era3: { pop: 0.008, biz: 0.08, tour: 0.10 },
+  },
+  // ---- 北美东部: 成熟市场，稳步增长 ----
+  east_namerica: {
+    era1: { pop: 0.004, biz: 0.06, tour: 0.08 },
+    era2: { pop: 0.003, biz: 0.05, tour: 0.10 },
+    era3: { pop: 0.003, biz: 0.04, tour: 0.06 },
+  },
+  // ---- 加勒比: 旅游是核心 ----
+  caribbean: {
+    era1: { pop: 0.008, biz: 0.03, tour: 0.12 },
+    era2: { pop: 0.008, biz: 0.04, tour: 0.10 },
+    era3: { pop: 0.006, biz: 0.05, tour: 0.08 },
+  },
+  // ---- 北美中部: 阳光带兴起 ----
+  central_namerica: {
+    era1: { pop: 0.008, biz: 0.06, tour: 0.05 },
+    era2: { pop: 0.010, biz: 0.10, tour: 0.06 },
+    era3: { pop: 0.008, biz: 0.08, tour: 0.06 },
+  },
+  // ---- 北美西部: 科技崛起 ----
+  west_namerica: {
+    era1: { pop: 0.010, biz: 0.08, tour: 0.08 },
+    era2: { pop: 0.008, biz: 0.12, tour: 0.08 },
+    era3: { pop: 0.006, biz: 0.15, tour: 0.06 },
+  },
+  // ---- 南美: 资源型经济体，周期波动 ----
+  samerica: {
+    era1: { pop: 0.010, biz: 0.05, tour: 0.04 },
+    era2: { pop: 0.012, biz: 0.06, tour: 0.06 },
+    era3: { pop: 0.008, biz: 0.08, tour: 0.08 },
+  },
+  // ---- 大洋洲: 移民+旅游驱动 ----
+  oceania: {
+    era1: { pop: 0.010, biz: 0.06, tour: 0.08 },
+    era2: { pop: 0.008, biz: 0.08, tour: 0.10 },
+    era3: { pop: 0.006, biz: 0.06, tour: 0.08 },
+  },
+};
+
+// Get growth profile for current game context (supports era4 dynamic year)
+function getSubRegionGrowth(subRegion, era, year) {
+  const profile = SUB_REGION_GROWTH[subRegion];
+  if (!profile) return { pop: 0.005, biz: 0.05, tour: 0.05 };
+  if (era === 'era4') {
+    if (year < 1975) return profile.era1;
+    if (year < 2000) return profile.era2;
+    return profile.era3;
+  }
+  return profile[era] || profile.era1;
+}
+
+// Initialize city states from era data
+function initCityStates(era) {
+  const eraIndex = era === 'era1' ? 0 : era === 'era2' ? 1 : era === 'era3' ? 2 : 0;
+  const states = {};
+  CITIES.forEach(c => {
+    const d = CITY_ERA_DATA[c.id];
+    if (d) {
+      states[c.id] = { pop: d[eraIndex][0], biz: d[eraIndex][1], tour: d[eraIndex][2] };
+    } else {
+      states[c.id] = { pop: c.pop, biz: 20, tour: 15 };
+    }
+  });
+  return states;
+}
+
+// Apply quarterly city growth (integer-safe: Math.round on biz/tour; pop kept as float M)
+function growCities() {
+  CITIES.forEach(c => {
+    const g = getSubRegionGrowth(c.subRegion, G.era, G.year);
+    const s = G.cityStates[c.id];
+    if (!s) return;
+    // Pop: multiplicative growth (float, 2 decimal places), small random variance
+    s.pop = Math.round(s.pop * (1 + g.pop + (Math.random() - 0.5) * 0.002) * 100) / 100;
+    // Biz: additive with diminishing returns, rounded to integer
+    const bizDiminish = 1 - s.biz / 120;
+    s.biz = Math.round(clamp(s.biz + g.biz * Math.max(0.15, bizDiminish) + (Math.random() - 0.5) * 0.1, 0, 100));
+    // Tour: additive with diminishing returns, rounded to integer
+    const tourDiminish = 1 - s.tour / 120;
+    s.tour = Math.round(clamp(s.tour + g.tour * Math.max(0.15, tourDiminish) + (Math.random() - 0.5) * 0.1, 0, 100));
+  });
+}
+
+// Get current city state (dynamic values)
+function getCityState(cityId) {
+  return G && G.cityStates ? G.cityStates[cityId] : null;
+}

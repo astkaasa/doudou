@@ -1,5 +1,6 @@
 import { PLAYER_TRAITS } from '../data/playerTraits.js';
 import { byId, fmt, fmtPct, getCity } from '../domain/helpers.js';
+import { getMilestoneStats } from '../domain/milestones.js';
 
 export function updateHUD(state) {
   const companyEl = byId('hud-company-name');
@@ -40,6 +41,11 @@ export function updateHUD(state) {
   hqEl.textContent = hqName;
   hqEl.title = hqName;
   byId('hud-brand-val').textContent = '★'.repeat(Math.min(5, Math.floor(state.brand)));
+  const milestoneEl = byId('hud-milestones');
+  if (milestoneEl) {
+    const stats = getMilestoneStats(state);
+    milestoneEl.textContent = `${stats.unlocked}/${stats.total}`;
+  }
   byId('hud-turn').textContent = state.year + ' Q' + state.quarter;
   const loanWrap = byId('hud-loan-wrap');
   if (loanWrap) {

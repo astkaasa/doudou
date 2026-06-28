@@ -10,6 +10,8 @@ export function createFinancialReportSnapshot(state) {
   return {
     cash: state.cash,
     loan: state.loan || 0,
+    hq: state.hq,
+    branches: Array.isArray(state.branches) ? [...state.branches] : [],
     routeCount: routes.length,
     fleetCount: fleet.length,
     boughtCount: countBoughtPlanes(safeState),
@@ -19,8 +21,12 @@ export function createFinancialReportSnapshot(state) {
     traitFund: state._lastTraitFund || 0,
     deliveredThisTurn: deliveredThisTurn.map((plane) => ({ ...plane })),
     routes: routes.map((route) => ({
+      from: route.from,
+      to: route.to,
       fromName: getCity(route.from)?.name || route.from,
       toName: getCity(route.to)?.name || route.to,
+      revenue: route.revenue || 0,
+      cost: route.cost || 0,
       profit: route.profit,
       loadFactor: route.loadFactor,
       suspended: Boolean(route.suspended),

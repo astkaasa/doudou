@@ -5,7 +5,7 @@ export function showBranchBanner(state) {
   removeBranchBanner();
   const banner = document.createElement('div');
   banner.id = 'branch-banner';
-  const cost = branchCost((state.branches || []).length);
+  const cost = branchCost((state.branches || []).length + (state.branchesConstructing || []).length);
   banner.innerHTML = `
     <div class="branch-title">📍 选择分部城市</div>
     <div class="branch-hint">点击地图上的城市开设分部（费用 ${fmt(cost)}）</div>

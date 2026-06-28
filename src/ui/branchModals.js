@@ -4,8 +4,19 @@ import { showModal } from './modal.js';
 
 export function showBranchModal(state) {
   const branches = Array.isArray(state.branches) ? state.branches : [];
+  const constructing = Array.isArray(state.branchesConstructing) ? state.branchesConstructing : [];
   const count = branches.length;
-  let html = '<h2>开设分部</h2><p style="color:#7ba3cc;font-size:13px;margin-bottom:12px">在总部以外的城市开设分部，扩展航线网络。航线只能从总部或分部起飞。分部上限10个。</p>';
+  const totalCount = count + constructing.length;
+  let html = '<h2>分部管理</h2><p style="color:#7ba3cc;font-size:13px;margin-bottom:12px">在总部以外的城市开设分部，扩展航线网络。航线只能从总部或分部起飞。分部上限10个。</p>';
+  if (constructing.length > 0) {
+    html += '<h3 style="color:#fbbf24">建设中</h3><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
+    constructing.forEach((branch) => {
+      const city = getCity(branch.cityId);
+      if (!city) return;
+      html += `<div class="branch-chip branch-chip-building"><span>${city.name}</span><small>施工中，${branch.constructIn}季度后完工</small></div>`;
+    });
+    html += '</div>';
+  }
   if (count > 0) {
     html += '<h3>已有分部</h3><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
     branches.forEach((cityId) => {
@@ -17,12 +28,13 @@ export function showBranchModal(state) {
     html += '</div>';
   }
   if (state.hq) html += `<div style="font-size:12px;color:#7ba3cc;margin-bottom:10px">总部: ${getCity(state.hq).name}</div>`;
-  if (count < MAX_BRANCHES) {
-    const nextCost = branchCost(count);
+  if (totalCount < MAX_BRANCHES) {
+    const nextCost = branchCost(totalCount);
     const canAfford = state.cash >= nextCost;
     html += `<div style="background:#0a1628;border-radius:8px;padding:12px;margin:8px 0">
-      <div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:#7ba3cc">第${count + 1}个分部费用</span><span style="font-weight:700;color:${canAfford ? '#4ade80' : '#f87171'}">${fmt(nextCost)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:#7ba3cc">第${totalCount + 1}个分部费用</span><span style="font-weight:700;color:${canAfford ? '#4ade80' : '#f87171'}">${fmt(nextCost)}</span></div>
       <div style="font-size:11px;color:#556;margin-top:4px">当前资金: ${fmt(state.cash)}</div>
+      <div style="font-size:11px;color:#fbbf24;margin-top:2px">建设需1个季度，完工后才可作为起飞基地。</div>
     </div>`;
     html += canAfford
       ? '<button class="btn btn-primary" data-action="start-branch-select" style="width:100%;padding:10px">在地图上选择分部城市</button>'

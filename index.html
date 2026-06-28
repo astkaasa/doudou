@@ -21,6 +21,7 @@
     <div class="hud-item"><span class="hud-label">客座率</span><span class="hud-val" id="hud-load">0%</span></div>
     <div class="hud-item hud-hq"><span class="hud-label">总部</span><span class="hud-val" id="hud-hq">未定</span></div>
     <div id="hud-brand"><span class="hud-label">品牌</span><span class="hud-val" id="hud-brand-val">★</span></div>
+    <button class="hud-milestone-btn" type="button" data-action="open-milestones" title="查看里程碑"><span>里程碑</span><strong id="hud-milestones">0/30</strong></button>
     <div class="hud-item" id="hud-loan-wrap" style="display:none"><span class="hud-label">贷款</span><span class="hud-val negative" id="hud-loan">$0M</span></div>
     <div id="hud-actions" style="display:flex;gap:4px;margin-left:8px">
       <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="save-game" title="保存存档">💾 存档</button>
@@ -39,7 +40,7 @@
           <button class="btn btn-warning btn-sm" data-action="open-fleet-panel">机队管理</button>
           <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="open-route-list">航线管理</button>
           <button class="btn btn-sm" style="background:#b45309;color:#fff" data-action="open-loan-modal">银行贷款</button>
-          <button class="btn btn-sm" style="background:#7c3aed;color:#fff" data-action="open-branch-modal">开设分部</button>
+          <button class="btn btn-sm" style="background:#7c3aed;color:#fff" data-action="open-branch-modal">分部管理</button>
         </div>
       </div>
       <div class="panel-section" id="panel-info">

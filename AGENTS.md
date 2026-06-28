@@ -24,7 +24,7 @@ npm run check
 
 - `src/` 是源码。
 - `dist/` 是构建产物，不要手动编辑。
-- `upstream/index.html` 是原始快照，不要修改。
+- `upstream/` 是原始上游快照，包含入口 HTML 以及按资源图发现的同源资源；不要手动修改。
 - `index.html` 是 Vite 源码入口，需要保留。
 - `scripts/build-standalone.mjs` 负责生成单文件版本。
 
@@ -36,6 +36,18 @@ npm run check
 4. 不随意改城市 id。新闻事件、测试、存档和默认总部依赖 `beijing`、`shanghai`、`tokyo`、`dubai`、`singapore`、`sydney` 等 id。
 5. 改玩法计算优先改 `src/domain/`，并补或更新测试。
 6. 改 UI 时保持当前深色管理面板风格，不做营销页、落地页或大幅装饰化重设计。
+7. 同步上游时不要假设它一定是单文件 HTML，也不要假设固定目录名；需要发现入口页面的资源图，抓取并对比相关同源资源。`upstream/` 只保存原始快照，移植时仍要按本项目结构整理到 `src/`。
+
+## 上游快照同步
+
+上游 `https://paratranz.cn/doudou/` 可能在单文件 HTML、拆分脚本/CSS、构建产物目录、hash 文件名或动态加载资源之间变化。同步时按当前线上结构适配：
+
+- 从入口 HTML 出发，解析 `script`、`link`、图片/媒体、`srcset`、manifest/preload/modulepreload 等引用。
+- 继续解析同源 CSS 的 `@import` 和 `url(...)`，以及 JS 中静态可识别的 `import()`、`import`、`fetch()`、`new URL()`、Worker 等资源引用。
+- 如果静态解析不足以判断资源图，使用浏览器或网络请求记录辅助确认实际加载的同源资源。
+- `upstream/` 需要镜像这些同源资源的原始内容和相对路径；上游新增、删除、重命名目录或文件时，快照结构也跟着变化。
+- 不把第三方外链资源随意 vendoring 到仓库；如果它们影响功能判断，在同步报告中说明。
+- 对比和移植都以整棵 `upstream/` 快照为输入，不只看 `index.html`。移植到本项目时继续保持模块化、测试和现有工程约束。
 
 ## 城市和地图
 

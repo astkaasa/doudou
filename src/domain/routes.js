@@ -45,7 +45,7 @@ export function routeOpenCost(from, to) {
   const avgLevel = (cityA.level + cityB.level) / 2;
   const d = cityDist(cityA, cityB);
   const distFactor = d > 8000 ? 2 : d > 3000 ? 1.5 : 1;
-  return Math.round(2 * avgLevel * distFactor);
+  return Math.round(avgLevel * distFactor);
 }
 
 export function openRoute(state, from, to, planeUid, price) {

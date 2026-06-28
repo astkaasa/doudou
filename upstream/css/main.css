@@ -1,0 +1,240 @@
+:root{
+  --c-text:#e0e8f0;
+  --c-muted:#7ba3cc;
+  --c-bg-dark:#0a1628;
+  --c-bg-panel:#334155;
+  --c-border:#1e3a5f;
+  --c-profit:#4ade80;
+  --c-loss:#f87171;
+  --c-warning:#fbbf24;
+  --c-primary:#2563eb;
+  --c-danger:#dc2626;
+  --c-success:#16a34a;
+  --c-map-ocean:#0a1225;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--c-bg-dark);color:var(--c-text);overflow:hidden;height:100vh;width:100vw}
+#app{display:grid;grid-template-rows:48px 1fr 40px;height:100vh;width:100vw}
+/* HUD */
+#hud{background:linear-gradient(90deg,#0d1f3c,#162d50);display:flex;align-items:center;padding:0 16px;gap:18px;border-bottom:1px solid #1e3a5f;z-index:10}
+.hud-item{display:flex;align-items:center;gap:5px;font-size:13px}
+.hud-label{color:#7ba3cc;font-size:13px}
+.hud-val{font-weight:700;font-size:15px}
+.hud-val.positive{color:#4ade80}
+.hud-val.negative{color:#f87171}
+#hud-brand{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:13px}
+#hud-turn{padding:4px 12px;border-radius:4px;font-weight:700;font-size:14px;transition:background 0.5s}
+/* Season HUD colors */
+.season-q1 #hud-turn{background:#15803d}
+.season-q2 #hud-turn{background:#c2410c}
+.season-q3 #hud-turn{background:#a16207}
+.season-q4 #hud-turn{background:#1d4ed8}
+/* Main */
+#main{display:grid;grid-template-columns:1fr 280px;overflow:hidden}
+#map-container{position:relative;overflow:hidden;background:#0a1225}
+#map-container svg{width:100%;height:100%}
+/* City nodes */
+.city-node{cursor:pointer;transition:filter 0.2s}
+.city-node:hover{filter:brightness(1.6) drop-shadow(0 0 4px currentColor)}
+.city-label{fill:#c0d0e0;font-size:9px;pointer-events:none;font-weight:500}
+/* Route lines */
+.route-line{stroke-width:2;fill:none;opacity:0.7}
+/* Right panel */
+#panel{background:#0f1f35;border-left:1px solid #1e3a5f;display:flex;flex-direction:column;overflow-y:auto}
+.panel-section{padding:12px;border-bottom:1px solid #1a2d48}
+.panel-title{font-size:14px;font-weight:700;color:#4ade80;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.panel-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px}
+.panel-row .label{color:#7ba3cc}
+.panel-row .val{font-weight:600}
+/* Buttons */
+.btn{padding:6px 14px;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.15s}
+.btn-primary{background:#2563eb;color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-success{background:#16a34a;color:#fff}
+.btn-success:hover{background:#15803d}
+.btn-danger{background:#dc2626;color:#fff}
+.btn-danger:hover{background:#b91c1c}
+.btn-warning{background:#d97706;color:#fff}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+/* Bottom bar */
+#bottom{background:#0d1f3c;border-top:1px solid #1e3a5f;display:flex;align-items:center;padding:0 16px;gap:12px}
+#season-badge{padding:2px 10px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:1px}
+.season-q1 #season-badge{background:#15803d60;color:#4ade80}
+.season-q2 #season-badge{background:#c2410c60;color:#fb923c}
+.season-q3 #season-badge{background:#a1620760;color:#fbbf24}
+.season-q4 #season-badge{background:#1d4ed860;color:#93c5fd}
+#advance-btn{margin-left:auto;padding:6px 24px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s}
+#advance-btn:hover{transform:scale(1.05)}
+#advance-btn:active{transform:scale(0.97)}
+/* Modals */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{background:#111d33;border:1px solid #1e3a5f;border-radius:12px;padding:24px;min-width:400px;max-width:600px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.modal h2{font-size:22px;margin-bottom:16px;color:#4ade80}
+.modal h3{font-size:14px;margin:12px 0 8px;color:#7ba3cc}
+.modal-close{position:absolute;top:12px;right:16px;background:none;border:none;color:#7ba3cc;font-size:20px;cursor:pointer}
+/* Route creation popup */
+.route-overlay{align-items:center!important;justify-content:center!important;padding-top:0!important}
+.route-modal{animation:fadeIn 0.2s ease-out}
+@keyframes fadeIn{from{transform:scale(0.95);opacity:0}to{transform:scale(1);opacity:1}}
+.route-preview{background:#0a1628;border-radius:8px;padding:14px;margin:8px 0}
+.r-field{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a2d48}
+.r-field:last-child{border:none}
+.r-field .r-label{color:#7ba3cc;font-size:17px}
+.r-field .r-val{color:#e0e8f0;font-weight:700;font-size:20px}
+.price-slider{width:100%;margin:8px 0}
+.price-display{display:flex;justify-content:space-between;font-size:13px;margin-top:4px}
+/* Financial report */
+.report-section{margin:12px 0;padding:12px;background:#0a1628;border-radius:8px}
+.report-row{display:flex;justify-content:space-between;padding:4px 0;font-size:14px;border-bottom:1px solid #1a2d48}
+.report-row:last-child{border:none}
+.report-total{font-weight:700;font-size:15px;padding-top:8px}
+/* Fleet list */
+.fleet-item{background:#0a1628;border-radius:6px;padding:8px;margin:4px 0;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.fleet-item .name{font-weight:600}
+.fleet-item .status{color:#7ba3cc;font-size:12px}
+/* Lease badge */
+.lease-badge{display:inline-block;background:#d9770630;color:#fbbf24;font-size:9px;font-weight:700;padding:0 4px;border-radius:2px;margin-left:4px;vertical-align:middle}
+/* Route list */
+.route-item{background:#0a1628;border-radius:6px;padding:8px;margin:4px 0;font-size:13px;cursor:pointer;transition:background 0.15s}
+.route-item:hover{background:#162d50}
+/* Event banner */
+#event-banner{position:fixed;top:48px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#b91c1c,#dc2626);color:#fff;padding:8px 24px;border-radius:0 0 8px 8px;font-size:13px;font-weight:600;z-index:110;display:none;animation:slideDown 0.3s}
+@keyframes slideDown{from{top:0;opacity:0}to{top:48px;opacity:1}}
+/* Player Trait Envelope & Beans */
+#trait-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:250;display:flex;align-items:center;justify-content:center}
+.envelope-wrap{width:200px;height:140px;cursor:pointer;transition:transform 0.3s;animation:envelopePulse 2s ease-in-out infinite}
+.envelope-wrap:hover{transform:scale(1.05)}
+@keyframes envelopePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.envelope-body{width:200px;height:100px;background:linear-gradient(135deg,#d4a96a,#c49558);border-radius:8px 8px 4px 4px;position:relative;box-shadow:0 4px 20px rgba(196,149,88,0.4)}
+.envelope-flap{width:0;height:0;border-left:100px solid transparent;border-right:100px solid transparent;border-top:60px solid #e0be82;position:absolute;top:-1px;left:0}
+.envelope-seal{width:30px;height:30px;background:radial-gradient(circle,#c0392b,#8b1a1a);border-radius:50%;position:absolute;bottom:20px;left:50%;transform:translateX(-50%);box-shadow:0 0 10px rgba(192,57,43,0.5)}
+.envelope-text{color:#e0e8f0;font-size:14px;margin-top:16px;text-align:center;animation:fadeInUp 0.5s ease-out}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.coins-stage{display:flex;gap:36px;justify-content:center;align-items:center}
+.coin{width:90px;height:100px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffd700,#daa520,#b8860b);cursor:pointer;transition:all 0.6s cubic-bezier(0.4,0,0.2,1);box-shadow:0 6px 20px rgba(218,165,32,0.5),inset 0 -3px 6px rgba(0,0,0,0.2);position:relative;display:flex;align-items:center;justify-content:center;perspective:600px}
+.coin::before{content:'';position:absolute;width:78px;height:88px;border-radius:50%;border:2px solid rgba(255,255,255,0.25)}
+.coin:hover{transform:scale(1.1);box-shadow:0 8px 30px rgba(218,165,32,0.7)}
+.coin-label{font-size:36px;font-weight:900;color:#8b6914;text-shadow:0 1px 2px rgba(255,255,255,0.3);user-select:none}
+.coin.fading{opacity:0;transform:scale(0.5);pointer-events:none}
+.coin.centering{position:absolute;transform:translateX(0) scale(1.2);z-index:10}
+.coin-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 0.8s;transform:rotateY(0deg)}
+.coin-inner.flipped{transform:rotateY(180deg)}
+.coin-face,.coin-back{position:absolute;width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;backface-visibility:hidden}
+.coin-face{background:radial-gradient(circle at 35% 35%,#ffd700,#daa520,#b8860b);box-shadow:inset 0 -4px 8px rgba(0,0,0,0.15),inset 0 4px 8px rgba(255,255,255,0.15)}
+.coin-face::after{content:'';position:absolute;width:24px;height:16px;background:rgba(255,255,255,0.35);border-radius:50%;top:22px;left:24px;transform:rotate(-25deg)}
+.coin-back{background:radial-gradient(circle at 35% 35%,#ffe066,#ffd700,#daa520);transform:rotateY(180deg)}
+.coin-back .coin-label{color:#8b6914;font-size:40px}
+/* HUD trait badge */
+.hud-trait{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffd700,#daa520,#b8860b);font-size:11px;font-weight:900;color:#8b6914;cursor:default;margin-left:6px;box-shadow:0 1px 4px rgba(218,165,32,0.4);position:relative;flex-shrink:0}
+.hud-trait .trait-tooltip{display:none;position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1e293b;color:#e0e8f0;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600;white-space:nowrap;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,0.3);pointer-events:none}
+.hud-trait:hover .trait-tooltip{display:block}
+/* Tutorial */
+#tutorial{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);z-index:200;display:flex;align-items:center;justify-content:center}
+.tutorial-box{background:#111d33;border:2px solid #4ade80;border-radius:16px;padding:40px;max-width:640px;text-align:center}
+.tutorial-box h1{font-size:28px;color:#4ade80;margin-bottom:8px}
+.tutorial-box p{color:#7ba3cc;margin:12px 0;font-size:14px;line-height:1.6}
+.tutorial-box input{width:100%;padding:10px;border:1px solid #1e3a5f;border-radius:6px;background:#0a1628;color:#e0e8f0;font-size:16px;margin:8px 0;text-align:center}
+.tutorial-box .btn{margin-top:16px;padding:10px 32px;font-size:15px}
+.era-card{background:#0a1628;border:2px solid #1e3a5f;border-radius:10px;padding:12px;cursor:pointer;transition:all 0.2s;text-align:left;width:220px}
+.era-card:hover{border-color:#2563eb;background:#0f1f35}
+.era-card.selected{border-color:#4ade80;background:#0f2818;box-shadow:0 0 12px rgba(74,222,128,0.2)}
+.era-card .era-name{font-size:15px;font-weight:700;color:#e0e8f0;margin-bottom:4px}
+.era-card .era-desc{font-size:11px;color:#7ba3cc;line-height:1.4}
+.era-card .era-detail{font-size:10px;color:#556;margin-top:6px}
+/* HQ select banner */
+#hq-banner{position:fixed;top:56px;left:50%;transform:translateX(-50%);background:rgba(17,29,51,0.96);border:2px solid #f97316;border-radius:14px;padding:18px 36px;z-index:90;text-align:center;min-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.5);pointer-events:none}
+#hq-banner *{pointer-events:auto}
+#hq-banner .hq-title{font-size:20px;font-weight:700;color:#f97316;margin-bottom:6px}
+#hq-banner .hq-hint{font-size:13px;color:#7ba3cc}
+#hq-banner .hq-selected{margin-top:10px;font-size:16px;color:#e0e8f0}
+#hq-banner .hq-selected .hq-name{color:#f97316;font-weight:700;font-size:18px}
+/* Tooltip */
+.tooltip{position:absolute;background:#1a2d48;border:1px solid #2d5f8b;border-radius:6px;padding:8px 12px;font-size:11px;z-index:30;pointer-events:none;max-width:200px;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0a1628}
+::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:3px}
+/* Game over */
+.gameover{text-align:center;padding:40px}
+.gameover h1{font-size:36px;color:#f87171;margin-bottom:16px}
+.gameover p{color:#7ba3cc;font-size:16px;margin:8px 0}
+/* Animations */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.pulse{animation:pulse 1.5s infinite}
+/* Tab system */
+.tabs{display:flex;gap:2px;margin-bottom:8px}
+.tab{padding:6px 12px;background:#0a1628;border:none;color:#7ba3cc;font-size:11px;cursor:pointer;border-radius:4px 4px 0 0;font-weight:600}
+.tab.active{background:#1e3a5f;color:#4ade80}
+/* Newspaper modal */
+.newspaper{background:#f5f0e6;color:#1a1a1a;border:2px solid #8b7355;border-radius:2px;padding:0;min-width:520px;max-width:600px;font-family:'Georgia','Times New Roman',serif;box-shadow:0 8px 32px rgba(0,0,0,0.6),inset 0 0 40px rgba(139,115,85,0.1)}
+.newspaper-header{background:#8b7355;color:#f5f0e6;text-align:center;padding:12px 20px;border-bottom:3px double #f5f0e6}
+.newspaper-header h2{font-size:22px;font-weight:900;letter-spacing:4px;margin:0;text-transform:uppercase}
+.newspaper-header .date{font-size:12px;letter-spacing:2px;margin-top:4px;opacity:0.8}
+.newspaper-body{padding:16px 20px}
+.newspaper-headline{font-size:18px;font-weight:700;border-bottom:1px solid #8b7355;padding-bottom:8px;margin-bottom:12px;line-height:1.3;color:#1a1a1a}
+.newspaper-item{margin-bottom:14px;padding-bottom:10px;border-bottom:1px dashed #ccc5b0}
+.newspaper-item .cat{display:inline-block;font-size:10px;font-weight:700;letter-spacing:1px;padding:1px 6px;border-radius:2px;margin-bottom:4px;text-transform:uppercase}
+.newspaper-item .cat.politics{background:#dc2626;color:#fff}
+.newspaper-item .cat.culture{background:#7c3aed;color:#fff}
+.newspaper-item .cat.disaster{background:#b91c1c;color:#fff}
+.newspaper-item .cat.economy{background:#2563eb;color:#fff}
+.newspaper-item .cat.ads{background:#16a34a;color:#fff}
+.newspaper-item .cat.oil{background:#1a1a1a;color:#fff}
+.newspaper-item .cat.aviation{background:#0284c7;color:#fff}
+.newspaper-item .title{font-size:14px;font-weight:700;margin:4px 0 2px}
+.newspaper-item .desc{font-size:12px;color:#4a4a3a;line-height:1.5}
+.newspaper-item .effect{font-size:11px;color:#8b0000;font-style:italic;margin-top:4px}
+.newspaper-footer{text-align:center;padding:10px;border-top:2px double #8b7355;background:#ebe6d6}
+/* Flying plane animation */
+@keyframes flyPlane{0%{offset-distance:0%}100%{offset-distance:100%}}
+.flying-plane{font-size:10px;offset-rotate:auto;animation:flyPlane 6s linear infinite;pointer-events:none}
+/* Loan info */
+.loan-info{background:#0a1628;border-radius:8px;padding:12px;margin:8px 0}
+.loan-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid #1a2d48}
+.loan-row:last-child{border:none}
+/* Onboarding hints */
+#onboard-hint{position:fixed;bottom:50px;left:16px;background:rgba(17,29,51,0.95);border:1px solid #4ade80;border-radius:10px;padding:12px 16px;z-index:80;max-width:280px;font-size:13px;color:#c0d0e0;line-height:1.5;display:none}
+#onboard-hint .hint-title{color:#4ade80;font-weight:700;margin-bottom:4px;font-size:14px}
+#onboard-hint .hint-step{color:#7ba3cc;font-size:11px;margin-top:4px}
+/* Turn summary - side by side, centered */
+.turn-summary{display:flex;gap:16px;max-width:1100px;width:95vw;max-height:82vh;justify-content:center}
+.turn-summary .newspaper{min-width:0;flex:1;max-width:560px;max-height:80vh;overflow-y:auto}
+.turn-summary .report-card{min-width:300px;max-width:420px;max-height:80vh;overflow-y:auto;background:#111d33;border:1px solid #1e3a5f;border-radius:12px;padding:20px;display:flex;flex-direction:column;font-family:'Segoe UI',Arial,sans-serif;color:#e0e8f0;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.turn-summary .report-card h2{font-size:20px;margin-bottom:14px;color:#4ade80;border-bottom:1px solid #1e3a5f;padding-bottom:8px}
+.turn-summary .report-card .report-section{margin:10px 0;padding:10px;background:#0a1628;border-radius:8px}
+.turn-summary .report-card .report-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid #1a2d48}
+.turn-summary .report-card .report-row:last-child{border:none}
+.turn-summary .report-card .report-total{font-weight:700;font-size:14px;padding-top:6px}
+.turn-summary .report-card .report-footer{margin-top:auto;padding-top:12px;text-align:center}
+/* Report card standalone */
+.report-card-standalone{background:#111d33;border:1px solid #1e3a5f;border-radius:12px;padding:24px;font-family:'Segoe UI',Arial,sans-serif;color:#e0e8f0}
+.report-card-standalone h2{font-size:20px;margin-bottom:14px;color:#4ade80}
+.report-card-standalone .report-section{margin:10px 0;padding:10px;background:#0a1628;border-radius:8px}
+.report-card-standalone .report-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid #1a2d48}
+.report-card-standalone .report-row:last-child{border:none}
+.report-card-standalone .report-total{font-weight:700;font-size:14px;padding-top:6px}
+/* HQ select - disable all interactive elements */
+.hq-selecting #panel button,
+.hq-selecting #hud button,
+.hq-selecting #advance-btn{pointer-events:none;opacity:0.3}
+.hq-selecting #bottom-hint{color:#f97316!important}
+.branch-selecting #panel button,
+.branch-selecting #hud button,
+.branch-selecting #advance-btn{pointer-events:none;opacity:0.3}
+.branch-selecting #bottom-hint{color:#7c3aed!important}
+/* Newspaper re-read button */
+/* Delivery overlay (on top of regular modal) */
+/* Route detail table */
+.route-table{width:100%;border-collapse:collapse;font-size:12px}
+.route-table th{background:#0a1628;color:#7ba3cc;padding:8px 6px;text-align:center;cursor:pointer;user-select:none;border-bottom:1px solid #1e3a5f;white-space:nowrap;font-size:11px;letter-spacing:0.5px}
+.route-table th:hover{color:#4ade80}
+.route-table th.sorted-asc::after{content:' ▲';font-size:9px}
+.route-table th.sorted-desc::after{content:' ▼';font-size:9px}
+.route-table td{padding:7px 6px;border-bottom:1px solid #1a2d48;text-align:center;vertical-align:middle}
+.route-table tr:hover td{background:#162d5060}
+.route-table .profit-pos{color:#4ade80;font-weight:600}
+.route-table .profit-neg{color:#f87171;font-weight:600}
+.route-page-info{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:#7ba3cc}
+.delivery-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:150;display:flex;align-items:center;justify-content:center}
+.delivery-modal{background:#111d33;border:1px solid #16a34a;border-radius:12px;padding:24px;min-width:360px;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.6)}

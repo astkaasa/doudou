@@ -1,10 +1,12 @@
 import { getCity, routeKey, STORAGE_KEYS } from './helpers.js';
+import { normalizeCityStates } from '../data/cityEraData.js';
 import { suggestedPrice } from './economy.js';
+import { normalizeMilestoneState } from './milestones.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, normalizeModifierState } from './modifiers.js';
 import { PLAYER_TRAIT_SYMBOLS, normalizePlayerTrait } from '../data/playerTraits.js';
 
 export function saveGameState(state, storage = localStorage) {
-  const saveData = JSON.stringify({ v: 7, ts: Date.now(), g: serializeGameState(state) });
+  const saveData = JSON.stringify({ v: 9, ts: Date.now(), g: serializeGameState(state) });
   storage.setItem(STORAGE_KEYS.save, saveData);
   const info = {
     ts: Date.now(),
@@ -47,6 +49,9 @@ function normalizeUpstreamStateFields(state) {
   if (!Array.isArray(state.fleet)) state.fleet = [];
   if (!Array.isArray(state.ai)) state.ai = [];
   state.branches = normalizeBranchIds(state);
+  state.branchesConstructing = normalizeConstructingBranches(state);
+  state.cityStates = normalizeCityStates(state);
+  normalizeMilestoneState(state);
   if (!Array.isArray(state.deliveredThisTurn)) state.deliveredThisTurn = [];
   if (state.redPacketClaimed === undefined) state.redPacketClaimed = false;
   state.playerTrait = normalizePlayerTrait(state.playerTrait);
@@ -108,6 +113,21 @@ function normalizeBranchIds(state) {
     seen.add(cityId);
     return true;
   });
+}
+
+function normalizeConstructingBranches(state) {
+  if (!Array.isArray(state.branchesConstructing)) return [];
+  const seen = new Set(state.branches || []);
+  if (state.hq) seen.add(state.hq);
+  const normalized = [];
+  state.branchesConstructing.forEach((branch) => {
+    const cityId = typeof branch === 'string' ? branch : branch?.cityId;
+    if (!getCity(cityId) || seen.has(cityId)) return;
+    const constructIn = Math.max(1, Math.floor(Number(branch?.constructIn) || 1));
+    seen.add(cityId);
+    normalized.push({ cityId, constructIn });
+  });
+  return normalized;
 }
 
 function migrateLegacyRouteModifiers(state) {

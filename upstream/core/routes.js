@@ -1,0 +1,3 @@
+// ===== ROUTE OPS =====
+function updateRouteMetrics(){G.routes.forEach(route=>{if(route.suspended){route.loadFactor=0;route.revenue=0;route.cost=0;route.profit=0;return;}const competitors=countCompetitors(route.from,route.to);route.loadFactor=calcLoadFactor(route,route.price,G.brand,competitors);const rev=routeRevenue(route);const cost=routeCost(route);route.revenue=rev.total;route.cost=cost.total;route.profit=rev.total-cost.total;})}
+function countCompetitors(from,to){const key=routeKey(from,to);let count=0;G.ai.forEach(ai=>{if(ai.routes.find(r=>routeKey(r.from,r.to)===key))count++;});return count}

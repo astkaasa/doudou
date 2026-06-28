@@ -2,11 +2,12 @@ import './styles/app.css';
 
 import { ERAS } from './data/eras.js';
 import { normalizePlayerTrait } from './data/playerTraits.js';
-import { closeBranch as closeBranchDomain, isBase, openBranch } from './domain/bases.js';
+import { closeBranch as closeBranchDomain, isBase, isBranchConstructing, openBranch } from './domain/bases.js';
 import { DEFAULT_COMPANY_NAME } from './domain/constants.js';
 import { buyPlane, returnLease, sellPlane } from './domain/fleet.js';
 import { byId, cityDist, fmt, getCity, routeKey } from './domain/helpers.js';
 import { repayLoan, takeLoan } from './domain/loans.js';
+import { checkMilestones } from './domain/milestones.js';
 import { loadGameState, saveGameState } from './domain/save.js';
 import { createSetupState, initState, seedInitialFleet } from './domain/state.js';
 import {
@@ -22,6 +23,7 @@ import {
 import { advanceTurnState } from './domain/turn.js';
 import { updateHUD } from './ui/hud.js';
 import { closeModalRoot, showBanner, showModal } from './ui/modal.js';
+import { showMilestoneList, showMilestoneNotification } from './ui/milestones.js';
 import { describeRouteSelection, initMapDrag, renderMap, setMapZoom } from './ui/map.js';
 import { showRouteCreateInfo as renderRouteCreateInfo, hideRouteCreateInfo, renderPanel, renderRouteCityPicker } from './ui/panel.js';
 import { applySeasonTheme } from './ui/season.js';
@@ -93,6 +95,13 @@ function renderGame() {
 
 function renderMapOnly() {
   if (G) renderMap(G, uiState);
+}
+
+function updateMilestones() {
+  if (!G) return;
+  const newlyUnlocked = checkMilestones(G);
+  updateHUD(G);
+  showMilestoneNotification(newlyUnlocked);
 }
 
 function setBottomHint(message = '') {
@@ -216,6 +225,7 @@ function loadGame() {
       return;
     }
     G = result.state;
+    checkMilestones(G);
     uiState.hqSelectMode = false;
     uiState.selectedHQ = null;
     uiState.branchSelectMode = false;
@@ -321,6 +331,7 @@ function confirmOpenRoute(from, to) {
   hideRouteCreateInfo();
   showBanner(`航线开通：${getCity(from).name} → ${getCity(to).name}  开通费用 ${fmt(result.cost)}`, '#16a34a');
   updateOnboarding(G, uiState);
+  updateMilestones();
 }
 
 function startBranchSelect() {
@@ -359,7 +370,8 @@ function confirmBranchFromMap() {
   }
   cancelBranchSelect();
   renderGame();
-  showBanner(`分部开设：${getCity(cityId).name}（花费 ${fmt(result.cost)}）`, '#7c3aed');
+  showBanner(`分部建设：${getCity(cityId).name}（花费 ${fmt(result.cost)}，${result.constructIn}季度后完工）`, '#fbbf24');
+  updateMilestones();
 }
 
 function closeBranch(cityId) {
@@ -399,6 +411,10 @@ function onCityClick(cityId) {
     const city = getCity(cityId);
     if (isBase(G, cityId)) {
       showBanner(city.name + ' 已是基地，无法重复开设', '#d97706');
+      return;
+    }
+    if (isBranchConstructing(G, cityId)) {
+      showBanner(city.name + ' 分部正在建设中', '#d97706');
       return;
     }
     uiState.selectedBranch = cityId;
@@ -448,6 +464,7 @@ function buySelectedPlane(target) {
   renderPanel(G, uiState);
   showBanner(`${target.dataset.lease === 'true' ? '租赁' : '购买'} ${result.planes.length}架 ${result.plane.name}`, target.dataset.lease === 'true' ? '#d97706' : '#2563eb');
   updateOnboarding(G);
+  updateMilestones();
 }
 
 function sellSelectedPlane(target) {
@@ -457,6 +474,7 @@ function sellSelectedPlane(target) {
   renderPanel(G, uiState);
   closeModal();
   showBanner(`出售 ${sold.plane.name}，获得 ${fmt(sold.sellPrice)}`, '#d97706');
+  updateMilestones();
 }
 
 function returnSelectedLease(target) {
@@ -551,6 +569,7 @@ function takeSelectedLoan(target) {
   updateHUD(G);
   showLoanModal(G);
   showBanner(`贷款 $${result.amount}M 已到账（手续费 ${fmt(result.fee)}）`, '#b45309');
+  updateMilestones();
 }
 
 function repaySelectedLoan(target) {
@@ -563,6 +582,7 @@ function repaySelectedLoan(target) {
   updateHUD(G);
   showLoanModal(G);
   showBanner(`还款 ${fmt(result.amount)}`, '#16a34a');
+  updateMilestones();
 }
 
 function advanceTurn() {
@@ -574,7 +594,11 @@ function advanceTurn() {
     return;
   }
   renderGame();
+  if (report.branchCompleted.length > 0) {
+    showBanner(`分部完工：${report.branchCompleted.map((cityId) => getCity(cityId)?.name || cityId).join('、')}`, '#7c3aed');
+  }
   showTurnSummary(G, report);
+  updateMilestones();
 }
 
 function handleClick(event) {
@@ -620,6 +644,9 @@ function handleClick(event) {
       break;
     case 'open-branch-modal':
       if (G) showBranchModal(G);
+      break;
+    case 'open-milestones':
+      if (G) showMilestoneList(G);
       break;
     case 'start-branch-select':
       startBranchSelect();

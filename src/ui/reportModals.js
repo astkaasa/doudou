@@ -1,4 +1,4 @@
-import { byId, fmt, fmtPct, seasonEmoji, seasonName } from '../domain/helpers.js';
+import { byId, fmt, seasonEmoji, seasonName } from '../domain/helpers.js';
 import { loanInterest } from '../domain/loans.js';
 import { createFinancialReportSnapshot } from '../domain/report.js';
 import { showModal } from './modal.js';
@@ -67,10 +67,11 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
     <div class="report-section"><div class="report-row"><span>营业收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span style="color:#4ade80">+${fmt(snapshot.traitFund)}</span></div>` : ''}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
     <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(snapshot.loan)}</span></div>` : ''}<div class="report-row"><span>航线数</span><span>${snapshot.routeCount}</span></div><div class="report-row"><span>机队规模</span><span>${snapshot.fleetCount} 架 (购${snapshot.boughtCount} / 租${snapshot.leasedCount})</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5, Math.floor(snapshot.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${snapshot.oilPrice.toFixed(0)}/桶</span></div></div>`;
   if (snapshot.routes.length > 0) {
-    html += '<h3>航线明细</h3><div class="report-section">';
-    snapshot.routes.forEach((r) => {
-      const rc = r.profit >= 0 ? '#4ade80' : '#f87171';
-      html += `<div class="report-row"><span>${r.fromName}→${r.toName}${r.suspended ? '（停飞）' : ''}</span><span style="color:${rc}">${r.suspended ? '--' : `${fmt(r.profit)} (LF ${fmtPct(r.loadFactor * 100)})`}</span></div>`;
+    html += '<h3>基地收益</h3><div class="report-section">';
+    getBaseRouteTotals(snapshot).forEach((base) => {
+      const rc = base.profit >= 0 ? '#4ade80' : '#f87171';
+      const tag = base.isHQ ? '⌂ 总部' : '⑂ 分部';
+      html += `<div class="report-row"><span>${tag} ${base.name} (${base.routeCount}线)</span><span style="color:${rc}">${fmt(base.profit)}</span></div>`;
     });
     html += '</div>';
   }
@@ -78,6 +79,29 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
     html += '<div style="text-align:center;margin:12px 0 0;position:relative;display:inline-block;width:100%"><button class="delivery-mail" type="button" data-action="show-delivery-popup" title="点击查看飞机交付通知">✉️<span>NEW</span></button></div>';
   }
   return html;
+}
+
+function getBaseRouteTotals(snapshot) {
+  const baseIds = [snapshot.hq, ...(snapshot.branches || [])].filter(Boolean);
+  const totals = new Map();
+  snapshot.routes.forEach((route) => {
+    const baseId = baseIds.includes(route.from) ? route.from : baseIds.includes(route.to) ? route.to : route.from;
+    const name = baseId === route.from ? route.fromName : route.toName;
+    const current = totals.get(baseId) || {
+      name,
+      isHQ: baseId === snapshot.hq,
+      revenue: 0,
+      cost: 0,
+      profit: 0,
+      routeCount: 0,
+    };
+    current.revenue += route.revenue || 0;
+    current.cost += route.cost || 0;
+    current.profit += route.profit || 0;
+    current.routeCount += 1;
+    totals.set(baseId, current);
+  });
+  return [...totals.values()].sort((a, b) => Number(b.isHQ) - Number(a.isHQ) || b.profit - a.profit);
 }
 
 export function showFinancialReport(state, rev, cost, profit, period = null, interest = loanInterest(state), snapshot = createFinancialReportSnapshot(state)) {

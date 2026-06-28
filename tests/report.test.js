@@ -8,7 +8,7 @@ describe('financial report snapshots', () => {
     const state = initState('beijing', 'era3');
     state.cash = 123;
     state.loan = 45;
-    state.routes.push({ from: 'beijing', to: 'shanghai', profit: 7, loadFactor: 0.8 });
+    state.routes.push({ from: 'beijing', to: 'shanghai', revenue: 9, cost: 2, profit: 7, loadFactor: 0.8 });
     state.fleet.push({ isLease: false }, { isLease: true });
     state.deliveredThisTurn = [{ name: 'A320', uid: 1 }];
 
@@ -28,7 +28,17 @@ describe('financial report snapshots', () => {
       boughtCount: 1,
       leasedCount: 1,
     });
-    expect(snapshot.routes).toEqual([{ fromName: '北京', toName: '上海', profit: 7, loadFactor: 0.8, suspended: false }]);
+    expect(snapshot.routes).toEqual([{
+      from: 'beijing',
+      to: 'shanghai',
+      fromName: '北京',
+      toName: '上海',
+      revenue: 9,
+      cost: 2,
+      profit: 7,
+      loadFactor: 0.8,
+      suspended: false,
+    }]);
     expect(snapshot.deliveredThisTurn).toEqual([{ name: 'A320', uid: 1 }]);
   });
 });

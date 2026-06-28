@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
-import { baseDemand, calcLoadFactor, routeCost, routeRevenue, suggestedPrice } from '../src/domain/economy.js';
+import { baseDemand, calcLoadFactor, routeCost, routeFrequencyFactor, routeRevenue, suggestedPrice } from '../src/domain/economy.js';
 import { cityDist, getCity } from '../src/domain/helpers.js';
 import { addSuspensionModifier, effectiveFrequency } from '../src/domain/modifiers.js';
 import { initState } from '../src/domain/state.js';
@@ -12,7 +12,7 @@ describe('economy model', () => {
     const shanghai = getCity('shanghai');
 
     expect(Math.round(cityDist(beijing, shanghai))).toBeGreaterThan(1000);
-    expect(suggestedPrice('beijing', 'shanghai')).toBeGreaterThan(50);
+    expect(suggestedPrice('beijing', 'shanghai')).toBe(Math.round(cityDist(beijing, shanghai) * 0.10 + 80));
   });
 
   it('derives positive demand for major city pairs', () => {
@@ -38,6 +38,28 @@ describe('economy model', () => {
     expect(route.loadFactor).toBeLessThanOrEqual(1);
     expect(routeRevenue(state, route).total).toBeGreaterThan(0);
     expect(routeCost(state, route).total).toBeGreaterThan(0);
+  });
+
+  it('applies distance-based route frequency to passenger revenue', () => {
+    const state = initState('beijing', 'era3');
+    state.fleet.push({ ...PLANES[0], uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 });
+    const route = {
+      from: 'beijing',
+      to: 'shanghai',
+      price: suggestedPrice('beijing', 'shanghai'),
+      suggestedPrice: suggestedPrice('beijing', 'shanghai'),
+      frequency: 1,
+      assignedPlanes: [1],
+      loadFactor: 0.5,
+    };
+    const frequency = routeFrequencyFactor(cityDist(getCity(route.from), getCity(route.to)));
+    const pax = Math.round(PLANES[0].seats * route.loadFactor) * frequency;
+
+    const revenue = routeRevenue(state, route);
+
+    expect(frequency).toBe(4);
+    expect(revenue.pax).toBe(pax);
+    expect(revenue.rev).toBeCloseTo(pax * route.price / 28000);
   });
 
   it('treats suspended routes as zero-frequency operations', () => {

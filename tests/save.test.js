@@ -53,12 +53,14 @@ describe('save migration', () => {
     expect(result.state.modifierIdCounter).toBe(4);
   });
 
-  it('adds branch, loan, and lease defaults to older saves', () => {
+  it('adds branch, construction, milestone, loan, and lease defaults to older saves', () => {
     const raw = JSON.stringify({
       v: 5,
       g: {
         hq: 'beijing',
         branches: ['shanghai', 'missing-city', 'shanghai', 'beijing'],
+        branchesConstructing: [{ cityId: 'tokyo', constructIn: 2 }, { cityId: 'missing-city', constructIn: 1 }, { cityId: 'shanghai', constructIn: 1 }],
+        milestones: { first_route: true, missing: true, routes_5: false },
         lastNewspaperHtml: '<p>legacy</p>',
         _lastReportData: { rev: 1 },
         fleet: [{ uid: 1, name: 'A320', isLease: true }],
@@ -74,6 +76,9 @@ describe('save migration', () => {
     expect(result.state.loan).toBe(0);
     expect(result.state.loanRate).toBe(0.02);
     expect(result.state.branches).toEqual(['shanghai']);
+    expect(result.state.branchesConstructing).toEqual([{ cityId: 'tokyo', constructIn: 2 }]);
+    expect(result.state.cityStates.beijing).toEqual({ pop: 5.5, biz: 30, tour: 22 });
+    expect(result.state.milestones).toEqual({ first_route: true });
     expect(result.state.lastNewspaperHtml).toBeUndefined();
     expect(result.state._lastReportData).toBeUndefined();
     expect(result.state.lastReportData).toEqual({ rev: 1 });
@@ -134,5 +139,24 @@ describe('save migration', () => {
 
     expect(saved.g._lastReportData).toBeUndefined();
     expect(saved.g.lastReportData).toEqual({ rev: 2, snapshot: { cash: 100 } });
+  });
+
+  it('persists milestone progress', () => {
+    const storage = writableStorage();
+    const state = {
+      companyName: '豆豆航空',
+      year: 2000,
+      quarter: 1,
+      cash: 100,
+      routes: [],
+      fleet: [],
+      milestones: { first_route: true },
+    };
+
+    saveGameState(state, storage);
+    const result = loadGameState(storage);
+
+    expect(result.ok).toBe(true);
+    expect(result.state.milestones).toEqual({ first_route: true });
   });
 });

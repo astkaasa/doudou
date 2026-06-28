@@ -24,7 +24,7 @@ export function showRouteCreateModal(state, from, to, competitors) {
     showModal(`<h2>无法开通航线</h2><p>航程 ${Math.round(distance)} km，没有航程足够的可用飞机。</p><p>请先购买航程足够的飞机，${hint}。</p><button class="btn btn-primary" data-action="close-modal">确定</button>`);
     return false;
   }
-  const demand = baseDemand(a, b);
+  const demand = baseDemand(a, b, state);
   let html = `<h2>开通航线</h2><div class="route-preview">
     <div style="font-size:24px;font-weight:700;margin-bottom:10px;text-align:center">${a.name} ✈ ${b.name}</div>
     <div class="r-field"><span class="r-label">起飞城市</span><span class="r-val">${a.name}</span></div>

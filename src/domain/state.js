@@ -1,4 +1,5 @@
 import { AI_PROFILES } from '../data/aiProfiles.js';
+import { initCityStates } from '../data/cityEraData.js';
 import { ERAS } from '../data/eras.js';
 import { DEFAULT_COMPANY_NAME } from './constants.js';
 import { availablePlaneTemplates } from './fleet.js';
@@ -43,10 +44,12 @@ function createBaseState(era, overrides = {}) {
     loan: 0,
     loanRate: 0.02,
     branches: [],
+    branchesConstructing: [],
     tech: { ops: 0, service: 0, eng: 0 },
     ai: [],
     events: [],
     newsItems: [],
+    cityStates: initCityStates(era.id),
     activeModifiers: [],
     modifierIdCounter: 1,
     turnProfit: 0,
@@ -55,6 +58,7 @@ function createBaseState(era, overrides = {}) {
     totalProfit: 0,
     turnsPlayed: 0,
     consecutiveProfit: 0,
+    milestones: {},
     gameOver: false,
     selectedCity: null,
     planeIdCounter: 1,

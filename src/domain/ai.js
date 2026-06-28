@@ -1,5 +1,5 @@
 import { CITIES } from '../data/cities.js';
-import { baseDemand, seasonModifier, suggestedPrice } from './economy.js';
+import { baseDemand, ROUTE_REVENUE_DIVISOR, routeFrequencyFactor, seasonModifier, suggestedPrice } from './economy.js';
 import { availablePlaneTemplates } from './fleet.js';
 import { cityDist, clamp, getCity, randInt, routeKey } from './helpers.js';
 
@@ -14,7 +14,7 @@ export function aiTurn(state, ai) {
         const key = routeKey(a.id, b.id);
         if (ai.routes.find((r) => routeKey(r.from, r.to) === key)) continue;
         const d = cityDist(a, b);
-        const demand = baseDemand(a, b);
+        const demand = baseDemand(a, b, state);
         const score = demand * (ai.riskAverse > 0.5 ? (a.level + b.level) : 1) / (1 + countCompetitorsAI(state, a.id, b.id, ai));
         if (score > bestScore) {
           bestScore = score;
@@ -52,14 +52,15 @@ export function aiTurn(state, ai) {
     const cityA = getCity(r.from);
     const cityB = getCity(r.to);
     const d = cityDist(cityA, cityB);
-    const demand = baseDemand(cityA, cityB) * seasonModifier(state.quarter);
+    const demand = baseDemand(cityA, cityB, state) * seasonModifier(state.quarter);
     const plane = ai.fleet.find((p) => p.uid === r.assignedPlane);
     if (!plane) return;
-    const lf = clamp(demand / (plane.seats * r.frequency) * Math.pow(r.price / r.suggestedPrice, -0.8), 0, 1);
+    const frequency = routeFrequencyFactor(d);
+    const lf = clamp(demand / plane.seats * Math.pow(r.price / r.suggestedPrice, -0.8), 0, 1);
     r.loadFactor = lf;
-    aiRev += plane.seats * r.frequency * lf * r.price / 1000;
-    aiCost += plane.fuel * (state.oilPrice / 80) * (d / 5000) * r.frequency;
-    aiCost += plane.maint * (1 + 0.05 * plane.age) * r.frequency;
+    aiRev += plane.seats * lf * r.price * frequency / ROUTE_REVENUE_DIVISOR;
+    aiCost += plane.fuel * (state.oilPrice / 80) * (d / 5000);
+    aiCost += plane.maint * (1 + 0.05 * plane.age);
   });
   ai.cash += aiRev - aiCost;
 }

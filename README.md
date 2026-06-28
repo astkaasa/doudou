@@ -47,14 +47,14 @@ npm run check
 - `scripts/`：构建辅助脚本，包括生成 `dist/standalone.html`。
 - `tests/`：Vitest 单元测试。
 - `public/`：开发和构建使用的静态资源。
-- `upstream/index.html`：原始下载快照，只用于对照，不要修改。
+- `upstream/`：原始上游快照，包含入口 HTML 和按资源图发现的同源资源，只用于对照，不要手动修改。
 - `dist/index.html`：构建生成的普通静态网站入口。
 - `dist/standalone.html`：给普通玩家双击运行的单文件版本。
 
 ## 开发约定
 
 - 不手动修改 `dist/`；需要更新产物时运行 `npm run build` 或 `npm run check`。
-- 不修改 `upstream/index.html`。
+- 不手动修改 `upstream/`；同步上游时需要按当前线上结构更新整棵快照。上游可能是单文件 HTML，也可能引用拆分脚本、CSS、构建产物目录、hash 文件名或动态加载资源；同步时以入口页面发现的同源资源图为准。
 - UI 事件使用 `data-action` 和统一事件委派，不新增内联 `onclick` / `oninput`。
 - 城市源数据使用 `lat/lon`，地图坐标通过 `projectCity` / `projectLonLat` 投影生成。
 - 报纸事件影响统一走 `state.activeModifiers`，经济模型负责消费修正器。

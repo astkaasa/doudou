@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
-import { closeBranch, openBranch, previewCloseBranchImpact } from '../src/domain/bases.js';
+import { advanceBranchConstruction, closeBranch, openBranch, previewCloseBranchImpact } from '../src/domain/bases.js';
 import { availablePlaneTemplates, buyPlane } from '../src/domain/fleet.js';
 import {
   adjustRoutePrice,
@@ -81,6 +81,8 @@ describe('route and fleet operations', () => {
 
     state.cash = 100;
     expect(openBranch(state, 'shanghai').ok).toBe(true);
+    expect(openRoute(state, 'shanghai', 'tokyo', 1, 120).ok).toBe(false);
+    expect(advanceBranchConstruction(state)).toEqual(['shanghai']);
     expect(openRoute(state, 'shanghai', 'tokyo', 1, 120).ok).toBe(true);
 
     const closed = closeBranch(state, 'shanghai');
@@ -99,6 +101,21 @@ describe('route and fleet operations', () => {
     expect(openRoute(state, 'beijing', 'tokyo', 1, '120abc').ok).toBe(false);
     expect(openRoute(state, 'beijing', 'tokyo', 1, 120.5).ok).toBe(false);
     expect(openBranch(state, 'missing-city').ok).toBe(false);
+  });
+
+  it('puts new branches under construction before they become bases', () => {
+    const state = initState('beijing', 'era3');
+    state.cash = 200;
+
+    const result = openBranch(state, 'shanghai');
+
+    expect(result).toMatchObject({ ok: true, constructIn: 1 });
+    expect(state.branches).toEqual([]);
+    expect(state.branchesConstructing).toEqual([{ cityId: 'shanghai', constructIn: 1 }]);
+    expect(openBranch(state, 'shanghai').ok).toBe(false);
+    expect(advanceBranchConstruction(state)).toEqual(['shanghai']);
+    expect(state.branches).toEqual(['shanghai']);
+    expect(state.branchesConstructing).toEqual([]);
   });
 
   it('charges a route opening fee and rejects routes when cash is insufficient', () => {
@@ -158,6 +175,7 @@ describe('route and fleet operations', () => {
     state.cash = 100;
     state.fleet.push({ ...PLANES[0], uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 });
     openBranch(state, 'shanghai');
+    advanceBranchConstruction(state);
     openRoute(state, 'shanghai', 'tokyo', 1, 120);
 
     const preview = previewCloseBranchImpact(state, 'shanghai');

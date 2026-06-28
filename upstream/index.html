@@ -19,6 +19,7 @@
     <div class="hud-item"><span class="hud-label">机队</span><span class="hud-val" id="hud-fleet">购0/租0</span></div>
     <div class="hud-item"><span class="hud-label">客座率</span><span class="hud-val" id="hud-load">0%</span></div>
     <div id="hud-brand"><span class="hud-label">品牌</span><span class="hud-val" id="hud-brand-val">★</span></div>
+    <div class="hud-item" style="cursor:pointer" onclick="openMilestoneList()" title="查看里程碑"><span class="hud-label" style="color:#fbbf24">🏆里程碑</span></div>
     <div class="hud-item" id="hud-loan-wrap" style="display:none"><span class="hud-label">贷款</span><span class="hud-val negative" id="hud-loan">$0M</span></div>
     <div style="display:flex;gap:5px;margin-left:8px;align-items:center">
       <button class="btn btn-sm" style="background:#334155;color:#e0e8f0;border-radius:5px" onclick="saveGame()">💾 存档</button>
@@ -38,7 +39,7 @@
           <button class="btn btn-warning btn-sm" onclick="openFleetPanel()">机队管理</button>
           <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" onclick="openRouteList()">航线管理</button>
           <button class="btn btn-sm" style="background:#b45309;color:#fff" onclick="openLoanModal()">银行贷款</button>
-          <button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="openBranchModal()">开设分部</button>
+          <button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="openBranchModal()">分部管理</button>
         </div>
       </div>
       <div class="panel-section" id="panel-info">
@@ -89,8 +90,12 @@
   </div>
 </div>
 
+<script src="data/balance.js"></script>
 <script src="data/constants.js"></script>
+<script src="data/city-era-data.js"></script>
+<script src="data/milestones.js"></script>
 <script src="core/state.js"></script>
+<script src="core/event-bus.js"></script>
 <script src="core/utils.js"></script>
 <script src="core/economics.js"></script>
 <script src="core/fleet.js"></script>
@@ -98,6 +103,7 @@
 <script src="core/ai.js"></script>
 <script src="core/events.js"></script>
 <script src="core/engine.js"></script>
+<script src="core/milestone-engine.js"></script>
 <script src="ui/modals.js"></script>
 <script src="ui/map.js"></script>
 <script src="ui/hud.js"></script>
@@ -110,6 +116,7 @@
 <script src="ui/branch.js"></script>
 <script src="ui/loan.js"></script>
 <script src="ui/trait.js"></script>
+<script src="ui/milestone-ui.js"></script>
 <script src="ui/tutorial.js"></script>
 <script>
 // ===== INIT =====
@@ -117,7 +124,34 @@ initTutorial();
 initMapDrag();
 window.addEventListener('resize',()=>{if(G)renderMap();});
 // Debug: press G to toggle lat/lon grid overlay
-document.addEventListener('keydown',e=>{if(e.key==='g'||e.key==='G'){_debugGrid=!_debugGrid;if(G)renderMap();console.log('Debug grid:',_debugGrid?'ON':'OFF');}});
+document.addEventListener('keydown',e=>{if(e.key==='g'||e.key==='G'){uiState.debugGrid=!uiState.debugGrid;if(G)renderMap();console.log('Debug grid:',uiState.debugGrid?'ON':'OFF');}});
+
+// ===== EVENT BUS LISTENERS (core → UI) =====
+on('fleet:changed', d => {
+  updateHUD(); renderPanel();
+  if(d.action==='buy') showBanner(`购买 ${d.count}架 ${d.planeName}`,'#2563eb');
+  else if(d.action==='lease') showBanner(`租赁 ${d.count}架 ${d.planeName}，手续费 ${fmt(d.fee)}`,'#d97706');
+  else if(d.action==='sell') showBanner(`出售 ${d.planeName}，获得 ${fmt(d.sellPrice)}`,'#d97706');
+  else if(d.action==='returnLease') showBanner(`退租 ${d.planeName}`,'#d97706');
+  updateMilestones();
+});
+
+on('turn:advanced', d => {
+  applySeasonTheme(); updateHUD(); renderMap(); renderPanel(); updateOnboarding();
+  showTurnSummary(d.revenue, d.cost, d.profit, d.year, d.quarter);
+});
+
+on('turn:warning', d => {
+  showModal(`<h2>时代即将结束</h2><p style="color:#fbbf24;font-size:15px">当前剧本将于 ${d.endYear} 年结束，还剩最后1个季度！</p><p style="color:#94a3b8">请合理安排最后的运营策略。</p><button class="btn btn-primary" onclick="closeModal()" style="margin-top:16px;padding:8px 32px">知道了</button>`);
+});
+
+on('game:over', d => {
+  if(d.reason==='bankrupt'){
+    $('modal-root').innerHTML=`<div class="modal-overlay"><div class="modal gameover"><h1>破产了</h1><p>你的航空公司因资金耗尽而倒闭。</p><p>存活了 ${d.turnsPlayed} 个季度</p><p>最高曾拥有 ${d.routes} 条航线、${d.fleet} 架飞机</p><button class="btn btn-primary" onclick="location.reload()" style="margin-top:16px;padding:10px 32px">重新开始</button></div></div>`;
+  } else if(d.reason==='era_end'){
+    $('modal-root').innerHTML=`<div class="modal-overlay"><div class="modal gameover"><h1>时代落幕</h1><p style="color:#fbbf24;font-size:15px">${d.eraName} 已结束</p><p>存活了 ${d.turnsPlayed} 个季度</p><p>最终资金：${fmt(d.cash)}</p><p>累计利润：${fmt(d.totalProfit)}</p><p>拥有 ${d.routes} 条航线、${d.fleet} 架飞机</p><button class="btn btn-primary" onclick="location.reload()" style="margin-top:16px;padding:10px 32px">重新开始</button></div></div>`;
+  }
+});
 </script>
 </body>
 </html>

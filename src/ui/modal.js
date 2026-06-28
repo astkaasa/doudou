@@ -1,7 +1,8 @@
 import { byId } from '../domain/helpers.js';
 
-export function showModal(html) {
-  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop"><div class="modal" style="position:relative">${html}</div></div>`;
+export function showModal(html, options = {}) {
+  const widthStyle = options.wide ? 'position:relative;max-width:960px;width:min(960px,95vw)' : 'position:relative';
+  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop"><div class="modal" style="${widthStyle}">${html}</div></div>`;
 }
 
 export function showRouteModal(html) {

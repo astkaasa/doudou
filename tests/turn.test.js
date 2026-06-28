@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { advanceTurnState, calculateTurnFinancials } from '../src/domain/turn.js';
 import { initState } from '../src/domain/state.js';
+import { openBranch } from '../src/domain/bases.js';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -55,9 +56,23 @@ describe('turn progression', () => {
 
     const report = advanceTurnState(state);
 
-    expect(report.traitFund).toBe(1);
-    expect(state._lastTraitFund).toBe(1);
-    expect(state.turnRevenue).toBe(1);
-    expect(state.history[0].traitFund).toBe(1);
+    expect(report.traitFund).toBe(15);
+    expect(state._lastTraitFund).toBe(15);
+    expect(state.turnRevenue).toBe(15);
+    expect(state.history[0].traitFund).toBe(15);
+  });
+
+  it('completes branch construction when advancing a quarter', () => {
+    const state = initState('beijing', 'era3');
+    state.ai = [];
+    state.cash = 100;
+    openBranch(state, 'shanghai');
+
+    const report = advanceTurnState(state);
+
+    expect(report.branchCompleted).toEqual(['shanghai']);
+    expect(state.branches).toEqual(['shanghai']);
+    expect(state.branchesConstructing).toEqual([]);
+    expect(state.history[0].branchCompleted).toEqual(['shanghai']);
   });
 });

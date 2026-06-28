@@ -1,4 +1,6 @@
 import { aiTurn } from './ai.js';
+import { growCityStates } from '../data/cityEraData.js';
+import { advanceBranchConstruction } from './bases.js';
 import { advanceTemporaryModifiers, generateEvents } from './events.js';
 import { advanceFleetAge } from './fleet.js';
 import { clamp } from './helpers.js';
@@ -9,7 +11,9 @@ export function advanceTurnState(state) {
   if (!state || state.gameOver) return null;
   const period = { year: state.year, quarter: state.quarter };
 
+  const branchCompleted = advanceBranchConstruction(state);
   advanceFleetAge(state);
+  growCityStates(state);
   updateRouteMetrics(state);
   const traitFund = rollTraitFund(state);
   const { totalRev, totalCost, profit, interest } = calculateTurnFinancials(state, traitFund);
@@ -45,6 +49,7 @@ export function advanceTurnState(state) {
     traitFund,
     routes: state.routes.length,
     fleet: state.fleet.length,
+    branchCompleted,
   });
   state.routes.forEach((route) => {
     route.isNew = false;
@@ -54,7 +59,7 @@ export function advanceTurnState(state) {
   });
 
   if (state.cash < -5) state.gameOver = true;
-  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit, interest, traitFund, gameOver: state.gameOver };
+  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit, interest, traitFund, branchCompleted, gameOver: state.gameOver };
 }
 
 export function calculateTurnFinancials(state, extraRevenue = 0) {
@@ -81,7 +86,7 @@ export function calculateTurnFinancials(state, extraRevenue = 0) {
 
 function rollTraitFund(state) {
   if (state.playerTrait !== '辣') return 0;
-  return Math.floor(Math.random() * 100) + 1;
+  return Math.floor(state.cash * 0.10);
 }
 
 function advanceCalendar(state) {
