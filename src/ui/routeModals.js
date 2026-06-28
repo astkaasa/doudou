@@ -3,6 +3,7 @@ import { availablePlaneTemplates } from '../domain/fleet.js';
 import { byId, cityDist, clamp, fmt, fmtPct, getCity } from '../domain/helpers.js';
 import { availablePlanes, findRoute, routeOpenCost } from '../domain/routes.js';
 import { escapeAttr, escapeHtml } from './html.js';
+import { renderMarketCard } from './market.js';
 import { showModal, showRouteModal } from './modal.js';
 
 let routeListSort = { key: 'profit', dir: 'desc' };
@@ -27,6 +28,7 @@ export function showRouteCreateModal(state, from, to, competitors) {
   const demand = baseDemand(a, b, state);
   let html = `<h2>开通航线</h2><div class="route-preview">
     <div style="font-size:24px;font-weight:700;margin-bottom:10px;text-align:center">${a.name} ✈ ${b.name}</div>
+    <div class="route-market-strip">${renderMarketCard(state, a)}${renderMarketCard(state, b)}</div>
     <div class="r-field"><span class="r-label">起飞城市</span><span class="r-val">${a.name}</span></div>
     <div class="r-field"><span class="r-label">到达城市</span><span class="r-val">${b.name}</span></div>
     <div class="r-field"><span class="r-label">距离</span><span class="r-val">${Math.round(distance)} km</span></div>

@@ -3,6 +3,7 @@ import { isBase } from '../domain/bases.js';
 import { availablePlanes } from '../domain/routes.js';
 import { byId, cityDist, fmt, fmtPct, getCity, routeKey } from '../domain/helpers.js';
 import { MODIFIER_TYPES } from '../domain/modifiers.js';
+import { formatMarketLine, renderMarketCard } from './market.js';
 
 const REGION_NAMES = {
   africa: '非洲',
@@ -44,7 +45,7 @@ const REGION_ORDER = [
 export function renderPanel(state, uiState) {
   const rs = byId('route-summary');
   if (uiState.hqSelectMode) {
-    rs.innerHTML = renderHQCityPicker(uiState.selectedHQ);
+    rs.innerHTML = renderHQCityPicker(state, uiState.selectedHQ);
     byId('market-info').innerHTML = '';
     return;
   }
@@ -105,12 +106,14 @@ export function renderRouteCityPicker(state, selectedCityId = null) {
   const planeHint = planes.length > 0
     ? `可用飞机 ${planes.length} 架，最大航程 ${Math.round(maxRange)} km`
     : '没有可用飞机，请先购买或等待交付';
+  const selectedMarket = selectedCity ? `<div class="route-city-market">${renderMarketCard(state, selectedCity)}</div>` : '';
   return `<div class="route-city-picker">
     <div class="route-city-status">
       <strong>${title}</strong>
       <span>${hint}</span>
       <em>${planeHint}</em>
     </div>
+    ${selectedMarket}
     ${renderCollapsibleCityGroup(
       '推荐城市',
       recommended,
@@ -138,18 +141,18 @@ function formatModifierEffect(modifier) {
   return `${label}${pct >= 0 ? '+' : ''}${fmtPct(pct)}`;
 }
 
-function renderHQCityPicker(selectedCityId) {
+function renderHQCityPicker(state, selectedCityId) {
   const recommended = CITIES.filter((city) => city.level >= 3 || ['dubai', 'singapore', 'sydney'].includes(city.id));
   return `<div class="city-picker">
     <div class="city-picker-hint">在地图上点击城市，或从列表选择总部</div>
     ${renderCollapsibleCityGroup(
       '推荐总部',
       recommended,
-      (city) => renderCityButton(city, selectedCityId),
+      (city) => renderCityButton(state, city, selectedCityId),
       { open: true, className: 'city-picker-group-featured' },
     )}
     <div class="city-picker-title">全部城市</div>
-    ${renderGroupedCityPicker(CITIES, (city) => renderCityButton(city, selectedCityId), selectedCityId)}
+    ${renderGroupedCityPicker(CITIES, (city) => renderCityButton(state, city, selectedCityId), selectedCityId)}
   </div>`;
 }
 
@@ -235,18 +238,19 @@ function renderRouteCityButton(state, city, selectedCity, maxRange, existingRout
       meta = `${Math.round(d)}km`;
     }
   }
+  const market = formatMarketLine(state, city.id);
   const disabledAttr = disabled ? ' disabled aria-disabled="true"' : '';
   const actionAttr = disabled ? '' : ' data-action="city-click"';
   return `<button class="city-picker-btn${disabled ? ' disabled' : ''}" type="button"${actionAttr} data-city-id="${city.id}"${disabledAttr}>
     <span>${city.name}</span>
-    <small>${meta}</small>
+    <small>${meta} · ${market}</small>
   </button>`;
 }
 
-function renderCityButton(city, selectedCityId) {
+function renderCityButton(state, city, selectedCityId) {
   const selectedClass = city.id === selectedCityId ? ' selected' : '';
   return `<button class="city-picker-btn${selectedClass}" type="button" data-action="city-click" data-city-id="${city.id}">
     <span>${city.name}</span>
-    <small>${REGION_NAMES[city.subRegion] || REGION_NAMES[city.region] || city.region}</small>
+    <small>${REGION_NAMES[city.subRegion] || REGION_NAMES[city.region] || city.region} · ${formatMarketLine(state, city.id)}</small>
   </button>`;
 }

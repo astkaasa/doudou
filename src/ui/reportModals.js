@@ -1,6 +1,7 @@
-import { byId, fmt, seasonEmoji, seasonName } from '../domain/helpers.js';
+import { byId, fmt, fmtPct, seasonEmoji, seasonName } from '../domain/helpers.js';
 import { loanInterest } from '../domain/loans.js';
 import { createFinancialReportSnapshot } from '../domain/report.js';
+import { escapeHtml } from './html.js';
 import { showModal } from './modal.js';
 
 function buildNewspaperHtml(state, includeFooter = true, period = null) {
@@ -67,11 +68,20 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
     <div class="report-section"><div class="report-row"><span>营业收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span style="color:#4ade80">+${fmt(snapshot.traitFund)}</span></div>` : ''}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
     <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(snapshot.loan)}</span></div>` : ''}<div class="report-row"><span>航线数</span><span>${snapshot.routeCount}</span></div><div class="report-row"><span>机队规模</span><span>${snapshot.fleetCount} 架 (购${snapshot.boughtCount} / 租${snapshot.leasedCount})</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5, Math.floor(snapshot.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${snapshot.oilPrice.toFixed(0)}/桶</span></div></div>`;
   if (snapshot.routes.length > 0) {
-    html += '<h3>基地收益</h3><div class="report-section">';
+    html += '<h3>基地收益</h3><div class="report-section report-base-section">';
     getBaseRouteTotals(snapshot).forEach((base) => {
       const rc = base.profit >= 0 ? '#4ade80' : '#f87171';
       const tag = base.isHQ ? '⌂ 总部' : '⑂ 分部';
-      html += `<div class="report-row"><span>${tag} ${base.name} (${base.routeCount}线)</span><span style="color:${rc}">${fmt(base.profit)}</span></div>`;
+      const openAttr = snapshot.routes.length <= 4 && base.routeCount <= 4 ? ' open' : '';
+      html += `<details class="report-base"${openAttr}>
+        <summary>
+          <span><strong>${tag} ${escapeHtml(base.name)}</strong><small>${base.routeCount}线 · 收 ${fmt(base.revenue)} / 成 ${fmt(base.cost)}</small></span>
+          <b style="color:${rc}">${fmt(base.profit)}</b>
+        </summary>
+        <div class="report-route-list">
+          ${base.routes.map(renderBaseRouteRow).join('')}
+        </div>
+      </details>`;
     });
     html += '</div>';
   }
@@ -94,14 +104,32 @@ function getBaseRouteTotals(snapshot) {
       cost: 0,
       profit: 0,
       routeCount: 0,
+      routes: [],
     };
     current.revenue += route.revenue || 0;
     current.cost += route.cost || 0;
     current.profit += route.profit || 0;
     current.routeCount += 1;
+    current.routes.push(route);
     totals.set(baseId, current);
   });
-  return [...totals.values()].sort((a, b) => Number(b.isHQ) - Number(a.isHQ) || b.profit - a.profit);
+  return [...totals.values()]
+    .map((base) => ({
+      ...base,
+      routes: base.routes.sort((a, b) => (b.profit || 0) - (a.profit || 0)),
+    }))
+    .sort((a, b) => Number(b.isHQ) - Number(a.isHQ) || b.profit - a.profit);
+}
+
+function renderBaseRouteRow(route) {
+  const profit = route.profit || 0;
+  const color = profit >= 0 ? '#4ade80' : '#f87171';
+  const status = route.suspended ? '<em>停飞</em>' : '';
+  return `<div class="report-route-row">
+    <span>${escapeHtml(route.fromName)} → ${escapeHtml(route.toName)} ${status}</span>
+    <small>客座率 ${fmtPct((route.loadFactor || 0) * 100)} · 收 ${fmt(route.revenue || 0)} / 成 ${fmt(route.cost || 0)}</small>
+    <strong style="color:${color}">${fmt(profit)}</strong>
+  </div>`;
 }
 
 export function showFinancialReport(state, rev, cost, profit, period = null, interest = loanInterest(state), snapshot = createFinancialReportSnapshot(state)) {
