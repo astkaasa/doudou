@@ -1,5 +1,3 @@
-export const RED_PACKET_AMOUNT = 1000;
-
 export function maxLoanAmount(state) {
   return Math.max(0, state.routes.length * 15 + state.fleet.length * 10 - (state.loan || 0));
 }
@@ -29,11 +27,4 @@ export function repayLoan(state, amount) {
   state.loan = (state.loan || 0) - repay;
   if (state.loan < 0.0001) state.loan = 0;
   return { ok: true, amount: repay };
-}
-
-export function claimRedPacket(state) {
-  if (state.redPacketClaimed) return { ok: false, message: '红包已领取' };
-  state.cash += RED_PACKET_AMOUNT;
-  state.redPacketClaimed = true;
-  return { ok: true, amount: RED_PACKET_AMOUNT };
 }

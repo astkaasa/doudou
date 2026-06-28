@@ -64,7 +64,7 @@ export function updatePricePreview(state) {
     to,
     price,
     suggestedPrice: suggestedPrice(from, to),
-    frequency: 1,
+    serviceMultiplier: 1,
     assignedPlanes: [planeUid],
     loadFactor: 0,
   };

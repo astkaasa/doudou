@@ -70,7 +70,7 @@ export function openRoute(state, from, to, planeUid, price) {
     to,
     price: parsedPrice,
     suggestedPrice: sp,
-    frequency: 1,
+    serviceMultiplier: 1,
     assignedPlanes: [planeUid],
     loadFactor: 0,
     profit: 0,

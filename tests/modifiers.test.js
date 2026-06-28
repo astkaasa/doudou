@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { addCostModifier, addDemandModifier, addSuspensionModifier, advanceActiveModifiers, effectiveFrequency, routeCostMultiplier, routeDemandMultiplier, routeMatchesScope } from '../src/domain/modifiers.js';
+import { addCostModifier, addDemandModifier, addSuspensionModifier, advanceActiveModifiers, routeCostMultiplier, routeDemandMultiplier, routeMatchesScope, routeServiceMultiplier } from '../src/domain/modifiers.js';
 import { initState } from '../src/domain/state.js';
 
-const route = { from: 'beijing', to: 'tokyo', frequency: 1 };
+const route = { from: 'beijing', to: 'tokyo', serviceMultiplier: 1 };
 
 describe('active modifiers', () => {
   it('matches route scopes directionlessly', () => {
@@ -14,7 +14,7 @@ describe('active modifiers', () => {
     expect(routeMatchesScope(route, { kind: 'routeKeys', routeKeys: ['beijing-tokyo'] })).toBe(true);
   });
 
-  it('combines demand and cost modifiers while suspending frequency', () => {
+  it('combines demand and cost modifiers while suspending service', () => {
     const state = initState('beijing', 'era3');
     const first = addDemandModifier(state, 'demand one', { kind: 'all' }, 0.9, 2);
     const second = addDemandModifier(state, 'demand two', { kind: 'cityIds', cityIds: ['tokyo'] }, 1.2, 2);
@@ -26,10 +26,10 @@ describe('active modifiers', () => {
     expect(state.modifierIdCounter).toBe(5);
     expect(routeDemandMultiplier(state, route)).toBeCloseTo(1.08);
     expect(routeCostMultiplier(state, route)).toBeCloseTo(1.1);
-    expect(effectiveFrequency(state, route)).toBe(0);
+    expect(routeServiceMultiplier(state, route)).toBe(0);
 
     advanceActiveModifiers(state);
-    expect(effectiveFrequency(state, route)).toBe(1);
+    expect(routeServiceMultiplier(state, route)).toBe(1);
     expect(routeDemandMultiplier(state, route)).toBeCloseTo(1.08);
 
     advanceActiveModifiers(state);

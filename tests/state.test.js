@@ -27,4 +27,10 @@ describe('state initialization', () => {
     expect(game.cityStates.beijing.biz).toBeGreaterThanOrEqual(68);
     expect(game.cityStates.beijing.tour).toBeGreaterThanOrEqual(47);
   });
+
+  it('does not add removed red packet state to new games', () => {
+    const game = initState('beijing', 'era3');
+
+    expect(game.redPacketClaimed).toBeUndefined();
+  });
 });

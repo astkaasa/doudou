@@ -48,8 +48,10 @@ export function isRouteSuspended(state, route) {
   return matchingModifiers(state, route, MODIFIER_TYPES.suspension).length > 0;
 }
 
-export function effectiveFrequency(state, route) {
-  return isRouteSuspended(state, route) ? 0 : (route.frequency || 1);
+export function routeServiceMultiplier(state, route) {
+  if (route?.suspended || isRouteSuspended(state, route)) return 0;
+  const multiplier = Number(route?.serviceMultiplier ?? route?.frequency ?? 1);
+  return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
 }
 
 export function advanceActiveModifiers(state) {

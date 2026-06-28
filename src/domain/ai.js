@@ -1,5 +1,5 @@
 import { CITIES } from '../data/cities.js';
-import { baseDemand, ROUTE_REVENUE_DIVISOR, routeFrequencyFactor, seasonModifier, suggestedPrice } from './economy.js';
+import { baseDemand, distanceServiceMultiplier, ROUTE_REVENUE_DIVISOR, seasonModifier, suggestedPrice } from './economy.js';
 import { availablePlaneTemplates } from './fleet.js';
 import { cityDist, clamp, getCity, randInt, routeKey } from './helpers.js';
 
@@ -31,7 +31,7 @@ export function aiTurn(state, ai) {
           to: best.to,
           price: Math.round(sp * ai.priceMul),
           suggestedPrice: sp,
-          frequency: 1,
+          serviceMultiplier: 1,
           assignedPlane: suitablePlane.uid,
           loadFactor: 0,
         });
@@ -55,10 +55,10 @@ export function aiTurn(state, ai) {
     const demand = baseDemand(cityA, cityB, state) * seasonModifier(state.quarter);
     const plane = ai.fleet.find((p) => p.uid === r.assignedPlane);
     if (!plane) return;
-    const frequency = routeFrequencyFactor(d);
+    const serviceMultiplier = distanceServiceMultiplier(d);
     const lf = clamp(demand / plane.seats * Math.pow(r.price / r.suggestedPrice, -0.8), 0, 1);
     r.loadFactor = lf;
-    aiRev += plane.seats * lf * r.price * frequency / ROUTE_REVENUE_DIVISOR;
+    aiRev += plane.seats * lf * r.price * serviceMultiplier / ROUTE_REVENUE_DIVISOR;
     aiCost += plane.fuel * (state.oilPrice / 80) * (d / 5000);
     aiCost += plane.maint * (1 + 0.05 * plane.age);
   });

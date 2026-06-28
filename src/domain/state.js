@@ -69,7 +69,6 @@ function createBaseState(era, overrides = {}) {
     onboardStep: 0,
     deliveredThisTurn: [],
     lastReportData: null,
-    redPacketClaimed: false,
     _lastTraitFund: 0,
     ...overrides,
   };

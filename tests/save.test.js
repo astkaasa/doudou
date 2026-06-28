@@ -66,7 +66,7 @@ describe('save migration', () => {
         fleet: [{ uid: 1, name: 'A320', isLease: true }],
         playerTrait: '豆',
         pendingTraitChoices: ['辣', 'bad', '机'],
-        routes: [{ from: 'beijing', to: 'shanghai' }],
+        routes: [{ from: 'beijing', to: 'shanghai', frequency: 2 }],
       },
     });
 
@@ -86,7 +86,8 @@ describe('save migration', () => {
     expect(result.state.playerTrait).toBe('豆');
     expect(result.state.traitChosen).toBe(true);
     expect(result.state.pendingTraitChoices).toBeNull();
-    expect(result.state.routes[0]).toMatchObject({ assignedPlanes: [], suspended: false, isNew: false });
+    expect(result.state.routes[0]).toMatchObject({ assignedPlanes: [], suspended: false, isNew: false, serviceMultiplier: 2 });
+    expect(result.state.routes[0].frequency).toBeUndefined();
     expect(result.state.routes[0].suggestedPrice).toBeGreaterThan(0);
     expect(result.state.routes[0].price).toBe(result.state.routes[0].suggestedPrice);
     expect(result.state.fleet[0]).toMatchObject({

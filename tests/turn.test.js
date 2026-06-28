@@ -62,6 +62,19 @@ describe('turn progression', () => {
     expect(state.history[0].traitFund).toBe(15);
   });
 
+  it('does not turn spicy bean trait fund into a debt penalty', () => {
+    const state = initState('beijing', 'era3');
+    state.ai = [];
+    state.cash = -1;
+    state.playerTrait = '辣';
+
+    const report = advanceTurnState(state);
+
+    expect(report.traitFund).toBe(0);
+    expect(state._lastTraitFund).toBe(0);
+    expect(state.history[0].traitFund).toBe(0);
+  });
+
   it('completes branch construction when advancing a quarter', () => {
     const state = initState('beijing', 'era3');
     state.ai = [];

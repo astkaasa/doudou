@@ -458,6 +458,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
   .turn-summary{flex-direction:column;width:calc(100vw - 24px);max-height:88dvh;overflow-y:auto}
   .turn-summary .newspaper,.turn-summary .report-card{width:100%;max-width:none;max-height:none}
   .newspaper-body{padding:12px 14px}
+  .milestone-progress{flex-wrap:wrap}
+  .milestone-progress-track{width:min(200px,100%)}
+  .milestone-shelf-grid{grid-template-columns:1fr}
+  .milestone-row{gap:7px;justify-content:space-between}
+  .milestone-row .trophy{width:42px!important;height:42px!important}
+  .milestone-row .trophy svg{width:42px;height:42px}
+  .milestone-label{max-width:48px}
   .tutorial-box{width:calc(100vw - 24px);max-height:92dvh;overflow-y:auto;padding:20px;border-radius:12px}
   .tutorial-box h1{font-size:24px}
   .era-card{width:min(100%,280px)}

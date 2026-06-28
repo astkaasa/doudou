@@ -86,7 +86,7 @@ export function calculateTurnFinancials(state, extraRevenue = 0) {
 
 function rollTraitFund(state) {
   if (state.playerTrait !== '辣') return 0;
-  return Math.floor(state.cash * 0.10);
+  return Math.max(0, Math.floor(state.cash * 0.10));
 }
 
 function advanceCalendar(state) {

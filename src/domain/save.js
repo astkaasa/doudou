@@ -73,7 +73,10 @@ function normalizeUpstreamStateFields(state) {
     if (!Array.isArray(route.assignedPlanes)) route.assignedPlanes = [];
     if (route.suspended === undefined) route.suspended = false;
     if (route.isNew === undefined) route.isNew = false;
-    if (!isPositiveNumber(route.frequency)) route.frequency = 1;
+    if (!isPositiveNumber(route.serviceMultiplier)) {
+      route.serviceMultiplier = isPositiveNumber(route.frequency) ? route.frequency : 1;
+    }
+    delete route.frequency;
     if (!isPositiveNumber(route.suggestedPrice)) route.suggestedPrice = suggestedPrice(route.from, route.to);
     if (!isPositiveNumber(route.price)) route.price = route.suggestedPrice;
     if (!isFiniteNumber(route.loadFactor)) route.loadFactor = 0;

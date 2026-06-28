@@ -27,7 +27,8 @@ describe('route and fleet operations', () => {
     expect(openRoute(state, 'shanghai', 'beijing', 1, 120).ok).toBe(false);
     expect(openRoute(state, 'beijing', 'tokyo', 999, 120).ok).toBe(false);
     expect(availablePlanes(state)).toHaveLength(0);
-    expect(state.routes[0]).toMatchObject({ isNew: true, suspended: false });
+    expect(state.routes[0]).toMatchObject({ isNew: true, suspended: false, serviceMultiplier: 1 });
+    expect(state.routes[0].frequency).toBeUndefined();
 
     updateRouteMetrics(state);
     expect(state.routes[0].revenue).toBeGreaterThanOrEqual(0);

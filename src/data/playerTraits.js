@@ -2,7 +2,7 @@ export const PLAYER_TRAITS = {
   '辣': {
     symbol: '辣',
     name: '辣豆豆',
-    desc: '每季度获得辣豆基金 $1M-$100M 随机收入',
+    desc: '每季度获得当前资金 10% 的辣豆基金收入',
     color: '#f87171',
   },
   '机': {
