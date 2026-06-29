@@ -1,4 +1,4 @@
-import { CITIES, projectCity } from '../data/cities.js';
+import { CITIES, projectCity, projectLonLat } from '../data/cities.js';
 import { WORLD_BOUNDARY_PATH, WORLD_LAND_PATH } from '../data/worldMapPaths.js';
 import { byId, cityDist, clamp, fmt, getCity } from '../domain/helpers.js';
 import terrainMapUrl from '../assets/natural-earth-2-50m.jpg';
@@ -13,6 +13,11 @@ const EDGE_SCROLL_SIZE = 32;
 const EDGE_SCROLL_SPEED = 360;
 const CITY_RADIUS_ZOOM_EXPONENT = 0.88;
 const LABEL_ZOOM_EXPONENT = 0.82;
+const ROUTE_ARC_MIN_SEGMENTS = 16;
+const ROUTE_ARC_MAX_SEGMENTS = 56;
+const ROUTE_ARC_KM_PER_SEGMENT = 450;
+const DEG_TO_RAD = Math.PI / 180;
+const RAD_TO_DEG = 180 / Math.PI;
 const GRID_LONGITUDES = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150];
 const GRID_LATITUDES = [-60, -30, 0, 30, 60];
 
@@ -761,26 +766,114 @@ function isPointNearViewport(x, y, ox, oy, vw, vh) {
 }
 
 function routePoints(a, b, offset = 0) {
-  const x1 = cityX(a) + offset;
-  const y1 = cityY(a);
-  let x2 = cityX(b) + offset;
-  const y2 = cityY(b);
-  const dx = x2 - x1;
-  if (dx > MAP_WIDTH / 2) x2 -= MAP_WIDTH;
-  else if (dx < -MAP_WIDTH / 2) x2 += MAP_WIDTH;
+  const samples = greatCircleSamples(a, b, routeArcSegmentCount(a, b));
+  const points = projectedRoutePoints(samples, offset);
+  const labelPoint = points[Math.floor(points.length / 2)] || points[0] || { x: cityX(a) + offset, y: cityY(a) };
   return {
-    x1,
-    y1,
-    x2,
-    y2,
-    mx: (x1 + x2) / 2,
-    my: (y1 + y2) / 2,
+    d: pointsToPath(points),
+    mx: labelPoint.x,
+    my: labelPoint.y,
   };
 }
 
 function renderRouteLine(a, b, offset, color, className, points = routePoints(a, b, offset)) {
-  return `<line x1="${points.x1}" y1="${points.y1}" x2="${points.x2}" y2="${points.y2}" stroke="${color}" class="${className}"/>`;
+  return `<path d="${points.d}" stroke="${color}" class="${className}"/>`;
 }
+
+function routeArcSegmentCount(a, b) {
+  return Math.round(clamp(cityDist(a, b) / ROUTE_ARC_KM_PER_SEGMENT, ROUTE_ARC_MIN_SEGMENTS, ROUTE_ARC_MAX_SEGMENTS));
+}
+
+function greatCircleSamples(a, b, segments) {
+  const start = latLonToVector(a.lat, a.lon);
+  const end = latLonToVector(b.lat, b.lon);
+  const dot = clamp(start.x * end.x + start.y * end.y + start.z * end.z, -1, 1);
+  const omega = Math.acos(dot);
+  const sinOmega = Math.sin(omega);
+  if (sinOmega < 1e-6) return linearLonLatSamples(a, b, segments);
+
+  const samples = [];
+  for (let i = 0; i <= segments; i += 1) {
+    const t = i / segments;
+    const startWeight = Math.sin((1 - t) * omega) / sinOmega;
+    const endWeight = Math.sin(t * omega) / sinOmega;
+    samples.push(vectorToLatLon({
+      x: start.x * startWeight + end.x * endWeight,
+      y: start.y * startWeight + end.y * endWeight,
+      z: start.z * startWeight + end.z * endWeight,
+    }));
+  }
+  return samples;
+}
+
+function latLonToVector(lat, lon) {
+  const latRad = lat * DEG_TO_RAD;
+  const lonRad = lon * DEG_TO_RAD;
+  const cosLat = Math.cos(latRad);
+  return {
+    x: cosLat * Math.cos(lonRad),
+    y: cosLat * Math.sin(lonRad),
+    z: Math.sin(latRad),
+  };
+}
+
+function vectorToLatLon(vector) {
+  const length = Math.hypot(vector.x, vector.y, vector.z) || 1;
+  const x = vector.x / length;
+  const y = vector.y / length;
+  const z = vector.z / length;
+  return {
+    lat: Math.atan2(z, Math.hypot(x, y)) * RAD_TO_DEG,
+    lon: normalizeLon(Math.atan2(y, x) * RAD_TO_DEG),
+  };
+}
+
+function linearLonLatSamples(a, b, segments) {
+  const lonDelta = wrapLongitudeDelta(b.lon - a.lon);
+  const samples = [];
+  for (let i = 0; i <= segments; i += 1) {
+    const t = i / segments;
+    samples.push({
+      lat: a.lat + (b.lat - a.lat) * t,
+      lon: normalizeLon(a.lon + lonDelta * t),
+    });
+  }
+  return samples;
+}
+
+function projectedRoutePoints(samples, offset) {
+  let previousX = null;
+  return samples.map((sample) => {
+    const projected = projectLonLat(sample.lat, sample.lon);
+    let x = projected.x;
+    if (previousX !== null) {
+      while (x - previousX > 0.5) x -= 1;
+      while (x - previousX < -0.5) x += 1;
+    }
+    previousX = x;
+    return {
+      x: x * MAP_WIDTH + offset,
+      y: projected.y * MAP_HEIGHT,
+    };
+  });
+}
+
+function pointsToPath(points) {
+  return points.map((point, index) => `${index === 0 ? "M" : "L"}${routeCoord(point.x)} ${routeCoord(point.y)}`).join(" ");
+}
+
+function routeCoord(value) {
+  return Number(value.toFixed(2));
+}
+
+function normalizeLon(lon) {
+  return ((((lon + 180) % 360) + 360) % 360) - 180;
+}
+
+function wrapLongitudeDelta(delta) {
+  return ((((delta + 180) % 360) + 360) % 360) - 180;
+}
+
 
 export function describeRouteSelection(cityFrom, cityTo, options = {}) {
   const fromIsBase = options.fromIsBase ?? true;
