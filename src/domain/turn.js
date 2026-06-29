@@ -6,6 +6,7 @@ import { advanceFleetAge } from './fleet.js';
 import { clamp } from './helpers.js';
 import { loanInterest } from './loans.js';
 import { updateRouteMetrics } from './routes.js';
+import { calcStockDividend } from './stocks.js';
 
 export function advanceTurnState(state) {
   if (!state || state.gameOver) return null;
@@ -17,15 +18,18 @@ export function advanceTurnState(state) {
   updateRouteMetrics(state);
   const traitFund = rollTraitFund(state);
   const { totalRev, totalCost, profit, interest } = calculateTurnFinancials(state, traitFund);
+  const stockDividend = calcStockDividend(state);
+  const netProfit = profit + stockDividend;
 
-  state.cash += profit;
+  state.cash += netProfit;
   state.turnRevenue = totalRev;
   state.turnCost = totalCost;
-  state.turnProfit = profit;
-  state.totalProfit += profit;
+  state.turnProfit = netProfit;
+  state.totalProfit += netProfit;
   state._lastTraitFund = traitFund;
+  state._lastStockDividend = stockDividend;
   state.turnsPlayed++;
-  if (profit > 0) {
+  if (netProfit > 0) {
     state.brand = clamp(state.brand + 0.05, 1, 10);
     state.consecutiveProfit = (state.consecutiveProfit || 0) + 1;
   } else {
@@ -42,11 +46,12 @@ export function advanceTurnState(state) {
   state.history.push({
     ...period,
     cash: state.cash,
-    profit,
+    profit: netProfit,
     rev: totalRev,
     cost: totalCost,
     interest,
     traitFund,
+    stockDividend,
     routes: state.routes.length,
     fleet: state.fleet.length,
     branchCompleted,
@@ -59,7 +64,7 @@ export function advanceTurnState(state) {
   });
 
   if (state.cash < -5) state.gameOver = true;
-  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit, interest, traitFund, branchCompleted, gameOver: state.gameOver };
+  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, branchCompleted, gameOver: state.gameOver };
 }
 
 export function calculateTurnFinancials(state, extraRevenue = 0) {

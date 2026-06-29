@@ -27,8 +27,26 @@ const uiState = {
   _buyPlaneMakerKeys: null
 };
 
+function initStockState(era) {
+  const stocks = {};
+  const portfolio = {};
+  const eraNum = parseInt(era.replace('era',''));
+  STOCKS.forEach(s => {
+    const startPrice = s.eraStart[eraNum];
+    if (startPrice !== null) {
+      stocks[s.id] = { price: startPrice, prevPrice: startPrice, history: [startPrice] };
+    }
+  });
+  // 默认持仓1M WAPC（吾爱传媒）——新手即时关注
+  if (stocks['wuer_media']) {
+    portfolio['wuer_media'] = { shares: 1, avgCost: stocks['wuer_media'].price };
+  }
+  return { stocks, portfolio };
+}
+
 function initState(hq, era) {
   const e = ERAS.find(er=>er.id===era)||ERAS[2];
+  const { stocks, portfolio } = initStockState(era);
   return {
     companyName:'豆豆航空', hq:hq, era:era, cash:e.cash, year:e.startYear, quarter:1, endYear:e.endYear,
     oilPrice:e.startOil, prevOilPrice:e.startOil, brand:1, routes:[], fleet:[], fleetMap:{},
@@ -37,6 +55,9 @@ function initState(hq, era) {
     cityStates: initCityStates(era),
     events:[], newsItems:[], lastNewspaperHtml:'',
     disasterRegions:[],
+    stocks: stocks,
+    portfolio: portfolio,
+    stockEvents: [],
     turnProfit:0, turnRevenue:0, turnCost:0, totalProfit:0, turnsPlayed:0, consecutiveProfit:0,
     gameOver:false, selectedCity:null, planeIdCounter:1, history:[], mapZoom:1, mapPanX:0, mapPanY:0,
     onboardStep:0, deliveredThisTurn:[], leaseExpiredThisTurn:[], redPacketClaimed:false,

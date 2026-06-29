@@ -4,6 +4,7 @@ import { ERAS } from '../data/eras.js';
 import { DEFAULT_COMPANY_NAME } from './constants.js';
 import { availablePlaneTemplates } from './fleet.js';
 import { randInt } from './helpers.js';
+import { initStockState } from './stocks.js';
 
 export function initState(hq, era) {
   const e = findEra(era);
@@ -25,6 +26,7 @@ export function createSetupState(companyName, eraId) {
 }
 
 function createBaseState(era, overrides = {}) {
+  const stockState = initStockState(era.id);
   return {
     companyName: DEFAULT_COMPANY_NAME,
     hq: null,
@@ -50,6 +52,9 @@ function createBaseState(era, overrides = {}) {
     events: [],
     newsItems: [],
     cityStates: initCityStates(era.id),
+    stocks: stockState.stocks,
+    portfolio: stockState.portfolio,
+    stockEvents: stockState.stockEvents,
     activeModifiers: [],
     modifierIdCounter: 1,
     turnProfit: 0,
@@ -70,6 +75,7 @@ function createBaseState(era, overrides = {}) {
     deliveredThisTurn: [],
     lastReportData: null,
     _lastTraitFund: 0,
+    _lastStockDividend: 0,
     ...overrides,
   };
 }

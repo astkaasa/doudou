@@ -54,4 +54,20 @@ describe('financial report snapshots', () => {
     expect(html).toContain('客座率 80.0%');
     expect(html).toContain('收 $9.0M / 成 $2.0M');
   });
+
+  it('captures and renders stock portfolio values in report snapshots', () => {
+    const state = initState('beijing', 'era3');
+    state.stocks.wuer_media.price = 60;
+    state._lastStockDividend = 0.2;
+
+    const snapshot = createFinancialReportSnapshot(state);
+    const html = buildFinancialReportHtml(state, 0, 1.2, -1, { year: 2000, quarter: 4 }, 0, snapshot);
+
+    expect(snapshot.stockDividend).toBe(0.2);
+    expect(snapshot.portfolio).toEqual({ marketValue: 60, totalCost: 52, floatingPnL: 8 });
+    expect(html).toContain('证券分红(Q4)');
+    expect(html).toContain('投资收益');
+    expect(html).toContain('$60.0M');
+    expect(html).toContain('+$8.0M');
+  });
 });

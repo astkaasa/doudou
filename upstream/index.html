@@ -59,6 +59,7 @@
   <div id="bottom">
     <span id="season-badge"></span>
     <span id="oil-badge" style="padding:2px 10px;border-radius:10px;font-size:13px;font-weight:600;background:#33415580;color:#fbbf24"></span>
+    <span id="nasdou-badge" style="padding:2px 10px;border-radius:10px;font-size:13px;font-weight:600;background:#33415580;color:#fbbf24;cursor:pointer" onclick="openStockModal()">📈 NASDOU</span>
     <span id="reread-news-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#1e3a5f80;color:#93c5fd;cursor:pointer" onclick="showNewspaper()">📰 上季报纸</span>
     <span id="reread-report-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#16a34a20;color:#4ade80;cursor:pointer" onclick="showReportAlone()">📊 上季财报</span>
     <span style="font-size:13px;color:#7ba3cc" id="bottom-hint">选择总部或分部作为起飞城市</span>
@@ -92,6 +93,7 @@
 
 <script src="data/balance.js"></script>
 <script src="data/constants.js"></script>
+<script src="data/stocks.js"></script>
 <script src="data/city-era-data.js"></script>
 <script src="data/milestones.js"></script>
 <script src="core/state.js"></script>
@@ -102,6 +104,7 @@
 <script src="core/routes.js"></script>
 <script src="core/ai.js"></script>
 <script src="core/events.js"></script>
+<script src="core/stock.js"></script>
 <script src="core/engine.js"></script>
 <script src="core/milestone-engine.js"></script>
 <script src="ui/modals.js"></script>
@@ -113,6 +116,7 @@
 <script src="ui/fleet-panel.js"></script>
 <script src="ui/route-panel.js"></script>
 <script src="ui/report.js"></script>
+<script src="ui/stock.js"></script>
 <script src="ui/branch.js"></script>
 <script src="ui/loan.js"></script>
 <script src="ui/trait.js"></script>
@@ -139,6 +143,11 @@ on('fleet:changed', d => {
 on('turn:advanced', d => {
   applySeasonTheme(); updateHUD(); renderMap(); renderPanel(); updateOnboarding();
   showTurnSummary(d.revenue, d.cost, d.profit, d.year, d.quarter);
+});
+
+on('stock:changed', d => {
+  updateHUD();
+  updateNasdouBadge();
 });
 
 on('turn:warning', d => {

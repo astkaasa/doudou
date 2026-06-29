@@ -1,6 +1,7 @@
 import { byId, fmt, fmtPct, seasonEmoji, seasonName } from '../domain/helpers.js';
 import { loanInterest } from '../domain/loans.js';
 import { createFinancialReportSnapshot } from '../domain/report.js';
+import { calcNasdouIndex } from '../domain/stocks.js';
 import { escapeHtml } from './html.js';
 import { showModal } from './modal.js';
 
@@ -32,6 +33,20 @@ function buildNewspaperHtml(state, includeFooter = true, period = null) {
     </div>
     <div style="margin-top:6px;font-size:11px;color:#4a4a3a;line-height:1.4">${Math.abs(oilChange) < 1 ? '原油价格保持平稳，市场供需基本均衡。' : oilChange > 0 ? '地缘政治紧张叠加季节性需求走强，油价上行压力明显。航空业燃油成本面临考验。' : '产油国增产预期增强，油价承压回落。航空业运营成本有望缓解。'}</div>
   </div>`;
+  if (state.stocks) {
+    const nasdou = calcNasdouIndex(state);
+    const nasdouColor = nasdou > 0.001 ? '#b91c1c' : nasdou < -0.001 ? '#166534' : '#555';
+    const nasdouArrow = nasdou > 0.001 ? '↑' : nasdou < -0.001 ? '↓' : '→';
+    const nasdouSign = nasdou > 0.001 ? '+' : '';
+    html += `<div class="newspaper-item" style="background:#ebe6d6;border:1px solid #8b7355;border-radius:4px;padding:10px;margin-bottom:14px">
+      <span class="cat stock">行情</span>
+      <div class="title">📈 NASDOU 综合指数</div>
+      <div style="margin-top:6px;font-size:13px">
+        <span style="color:${nasdouColor};font-weight:700">${nasdouArrow} ${nasdouSign}${(nasdou * 100).toFixed(1)}%</span>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#4a4a3a;line-height:1.4">${describeNasdouForPaper(nasdou)}</div>
+    </div>`;
+  }
   newsItems.forEach((item) => {
     const catName = { politics: '时政', entertainment: '娱乐', culture: '文化', disaster: '灾害', economy: '财经', tech: '科技', sports: '体育', health: '卫生', ads: '广告', aviation: '航空' }[item.category] || '综合';
     const featured = item.category === 'aviation' ? ' style="background:#ebe6d6;border:1px solid #0284c7;border-radius:4px;padding:10px;margin-bottom:14px"' : '';
@@ -64,9 +79,18 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
   const reportPeriod = period || { year: state.year, quarter: state.quarter };
   const color = profit >= 0 ? '#4ade80' : '#f87171';
   const interest = reportInterest;
+  const stockDividend = snapshot.stockDividend || 0;
   let html = `<h2>上季财报 — ${reportPeriod.year} Q${reportPeriod.quarter} ${seasonEmoji(reportPeriod.quarter)}${seasonName(reportPeriod.quarter)}</h2>
-    <div class="report-section"><div class="report-row"><span>营业收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span style="color:#4ade80">+${fmt(snapshot.traitFund)}</span></div>` : ''}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
+    <div class="report-section"><div class="report-row"><span>营业收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span style="color:#4ade80">+${fmt(snapshot.traitFund)}</span></div>` : ''}${stockDividend > 0 ? `<div class="report-row"><span>证券分红(Q4)</span><span style="color:#fbbf24">+${fmt(stockDividend)}</span></div>` : ''}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
     <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(snapshot.loan)}</span></div>` : ''}<div class="report-row"><span>航线数</span><span>${snapshot.routeCount}</span></div><div class="report-row"><span>机队规模</span><span>${snapshot.fleetCount} 架 (购${snapshot.boughtCount} / 租${snapshot.leasedCount})</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5, Math.floor(snapshot.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${snapshot.oilPrice.toFixed(0)}/桶</span></div></div>`;
+  if (snapshot.portfolio && snapshot.portfolio.marketValue > 0) {
+    const pnl = snapshot.portfolio.floatingPnL || 0;
+    const pnlColor = pnl >= 0 ? '#ef4444' : '#22c55e';
+    html += `<h3>投资收益</h3><div class="report-section">
+      <div class="report-row"><span>持仓市值</span><span>$${snapshot.portfolio.marketValue.toFixed(1)}M</span></div>
+      <div class="report-row"><span>本季浮盈</span><span style="color:${pnlColor}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(1)}M</span></div>
+    </div>`;
+  }
   if (snapshot.routes.length > 0) {
     html += '<h3>基地收益</h3><div class="report-section report-base-section">';
     getBaseRouteTotals(snapshot).forEach((base) => {
@@ -89,6 +113,14 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
     html += '<div style="text-align:center;margin:12px 0 0;position:relative;display:inline-block;width:100%"><button class="delivery-mail" type="button" data-action="show-delivery-popup" title="点击查看飞机交付通知">✉️<span>NEW</span></button></div>';
   }
   return html;
+}
+
+function describeNasdouForPaper(value) {
+  if (value > 0.05) return '市场全面走强，多个板块涨幅显著，投资者信心回升。';
+  if (value < -0.05) return '市场明显承压，资金转向避险，多个板块出现回调。';
+  if (value > 0.005) return '市场小幅上行，各板块波动温和，整体走势偏暖。';
+  if (value < -0.005) return '市场小幅承压，部分板块微跌，投资者观望情绪较浓。';
+  return '股市整体平稳，各板块波动不大，市场交投清淡。';
 }
 
 function getBaseRouteTotals(snapshot) {

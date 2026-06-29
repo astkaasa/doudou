@@ -63,3 +63,22 @@ const LOAN_FEE_RATIO  = 0.05;   // 5% origination fee
 
 // --- Trait: 辣豆基金 ---
 const TRAIT_FUND_RATIO = 0.10;  // 辣豆基金：基于资金10%产生收入
+
+// ===== STOCK MARKET (v2.5: rebalanced — 强内在随机 + 弱新闻主导 + 非对称下行风险) =====
+const STOCK_MAX_CHANGE = 0.20;             // 单季度最大涨跌幅 ±20%
+const STOCK_MEAN_REVERT_THRESHOLD = 0.30;  // 偏离均值30%触发回归 [待测试] (was 0.50)
+const STOCK_MEAN_REVERT_RATE = 0.05;       // 回归速率5%/季度 [待测试] (was 0.02)
+const STOCK_NOISE_RANGE = 0.05;            // 内在随机噪声范围 ±5%×beta [待测试]
+const STOCK_MARKET_SENTIMENT = 0.02;       // 市场情绪范围 ±2% [待测试] (was ±3%)
+const STOCK_NEWS_IMPACT_SCALE = 0.5;       // 新闻板块冲击衰减系数 [待测试]
+const STOCK_RANDOM_CRASH_CHANCE = 0.15;    // 每季度随机板块崩盘概率15% [待测试]
+const STOCK_RANDOM_CRASH_MIN = 0.03;       // 随机崩盘最小幅度3% [待测试]
+const STOCK_RANDOM_CRASH_MAX = 0.08;       // 随机崩盘最大幅度8% [待测试]
+const STOCK_OVERVAL_THRESHOLD = 0.50;      // 高估值阈值：偏离回归目标50% [待测试]
+const STOCK_OVERVAL_PENALTY_RATE = 0.10;   // 高估值惩罚率：超出部分×10% [待测试]
+const STOCK_TRADE_FEE = 0.01;             // 交易手续费1%（买入/卖出双向收取）
+const STOCK_MIN_TRADE = 1;                // 最小交易1M
+const STOCK_MAX_HOLDING = 100;            // 单只股票持仓上限100M
+const STOCK_SECTOR_SHOCK_OIL = 0.08;      // 油价冲击系数
+const STOCK_SECTOR_SHOCK_DISASTER = 0.12; // 灾害冲击系数
+const STOCK_SECTOR_SHOCK_NEWS = 0.05;     // 普通新闻冲击（保留兼容）

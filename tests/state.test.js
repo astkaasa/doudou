@@ -33,4 +33,13 @@ describe('state initialization', () => {
 
     expect(game.redPacketClaimed).toBeUndefined();
   });
+
+  it('initializes the stock market for new games', () => {
+    const game = initState('beijing', 'era3');
+
+    expect(game.stocks.wuer_media).toEqual({ price: 52, prevPrice: 52, history: [52] });
+    expect(game.portfolio.wuer_media).toEqual({ shares: 1, avgCost: 52 });
+    expect(game.stockEvents).toEqual([]);
+    expect(game._lastStockDividend).toBe(0);
+  });
 });

@@ -30,13 +30,13 @@ function generateEvents(){
   fixedOrder.forEach(cat=>{
     const news=pickNews(cat);
     if(!news)return;
-    G.newsItems.push({category:cat,title:news.title,desc:news.desc,effect:news.effect||'',effectFn:news.effectFn||null});
+    G.newsItems.push({category:cat,title:news.title,desc:news.desc,effect:news.effect||'',effectFn:news.effectFn||null,stockEffect:news.stockEffect||null});
     try{if(news.effectFn)news.effectFn();}catch(e){}
   });
   // Ads (50% chance)
   if(Math.random()<0.5){
     const news=pickNews('ads');
-    if(news)G.newsItems.push({category:'ads',title:news.title,desc:news.desc,effect:'',effectFn:null});
+    if(news)G.newsItems.push({category:'ads',title:news.title,desc:news.desc,effect:'',effectFn:null,stockEffect:news.stockEffect||null});
   }
   // Disaster (30% random chance, load factor drops to 0 for affected sub-region)
   if(Math.random()<0.3){
@@ -44,7 +44,7 @@ function generateEvents(){
     G.disasterRegions=G.disasterRegions||[];
     G.disasterRegions.push({region:news.region,subRegion:news.subRegion||null,turns:1});
     const regionLabel=news.subRegion?news.subRegionName:news.regionName;
-    G.newsItems.push({category:'disaster',title:news.title,desc:news.desc,effect:`${regionLabel}航线遭受巨大影响`});
+    G.newsItems.push({category:'disaster',title:news.title,desc:news.desc,effect:`${regionLabel}航线遭受巨大影响`,stockEffect:news.stockEffect||null});
     G.events.push({type:'disaster',text:news.title,severity:'high'});
   }
   // Aviation news: new planes entering service or retiring this year
@@ -57,4 +57,6 @@ function generateEvents(){
     const names=retiring.map(p=>p.name).join('、');
     G.newsItems.push({category:'aviation',title:`经典机型正式退役`,desc:`${names}结束了数十年的商业飞行生涯，正式退出航线运营。航空界对这一历史性时刻表达了深切的怀念。`,effect:''});
   }
+  // ── 股价波动 ──
+  updateStockPrices();
 }

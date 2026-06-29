@@ -2,6 +2,7 @@ import { NEWS_POOL } from '../data/news.js';
 import { PLANES } from '../data/planes.js';
 import { clamp, fmtPct, getCity, rand, randInt } from './helpers.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, advanceActiveModifiers, selectRouteKeys } from './modifiers.js';
+import { updateStockPrices } from './stocks.js';
 
 export function generateEvents(state) {
   state.events = [];
@@ -30,7 +31,7 @@ export function generateEvents(state) {
     } while (picked.has(news.title) && tries < 10);
     if (picked.has(news.title)) continue;
     picked.add(news.title);
-    const item = { category: cat, title: news.title, desc: news.desc, effect: news.effect };
+    const item = { category: cat, title: news.title, desc: news.desc, effect: news.effect, stockEffect: news.stockEffect || null };
     state.newsItems.push(item);
     try {
       news.effectFn?.({
@@ -55,6 +56,7 @@ export function generateEvents(state) {
       title: '新一代客机投入商业运营',
       desc: `${newService.map((plane) => plane.name).join('、')}正式投入商业服务，多家航空公司已下达订单。`,
       effect: '',
+      stockEffect: { tech: 0.04, finance: 0.02 },
     });
   } else if (retiring.length > 0) {
     state.newsItems.push({
@@ -62,8 +64,10 @@ export function generateEvents(state) {
       title: '经典机型正式退役',
       desc: `${retiring.map((plane) => plane.name).join('、')}结束商业飞行生涯，正式退出航线运营。`,
       effect: '',
+      stockEffect: { tourism: -0.01 },
     });
   }
+  updateStockPrices(state);
 }
 
 export function advanceTemporaryModifiers(state) {

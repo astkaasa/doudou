@@ -67,4 +67,10 @@ describe('news event effects', () => {
       scope: { kind: 'all' },
     });
   });
+
+  it('keeps stock effects as news metadata separate from route modifiers', () => {
+    const recession = NEWS_POOL.economy.find((item) => item.title.includes('全球股市暴跌'));
+
+    expect(recession.stockEffect).toEqual({ finance: -0.08, tech: -0.05, tourism: -0.04 });
+  });
 });

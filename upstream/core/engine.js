@@ -36,8 +36,12 @@ function advanceTurn(){
   let traitFund=0;
   if(G.playerTrait==='辣'){traitFund=Math.floor(G.cash*TRAIT_FUND_RATIO);}
   const profit=totalRev-totalCost+traitFund;G.cash+=profit;
-  G.turnRevenue=totalRev;G.turnCost=totalCost;G.turnProfit=profit;G.totalProfit+=profit;G.turnsPlayed++;
+  // ── Q4 股票分红结算 ──
+  let stockDividend=0;
+  if(G.quarter===4){stockDividend=calcDividend();if(stockDividend>0){G.cash+=stockDividend;}}
+  G.turnRevenue=totalRev;G.turnCost=totalCost;G.turnProfit=profit+stockDividend;G.totalProfit+=profit+stockDividend;G.turnsPlayed++;
   if(traitFund>0)G._lastTraitFund=traitFund; else G._lastTraitFund=0;
+  G._lastStockDividend=stockDividend;
   G._lastBranchCompleted=branchCompleted.length>0?branchCompleted:[];
   if(profit>0){G.brand=clamp(G.brand+BRAND_PROFIT_GAIN,1,10);G.consecutiveProfit=(G.consecutiveProfit||0)+1;}
   else{G.brand=clamp(G.brand-BRAND_LOSS_DROP,1,10);G.consecutiveProfit=0;}

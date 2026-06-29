@@ -159,6 +159,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .season-q2 #season-badge{background:#c2410c60;color:#fb923c}
 .season-q3 #season-badge{background:#a1620760;color:#fbbf24}
 .season-q4 #season-badge{background:#1d4ed860;color:#93c5fd}
+#nasdou-badge{border:0;border-radius:10px;background:#33415580;color:#fbbf24;padding:2px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+#nasdou-badge:hover,#nasdou-badge:focus-visible{background:#475569;color:#fde68a;outline:none}
+#nasdou-badge[hidden]{display:none}
 #advance-btn{margin-left:auto;padding:6px 24px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.1s}
 #advance-btn:hover{transform:scale(1.05)}
 #advance-btn:active{transform:scale(0.97)}
@@ -229,6 +232,52 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .loan-info{background:#0a1628;border-radius:8px;padding:12px;margin:8px 0}
 .loan-row{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid #1a2d48}
 .loan-row:last-child{border:none}
+.stock-modal{max-width:960px;width:min(95vw,960px);max-height:84vh;padding:18px;overflow:auto}
+.stock-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.stock-modal-head h2{margin:0;color:#fbbf24;font-size:18px}
+.stock-modal-head span{display:block;color:#94a3b8;font-size:12px;margin-top:3px}
+.stock-close{background:#334155;color:#e0e8f0;flex:0 0 auto}
+.stock-index{display:flex;align-items:center;gap:10px;border:1px solid #1e3a5f;border-radius:8px;background:#0a1628;padding:8px 10px;margin-bottom:12px}
+.stock-index span{color:#94a3b8;font-size:12px}
+.stock-index strong{font-size:15px}
+.stock-index small{color:#7ba3cc;font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stock-modal .up{color:#ef4444!important}
+.stock-modal .down{color:#22c55e!important}
+.stock-modal .flat{color:#fbbf24!important}
+.stock-market-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:14px;align-items:start}
+.stock-list{min-width:0}
+.stock-table-head,.stock-row{display:grid;grid-template-columns:48px minmax(76px,1fr) 58px 54px 80px 42px 58px;gap:8px;align-items:center}
+.stock-table-head{padding:0 8px 5px;color:#64748b;font-size:11px;border-bottom:1px solid #33415580;margin-bottom:4px}
+.stock-row{width:100%;min-height:34px;border:1px solid transparent;border-radius:6px;background:transparent;color:#e0e8f0;padding:5px 8px;margin-bottom:3px;text-align:left;cursor:pointer}
+.stock-row:hover,.stock-row:focus-visible{background:#162d50;outline:none}
+.stock-row.selected{background:#33415580;border-color:var(--sector-color)}
+.stock-code{color:var(--sector-color);font-weight:800;font-size:12px}
+.stock-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.stock-price,.stock-change,.stock-holding,.stock-cost{text-align:right;font-size:12px;white-space:nowrap}
+.stock-price{font-weight:700}
+.stock-holding{color:#fbbf24;font-weight:700}
+.stock-cost{color:#94a3b8}
+.stock-bars{width:80px;height:16px;display:block}
+.stock-bars.empty{display:inline-block}
+.stock-trade{border:1px solid #1e3a5f;border-radius:10px;background:#0a1628;padding:12px;min-width:0}
+.stock-detail{border-left:3px solid var(--sector-color);padding-left:9px;margin-bottom:10px}
+.stock-detail h3{margin:0 0 3px;color:var(--sector-color);font-size:15px}
+.stock-meta{font-size:12px;color:#94a3b8}
+.stock-price-line,.stock-position{display:flex;justify-content:space-between;gap:10px;margin-top:7px;font-size:12px;color:#cfe3f6}
+.stock-price-line strong{font-size:14px}
+.stock-actions{border-top:1px solid #1e3a5f;padding-top:9px;margin-top:9px}
+.stock-actions strong{display:block;color:#94a3b8;font-size:12px;margin-bottom:6px}
+.stock-action-row{display:flex;gap:5px;flex-wrap:wrap}
+.stock-buy{background:#16a34a;color:#fff}
+.stock-sell{background:#b91c1c;color:#fff}
+.stock-actions small{display:block;color:#64748b;font-size:11px;margin-top:5px}
+.stock-portfolio{border:1px solid #fbbf2460;border-radius:8px;padding:9px 10px;margin-top:12px}
+.stock-portfolio>strong{display:block;color:#fbbf24;font-size:12px;margin-bottom:6px}
+.stock-portfolio div{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-top:3px}
+.stock-portfolio span{color:#94a3b8}
+.stock-cash{border-top:1px solid #1e3a5f;margin-top:10px;padding-top:8px;color:#7ba3cc;font-size:13px}
+.stock-cash strong{color:#4ade80;font-size:15px}
+.stock-empty{color:#64748b;text-align:center;padding:20px 0;font-size:13px}
 .branch-chip{display:flex;align-items:center;gap:4px;background:#3b82f620;border:1px solid #3b82f660;border-radius:4px;padding:4px 8px}
 .branch-chip span{color:#93c5fd;font-size:12px}
 .branch-chip small{color:#7ba3cc;font-size:10px}
@@ -421,6 +470,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .newspaper-item .cat.health{background:#0d9488;color:#fff}
 .newspaper-item .cat.ads{background:#16a34a;color:#fff}
 .newspaper-item .cat.oil{background:#1a1a1a;color:#fff}
+.newspaper-item .cat.stock{background:#dc2626;color:#fff}
 .newspaper-item .cat.aviation{background:#0284c7;color:#fff}
 .newspaper-item .title{font-size:14px;font-weight:700;margin:4px 0 2px}
 .newspaper-item .desc{font-size:12px;color:#4a4a3a;line-height:1.5}
@@ -497,6 +547,13 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
   .market-card{padding:7px}
   .market-bar{grid-template-columns:34px minmax(0,1fr) 32px}
   .newspaper{min-width:0;width:calc(100vw - 24px);max-width:none}
+  .stock-modal{width:calc(100vw - 24px);max-width:none;max-height:88dvh;padding:14px}
+  .stock-market-layout{grid-template-columns:1fr}
+  .stock-table-head{display:none}
+  .stock-row{grid-template-columns:48px minmax(86px,1fr) 60px 54px;gap:7px;min-height:44px}
+  .stock-row .stock-bars,.stock-row .stock-holding,.stock-row .stock-cost{display:none}
+  .stock-index{align-items:flex-start;flex-wrap:wrap}
+  .stock-index small{flex:1 1 100%;white-space:normal}
   .turn-summary{flex-direction:column;width:calc(100vw - 24px);max-height:88dvh;overflow-y:auto}
   .turn-summary .newspaper,.turn-summary .report-card{width:100%;max-width:none;max-height:none}
   .newspaper-body{padding:12px 14px}

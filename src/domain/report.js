@@ -1,11 +1,13 @@
 import { countBoughtPlanes, countLeasedPlanes } from './fleet.js';
 import { getCity } from './helpers.js';
+import { calcPortfolioValue } from './stocks.js';
 
 export function createFinancialReportSnapshot(state) {
   const routes = Array.isArray(state.routes) ? state.routes : [];
   const fleet = Array.isArray(state.fleet) ? state.fleet : [];
   const deliveredThisTurn = Array.isArray(state.deliveredThisTurn) ? state.deliveredThisTurn : [];
   const safeState = { ...state, routes, fleet };
+  const portfolio = calcPortfolioValue(state);
 
   return {
     cash: state.cash,
@@ -19,6 +21,8 @@ export function createFinancialReportSnapshot(state) {
     brand: state.brand,
     oilPrice: state.oilPrice,
     traitFund: state._lastTraitFund || 0,
+    stockDividend: state._lastStockDividend || 0,
+    portfolio,
     deliveredThisTurn: deliveredThisTurn.map((plane) => ({ ...plane })),
     routes: routes.map((route) => ({
       from: route.from,

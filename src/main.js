@@ -50,10 +50,13 @@ import {
   showRoutePriceAdjust,
   showRouteResumeConfirm,
   showRouteSuspendConfirm,
+  showStockMarket,
   toggleRouteListSort,
   updateAdjustedPriceDisplay,
   showTurnSummary,
   updatePricePreview,
+  buyStockFromModal,
+  sellStockFromModal,
 } from './ui/modals.js';
 import {
   hideTutorial,
@@ -585,6 +588,28 @@ function repaySelectedLoan(target) {
   updateMilestones();
 }
 
+function buySelectedStock(target) {
+  const result = buyStockFromModal(G, target.dataset.stockId, Number(target.dataset.shares));
+  if (!result.ok) {
+    showBanner(result.message, '#b91c1c');
+    return;
+  }
+  updateHUD(G);
+  renderPanel(G, uiState);
+  showBanner(`买入 ${result.stock.code} ${target.dataset.shares}M，花费 ${fmt(result.totalCost)}`, '#16a34a');
+}
+
+function sellSelectedStock(target) {
+  const result = sellStockFromModal(G, target.dataset.stockId, Number(target.dataset.shares));
+  if (!result.ok) {
+    showBanner(result.message, '#b91c1c');
+    return;
+  }
+  updateHUD(G);
+  renderPanel(G, uiState);
+  showBanner(`卖出 ${result.stock.code} ${target.dataset.shares}M，到账 ${fmt(result.netRevenue)}`, '#d97706');
+}
+
 function advanceTurn() {
   if (!G || G.gameOver) return;
   const report = advanceTurnState(G);
@@ -641,6 +666,18 @@ function handleClick(event) {
       break;
     case 'open-loan-modal':
       if (G) showLoanModal(G);
+      break;
+    case 'open-stock-market':
+      if (G) showStockMarket(G);
+      break;
+    case 'select-stock':
+      if (G) showStockMarket(G, target.dataset.stockId);
+      break;
+    case 'buy-stock':
+      if (G) buySelectedStock(target);
+      break;
+    case 'sell-stock':
+      if (G) sellSelectedStock(target);
       break;
     case 'open-branch-modal':
       if (G) showBranchModal(G);

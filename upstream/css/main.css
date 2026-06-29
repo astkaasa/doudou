@@ -181,6 +181,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--c-bg-dark);color:v
 .newspaper-item .cat.economy{background:#2563eb;color:#fff}
 .newspaper-item .cat.ads{background:#16a34a;color:#fff}
 .newspaper-item .cat.oil{background:#1a1a1a;color:#fff}
+.newspaper-item .cat.stock{background:#dc2626;color:#fff}
 .newspaper-item .cat.aviation{background:#0284c7;color:#fff}
 .newspaper-item .title{font-size:14px;font-weight:700;margin:4px 0 2px}
 .newspaper-item .desc{font-size:12px;color:#4a4a3a;line-height:1.5}

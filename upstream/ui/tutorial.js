@@ -118,7 +118,7 @@ function loadGameFromTutorial(){
 // ===== SAVE MIGRATION =====
 function migrateSave(data){
   const g=data.g;
-  const defaults={loan:0,loanRate:LOAN_RATE,disasterRegions:[],branches:[],branchesConstructing:[],deliveredThisTurn:[],redPacketClaimed:false,_newsUsedPerYear:{},consecutiveProfit:0,lastNewspaperHtml:'',leaseExpiredThisTurn:[],playerTrait:null,traitChosen:false,_lastTraitFund:0,_lastBranchCompleted:[],milestones:{}};
+  const defaults={loan:0,loanRate:LOAN_RATE,disasterRegions:[],branches:[],branchesConstructing:[],deliveredThisTurn:[],redPacketClaimed:false,_newsUsedPerYear:{},consecutiveProfit:0,lastNewspaperHtml:'',leaseExpiredThisTurn:[],playerTrait:null,traitChosen:false,_lastTraitFund:0,_lastBranchCompleted:[],milestones:{},stocks:{},portfolio:{},stockEvents:[],_lastStockDividend:0};
   Object.entries(defaults).forEach(([k,v])=>{if(g[k]===undefined)g[k]=typeof v==='object'?JSON.parse(JSON.stringify(v)):v;});
   // Ensure cityStates exists for old saves
   if(!g.cityStates){g.cityStates=initCityStates(g.era);}
@@ -141,7 +141,7 @@ function migrateSave(data){
 function saveGame(){
   if(!G){showBanner('游戏尚未开始，无法存档','#dc2626');return;}
   try{
-    const saveData=JSON.stringify({v:8,ts:Date.now(),g:G});
+    const saveData=JSON.stringify({v:9,ts:Date.now(),g:G});
     localStorage.setItem('skyline_save',saveData);
     let slots=JSON.parse(localStorage.getItem('skyline_slots')||'[]');
     const info={ts:Date.now(),company:G.companyName,year:G.year,quarter:G.quarter,cash:G.cash,routes:G.routes.length,fleet:G.fleet.length};

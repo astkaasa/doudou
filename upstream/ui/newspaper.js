@@ -27,6 +27,22 @@ function buildNewspaperHtml(includeFooter,settledYear,settledQuarter){
     </div>
     <div style="margin-top:6px;font-size:11px;color:#4a4a3a;line-height:1.4">${Math.abs(oilChange)<1?'原油价格保持平稳，市场供需基本均衡。':oilChange>0?'地缘政治紧张叠加季节性需求走强，油价上行压力明显。':'产油国增产预期增强，油价承压回落。'}</div>
   </div>`;
+  // NASDOU 股市行情模块（石油行情之后）
+  if(G.stocks){
+    const nasdou=calcNasdouIndex();
+    const nasdouPct=(nasdou*100).toFixed(1);
+    const nasdouSign=nasdou>0.001?'+':'';
+    const nasdouColor=nasdou>0.001?'#b91c1c':nasdou<-0.001?'#166534':'#555';
+    const nasdouArrow=nasdou>0.001?'↑':nasdou<-0.001?'↓':'→';
+    html+=`<div class="newspaper-item" style="background:#ebe6d6;border:1px solid #8b7355;border-radius:4px;padding:10px;margin-bottom:14px">
+      <span class="cat stock">行情</span>
+      <div class="title">📈 NASDOU 综合指数</div>
+      <div style="margin-top:6px;font-size:13px">
+        <span style="color:${nasdouColor};font-weight:700">${nasdouArrow} ${nasdouSign}${nasdouPct}%</span>
+      </div>
+      <div style="margin-top:6px;font-size:11px;color:#4a4a3a;line-height:1.4">${getNasdouDesc(nasdou)}</div>
+    </div>`;
+  }
   // News items in correct order: politics, economy, culture, ads, disaster
   const order=['aviation','politics','economy','culture','ads','disaster'];
   const catName={politics:'时政',economy:'财经',culture:'文化',aviation:'航空',ads:'广告',disaster:'灾害'};
@@ -66,4 +82,27 @@ function showNewspaper(){
   G.lastNewspaperHtml=html;
   $('modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()" style="align-items:flex-start;padding-top:40px;overflow-y:auto"><div style="max-height:82vh;overflow-y:auto">${html}</div></div>`;
   $('reread-news-btn').style.display='';
+}
+
+// 根据NASDOU指数涨跌幅返回3档动态描述
+function getNasdouDesc(nasdou){
+  const pct=Math.abs(nasdou)*100;
+  // 大涨(>5%): 市场强势，多数板块大涨
+  if(nasdou>0.05){
+    const lines=['市场全面走强，各板块普涨，投资者信心高涨。','资金大规模流入，多个板块涨幅显著，市场呈现强势格局。','利好消息密集释放，市场做多情绪浓厚，指数大幅上扬。'];
+    return lines[Math.floor(Math.random()*lines.length)];
+  }
+  // 大跌(>5%): 市场承压，恐慌抛售
+  if(nasdou<-0.05){
+    const lines=['市场大幅下挫，恐慌性抛售蔓延，投资者纷纷避险。','多重利空叠加，各板块深度回调，市场信心遭受重创。','资金加速撤离，指数暴跌，市场笼罩在悲观情绪中。'];
+    return lines[Math.floor(Math.random()*lines.length)];
+  }
+  // 平稳(-5%~+5%): 波动不大/小幅涨跌
+  if(nasdou>0.005){
+    return '市场小幅上行，各板块波动温和，整体走势偏暖。';
+  }
+  if(nasdou<-0.005){
+    return '市场小幅承压，部分板块微跌，投资者观望情绪较浓。';
+  }
+  return '股市整体平稳，各板块波动不大，市场交投清淡。';
 }

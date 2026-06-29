@@ -1,6 +1,7 @@
 import { PLAYER_TRAITS } from '../data/playerTraits.js';
 import { byId, fmt, fmtPct, getCity } from '../domain/helpers.js';
 import { getMilestoneStats } from '../domain/milestones.js';
+import { calcNasdouIndex } from '../domain/stocks.js';
 
 export function updateHUD(state) {
   const companyEl = byId('hud-company-name');
@@ -56,4 +57,19 @@ export function updateHUD(state) {
       loanWrap.style.display = 'none';
     }
   }
+  updateNasdouBadge(state);
+}
+
+export function updateNasdouBadge(state) {
+  const badge = byId('nasdou-badge');
+  if (!badge) return;
+  if (!state?.stocks) {
+    badge.hidden = true;
+    return;
+  }
+  badge.hidden = false;
+  const nasdou = calcNasdouIndex(state);
+  const color = nasdou > 0.001 ? '#ef4444' : nasdou < -0.001 ? '#22c55e' : '#fbbf24';
+  const sign = nasdou > 0.001 ? '+' : '';
+  badge.innerHTML = `📈 NASDOU <span style="color:${color};font-size:10px">${sign}${(nasdou * 100).toFixed(1)}%</span>`;
 }

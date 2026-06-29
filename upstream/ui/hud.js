@@ -4,6 +4,7 @@ function applySeasonTheme(){
   app.classList.add('season-q'+G.quarter);
   $('season-badge').textContent=seasonEmoji(G.quarter)+' '+seasonName(G.quarter);
   updateOilBadge();
+  updateNasdouBadge();
 }
 function updateOilBadge(){
   const ob=$('oil-badge');
@@ -44,4 +45,5 @@ function updateHUD(){
     if(G.loan>0){loanWrap.style.display='flex';$('hud-loan').textContent=fmt(G.loan);}
     else{loanWrap.style.display='none';}
   }
+  // v2.5: 顶部HUD不再显示证券市值（改由底部NASDOU徽章+证券市场Modal展示）
 }

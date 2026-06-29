@@ -122,6 +122,52 @@ describe('save migration', () => {
     expect(loadGameState(memoryStorage(invalidRaw)).state.pendingTraitChoices).toBeNull();
   });
 
+  it('adds normalized stock state to older saves without granting starter holdings', () => {
+    const raw = JSON.stringify({
+      v: 8,
+      g: {
+        era: 'era3',
+        routes: [],
+        fleet: [],
+        stocks: {
+          lan_royal_bank: { price: 130, prevPrice: 128, history: [128, 130] },
+        },
+        portfolio: {
+          lan_royal_bank: { shares: 200, avgCost: 120 },
+          missing_stock: { shares: 1, avgCost: 1 },
+        },
+      },
+    });
+
+    const result = loadGameState(memoryStorage(raw));
+
+    expect(result.ok).toBe(true);
+    expect(result.state.stocks.lan_royal_bank).toEqual({ price: 130, prevPrice: 128, history: [128, 130] });
+    expect(result.state.stocks.qw_eco).toEqual({ price: 123, prevPrice: 123, history: [123] });
+    expect(result.state.portfolio).toEqual({ lan_royal_bank: { shares: 100, avgCost: 120 } });
+    expect(result.state.stockEvents).toEqual([]);
+    expect(result.state._lastStockDividend).toBe(0);
+  });
+
+  it('initializes missing stock prices for old saves with an empty portfolio', () => {
+    const raw = JSON.stringify({
+      v: 8,
+      g: {
+        era: 'era2',
+        routes: [],
+        fleet: [],
+      },
+    });
+
+    const result = loadGameState(memoryStorage(raw));
+
+    expect(result.ok).toBe(true);
+    expect(result.state.stocks.wuer_media.price).toBe(52);
+    expect(result.state.stocks.hhyy_tech.price).toBe(80);
+    expect(result.state.stocks.qw_eco).toBeUndefined();
+    expect(result.state.portfolio).toEqual({});
+  });
+
   it('persists official report data while dropping legacy transient report cache', () => {
     const storage = writableStorage();
     const state = {

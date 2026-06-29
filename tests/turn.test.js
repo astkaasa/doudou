@@ -62,6 +62,25 @@ describe('turn progression', () => {
     expect(state.history[0].traitFund).toBe(15);
   });
 
+  it('settles stock dividends in Q4 profit without inflating operating revenue', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const state = initState('beijing', 'era3');
+    state.ai = [];
+    state.fleet = [];
+    state.routes = [];
+    state.quarter = 4;
+
+    const report = advanceTurnState(state);
+
+    expect(report.stockDividend).toBe(0.2);
+    expect(report.rev).toBe(0);
+    expect(report.cost).toBeCloseTo(1.2);
+    expect(report.profit).toBeCloseTo(-1.0);
+    expect(state._lastStockDividend).toBe(0.2);
+    expect(state.turnProfit).toBeCloseTo(-1.0);
+    expect(state.history[0].stockDividend).toBe(0.2);
+  });
+
   it('does not turn spicy bean trait fund into a debt penalty', () => {
     const state = initState('beijing', 'era3');
     state.ai = [];

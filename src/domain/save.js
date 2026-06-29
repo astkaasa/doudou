@@ -3,6 +3,7 @@ import { normalizeCityStates } from '../data/cityEraData.js';
 import { suggestedPrice } from './economy.js';
 import { normalizeMilestoneState } from './milestones.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, normalizeModifierState } from './modifiers.js';
+import { normalizeStockState } from './stocks.js';
 import { PLAYER_TRAIT_SYMBOLS, normalizePlayerTrait } from '../data/playerTraits.js';
 
 export function saveGameState(state, storage = localStorage) {
@@ -52,6 +53,7 @@ function normalizeUpstreamStateFields(state) {
   state.branchesConstructing = normalizeConstructingBranches(state);
   state.cityStates = normalizeCityStates(state);
   normalizeMilestoneState(state);
+  normalizeStockState(state);
   if (!Array.isArray(state.deliveredThisTurn)) state.deliveredThisTurn = [];
   if (state.redPacketClaimed === undefined) state.redPacketClaimed = false;
   state.playerTrait = normalizePlayerTrait(state.playerTrait);

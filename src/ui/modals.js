@@ -24,3 +24,8 @@ export {
   updateAdjustedPriceDisplay,
   updatePricePreview,
 } from './routeModals.js';
+export {
+  buyStockFromModal,
+  sellStockFromModal,
+  showStockMarket,
+} from './stockModals.js';
