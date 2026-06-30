@@ -62,7 +62,7 @@ const LOAN_RATE       = 0.02;   // quarterly
 const LOAN_FEE_RATIO  = 0.05;   // 5% origination fee
 
 // --- Trait: 辣豆基金 ---
-const TRAIT_FUND_RATIO = 0.10;  // 辣豆基金：基于资金10%产生收入
+const TRAIT_FUND_RATIO = 0.025; // 辣豆基金：基于资金2.5%产生收入
 
 // ===== STOCK MARKET (v2.5: rebalanced — 强内在随机 + 弱新闻主导 + 非对称下行风险) =====
 const STOCK_MAX_CHANGE = 0.20;             // 单季度最大涨跌幅 ±20%

@@ -56,10 +56,10 @@ describe('turn progression', () => {
 
     const report = advanceTurnState(state);
 
-    expect(report.traitFund).toBe(15);
-    expect(state._lastTraitFund).toBe(15);
-    expect(state.turnRevenue).toBe(15);
-    expect(state.history[0].traitFund).toBe(15);
+    expect(report.traitFund).toBe(3);
+    expect(state._lastTraitFund).toBe(3);
+    expect(state.turnRevenue).toBe(3);
+    expect(state.history[0].traitFund).toBe(3);
   });
 
   it('settles stock dividends in Q4 profit without inflating operating revenue', () => {

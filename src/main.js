@@ -24,6 +24,7 @@ import { advanceTurnState } from './domain/turn.js';
 import { updateHUD } from './ui/hud.js';
 import { closeModalRoot, showBanner, showModal } from './ui/modal.js';
 import { showMilestoneList, showMilestoneNotification } from './ui/milestones.js';
+import { showVersionLog } from './ui/versionLog.js';
 import { describeRouteSelection, initMapDrag, renderMap, setMapZoom } from './ui/map.js';
 import { showRouteCreateInfo as renderRouteCreateInfo, hideRouteCreateInfo, renderPanel, renderRouteCityPicker } from './ui/panel.js';
 import { applySeasonTheme } from './ui/season.js';
@@ -645,6 +646,9 @@ function handleClick(event) {
       break;
     case 'tutorial-next-step':
       tutorialNextStep();
+      break;
+    case 'show-version-log':
+      showVersionLog();
       break;
     case 'cancel-hq-select':
       cancelHQSelect();

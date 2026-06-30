@@ -28,6 +28,7 @@ function initTutorial(){
     eraSel.appendChild(card);
   });
   selectedEra=ERAS[2].id;
+  const vn=$('ver-num'); if(vn) vn.textContent=typeof GAME_VERSION!=='undefined'?GAME_VERSION:'?';
 }
 
 function tutorialNextStep(){
@@ -195,4 +196,50 @@ function startGame(){
   applySeasonTheme();renderMap();updateHUD();renderPanel();updateOnboarding();
   // Show player trait envelope on first turn
   showTraitEnvelope();
+}
+
+// ===== VERSION LOG =====
+function showVersionLog(){
+  if(typeof VERSION_LOG==='undefined') return;
+  const cur = VERSION_LOG[0];
+
+  // Section definitions: key → [label, color]
+  const SECTIONS = [
+    ['new',     '新功能',     '#fbbf24'],
+    ['balance', '平衡调整',   '#4ade80'],
+    ['fix',     '修复',       '#93c5fd'],
+    ['ui',      '界面',       '#c084fc'],
+  ];
+
+  let body = '';
+  SECTIONS.forEach(([key, label, color]) => {
+    const list = cur[key];
+    if(!list || !list.length) return;
+    body += `<div style="margin-bottom:14px">`
+          + `<div style="font-weight:700;font-size:14px;color:${color};margin-bottom:6px">${label}</div>`;
+    list.forEach(txt => {
+      body += `<div style="font-size:13px;color:#c0d0e0;padding:3px 0 3px 16px;border-left:2px solid ${color}40">• ${txt}</div>`;
+    });
+    body += `</div>`;
+  });
+
+  // Use z-index:250 to sit above #tutorial (z-index:200)
+  $('modal-root').innerHTML = `
+    <div class="modal-overlay" style="z-index:250" onclick="if(event.target===this)closeVersionLog()">
+      <div class="modal" style="position:relative;min-width:420px;max-width:520px">
+        <button onclick="closeVersionLog()" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#7ba3cc;font-size:18px;cursor:pointer;padding:4px;transition:color 0.15s" onmouseover="this.style.color='#e0e8f0'" onmouseout="this.style.color='#7ba3cc'">✕</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding-right:28px">
+          <h2 style="margin:0">更新日志</h2>
+          <span style="color:#fbbf24;font-weight:700;font-family:monospace;font-size:15px">v${cur.ver}</span>
+        </div>
+        <div style="font-size:11px;color:#556;margin-bottom:14px">${cur.date}</div>
+        ${body}
+        <div style="text-align:center;margin-top:16px">
+          <button class="btn" style="background:#334155;color:#e0e8f0;padding:6px 24px;font-size:13px;border-radius:6px" onclick="closeVersionLog()">关闭</button>
+        </div>
+      </div>
+    </div>`;
+}
+function closeVersionLog(){
+  $('modal-root').innerHTML = '';
 }

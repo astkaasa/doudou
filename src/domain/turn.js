@@ -3,6 +3,7 @@ import { growCityStates } from '../data/cityEraData.js';
 import { advanceBranchConstruction } from './bases.js';
 import { advanceTemporaryModifiers, generateEvents } from './events.js';
 import { advanceFleetAge } from './fleet.js';
+import { SPICY_TRAIT_FUND_RATIO } from './constants.js';
 import { clamp } from './helpers.js';
 import { loanInterest } from './loans.js';
 import { updateRouteMetrics } from './routes.js';
@@ -91,7 +92,7 @@ export function calculateTurnFinancials(state, extraRevenue = 0) {
 
 function rollTraitFund(state) {
   if (state.playerTrait !== '辣') return 0;
-  return Math.max(0, Math.floor(state.cash * 0.10));
+  return Math.max(0, Math.floor(state.cash * SPICY_TRAIT_FUND_RATIO));
 }
 
 function advanceCalendar(state) {

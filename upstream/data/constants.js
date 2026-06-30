@@ -318,7 +318,7 @@ const ERAS = [
 
 // ===== TRAIT INFO =====
 const TRAIT_INFO={
-  '辣':{name:'辣豆豆',desc:'每季度获得辣豆基金，金额为当前资金的10%',color:'#f87171'},
+  '辣':{name:'辣豆豆',desc:'每季度获得辣豆基金，金额为当前资金的2.5%',color:'#f87171'},
   '机':{name:'呼呼 ✈',desc:'所有执飞飞机维护费降低10%',color:'#60a5fa'},
   '豆':{name:'OIL 🛢',desc:'所有执飞飞机油耗降低10%',color:'#4ade80'}
 };

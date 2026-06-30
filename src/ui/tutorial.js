@@ -1,4 +1,5 @@
 import { ERAS } from '../data/eras.js';
+import { GAME_VERSION } from '../data/version.js';
 import { byId } from '../domain/helpers.js';
 
 export function initTutorial(selectedEra) {
@@ -12,6 +13,8 @@ export function initTutorial(selectedEra) {
     card.innerHTML = `<div class="era-name">${era.name}</div><div class="era-desc">${era.desc}</div><div class="era-detail">${era.detail}</div>`;
     eraSel.appendChild(card);
   });
+  const versionNumber = byId('ver-num');
+  if (versionNumber) versionNumber.textContent = `v${GAME_VERSION}`;
 }
 
 export function selectEraCard(eraId) {

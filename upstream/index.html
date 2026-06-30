@@ -87,10 +87,12 @@
     <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;align-items:center">
       <button class="btn" onclick="tutorialNextStep()" id="era-next-btn" style="padding:12px 56px;font-size:16px;font-weight:700;border-radius:8px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(34,197,94,0.3);transition:all 0.2s;letter-spacing:1px">开始游戏</button>
       <button class="btn" style="background:#7c3aed;color:#fff;padding:8px 20px;font-size:13px;font-weight:600;border-radius:6px" onclick="loadGameFromTutorial()">📂 读取存档</button>
+      <span class="ver-badge" onclick="showVersionLog()">Version：<span id="ver-num"></span> 📋</span>
     </div>
   </div>
 </div>
 
+<script src="data/version.js"></script>
 <script src="data/balance.js"></script>
 <script src="data/constants.js"></script>
 <script src="data/stocks.js"></script>
