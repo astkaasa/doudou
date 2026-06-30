@@ -60,11 +60,17 @@ import {
   sellStockFromModal,
 } from './ui/modals.js';
 import {
+  getTutorialCompanyName,
   hideTutorial,
   initTutorial,
   removeHQBanner,
   selectEraCard,
+  setTutorialCompanyName,
+  showCreditsMenu,
+  showEraMenu,
   showHQBanner,
+  showMainMenu,
+  showSaveMenu,
   showSelectedHQ,
   showTutorial,
 } from './ui/tutorial.js';
@@ -238,6 +244,7 @@ function loadGame() {
     removeHQBanner();
     removeBranchBanner();
     removeTraitOverlay();
+    byId('app').hidden = false;
     renderGame();
     showTraitEnvelope(G);
     showBanner('存档已载入！' + G.companyName + ' - ' + G.year + ' Q' + G.quarter, '#16a34a');
@@ -251,7 +258,7 @@ function tutorialNextStep() {
     showBanner('请先选择时代剧本', '#d97706');
     return;
   }
-  const name = byId('company-name').value.trim() || DEFAULT_COMPANY_NAME;
+  const name = getTutorialCompanyName();
   G = createSetupState(name, uiState.selectedEra);
   uiState.hqSelectMode = true;
   uiState.selectedHQ = null;
@@ -269,6 +276,7 @@ function cancelHQSelect() {
   byId('app').classList.remove('hq-selecting');
   G = null;
   showTutorial();
+  showEraMenu(uiState.selectedEra);
 }
 
 function confirmHQAndStart() {
@@ -281,7 +289,7 @@ function confirmHQAndStart() {
 
 function startGame() {
   const hq = uiState.selectedHQ || 'beijing';
-  const name = byId('company-name') ? (byId('company-name').value.trim() || DEFAULT_COMPANY_NAME) : DEFAULT_COMPANY_NAME;
+  const name = getTutorialCompanyName();
   const era = uiState.selectedEra || 'era1';
   G = initState(hq, era);
   G.companyName = name;
@@ -291,6 +299,7 @@ function startGame() {
   byId('app').classList.remove('hq-selecting');
   removeHQBanner();
   hideTutorial();
+  byId('app').hidden = false;
   renderGame();
   showTraitEnvelope(G);
   setBottomHint();
@@ -640,6 +649,18 @@ function handleClick(event) {
     case 'load-game':
       loadGame();
       break;
+    case 'show-main-menu':
+      showMainMenu(uiState.selectedEra);
+      break;
+    case 'show-era-menu':
+      showEraMenu(uiState.selectedEra);
+      break;
+    case 'show-save-menu':
+      showSaveMenu();
+      break;
+    case 'show-credits-menu':
+      showCreditsMenu();
+      break;
     case 'select-era':
       uiState.selectedEra = target.dataset.eraId;
       selectEraCard(uiState.selectedEra);
@@ -853,6 +874,9 @@ function handleInput(event) {
   const target = event.target.closest('[data-action]');
   if (!target) return;
   switch (target.dataset.action) {
+    case 'company-name-input':
+      setTutorialCompanyName(target.value);
+      break;
     case 'route-price-preview':
       updatePricePreview(G);
       break;

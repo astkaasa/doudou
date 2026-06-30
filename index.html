@@ -88,19 +88,12 @@
   </div>
 </div>
 <div id="tutorial">
-  <div class="tutorial-box" id="tutorial-step1">
-    <h1>✈ 空豆霸业</h1>
-    <p>欢迎来到航空霸业的世界！<br>选择一个时代剧本开始你的航空帝国之旅。</p>
-    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:16px 0" id="era-select"></div>
-    <p style="font-size:12px;color:#556;margin-top:12px">为你的航空公司命名：</p>
-    <input type="text" id="company-name" value="豆豆航空" placeholder="输入公司名称" maxlength="20">
-    <br>
-    <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px;align-items:center">
-      <button class="btn btn-success" data-action="tutorial-next-step" id="era-next-btn" style="padding:10px 40px;font-size:15px">开始游戏</button>
-      <button class="btn" style="background:#7c3aed;color:#fff;padding:8px 20px;font-size:13px;font-weight:600;border-radius:6px" data-action="load-game">📂 读取存档</button>
-      <button class="ver-badge" type="button" data-action="show-version-log">Version: <span id="ver-num"></span> 📋</button>
-    </div>
+  <div id="menu-map-bg" aria-hidden="true"></div>
+  <div class="menu-game-title">
+    空豆霸业
+    <span class="title-sub">SKYLINE TYCOON</span>
   </div>
+  <div class="tutorial-box" id="menu-box"></div>
 </div>
 <script type="module" src="/src/main.js"></script>
 </body>

@@ -13,21 +13,31 @@ export function showVersionLog() {
   const current = VERSION_LOG[0];
   if (!current) return;
 
-  const body = VERSION_SECTIONS.map(([key, label, color]) => renderSection(current[key], label, color)).join('');
+  const body = VERSION_LOG.map(renderVersionEntry).join('');
   byId('modal-root').innerHTML = `<div class="modal-overlay version-log-overlay" data-action="modal-backdrop">
-    <div class="modal" style="position:relative">
+    <div class="modal version-log-modal" style="position:relative">
       <button class="version-log-close" type="button" data-action="close-modal" title="关闭">✕</button>
       <div class="version-log-head">
         <h2>更新日志</h2>
         <span>v${escapeHtml(current.ver)}</span>
       </div>
-      <div class="version-log-date">${escapeHtml(current.date)}</div>
       <div class="version-log-body">${body}</div>
       <div class="version-log-footer">
         <button class="btn" type="button" data-action="close-modal">关闭</button>
       </div>
     </div>
   </div>`;
+}
+
+function renderVersionEntry(entry) {
+  const body = VERSION_SECTIONS.map(([key, label, color]) => renderSection(entry[key], label, color)).join('');
+  return `<article class="version-log-entry">
+    <div class="version-log-entry-head">
+      <strong>v${escapeHtml(entry.ver)}</strong>
+      <span>${escapeHtml(entry.date)}</span>
+    </div>
+    ${body}
+  </article>`;
 }
 
 function renderSection(items, label, color) {
