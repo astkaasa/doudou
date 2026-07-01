@@ -1,2 +1,12 @@
 export const DEFAULT_COMPANY_NAME = '豆豆航空';
 export const SPICY_TRAIT_FUND_RATIO = 0.025;
+export const BANKRUPTCY_THRESHOLD = -5;
+export const ANGEL_INVEST_MIN = 50;
+export const ANGEL_INVEST_MAX = 100;
+export const ANGEL_INVEST_STEP = 5;
+export const MEGA_EVENT_SPILLOVER = 0.3;
+export const MEGA_EVENT_REMOTE_SPILLOVER = 0.15;
+export const MEGA_EVENT_PRE_ANNOUNCE = 4;
+export const MEGA_EVENT_DECAY_LENGTH = 3;
+export const DISASTER_BOTH_CITIES = 0.1;
+export const DISASTER_ONE_CITY = 0.3;

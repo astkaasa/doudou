@@ -19,9 +19,10 @@ function regionalDisaster({ title, desc, subRegion, label }) {
     title,
     desc,
     effect: `${label}航线遭受巨大影响`,
+    subRegion,
     stockEffect: disasterStockEffect(title),
-    effectFn: ({ state: G, addSuspensionModifier }) => {
-      addSuspensionModifier(G, title, scopeSubRegion(subRegion), 1);
+    effectFn: ({ state: G, addDisasterDemandModifier }) => {
+      addDisasterDemandModifier(G, title, scopeSubRegion(subRegion), 1);
     },
   };
 }

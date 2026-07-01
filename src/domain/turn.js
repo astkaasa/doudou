@@ -3,7 +3,7 @@ import { growCityStates } from '../data/cityEraData.js';
 import { advanceBranchConstruction } from './bases.js';
 import { advanceTemporaryModifiers, generateEvents } from './events.js';
 import { advanceFleetAge } from './fleet.js';
-import { SPICY_TRAIT_FUND_RATIO } from './constants.js';
+import { BANKRUPTCY_THRESHOLD, SPICY_TRAIT_FUND_RATIO } from './constants.js';
 import { clamp } from './helpers.js';
 import { loanInterest } from './loans.js';
 import { updateRouteMetrics } from './routes.js';
@@ -64,8 +64,16 @@ export function advanceTurnState(state) {
     route._reopened = false;
   });
 
-  if (state.cash < -5) state.gameOver = true;
-  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, branchCompleted, gameOver: state.gameOver };
+  let angelRescue = false;
+  if (state.cash < BANKRUPTCY_THRESHOLD) {
+    if (!state.bankruptRescued) {
+      state.bankruptRescued = true;
+      angelRescue = true;
+    } else {
+      state.gameOver = true;
+    }
+  }
+  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, branchCompleted, gameOver: state.gameOver, angelRescue };
 }
 
 export function calculateTurnFinancials(state, extraRevenue = 0) {

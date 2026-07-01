@@ -12,6 +12,12 @@ describe('city data', () => {
       'amsterdam',
       'lagos',
       'sanfrancisco',
+      'osaka',
+      'seville',
+      'hannover',
+      'milan',
+      'montreal',
+      'rio',
     ]));
     expect(CITIES.every((city) => Number.isFinite(city.lat) && Number.isFinite(city.lon))).toBe(true);
     expect(CITIES.every((city) => !('x' in city) && !('y' in city))).toBe(true);

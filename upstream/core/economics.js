@@ -42,10 +42,79 @@ function isDisasterAffected(cityRegion,citySubRegion){
   });
 }
 
+// ── 盛事渐进曲线 ──
+function megaEventBoostCurve(quartersFromEvent) {
+  const q = quartersFromEvent;
+  if (q <= -5) return 0;
+  if (q === -4) return 0.10;
+  if (q === -3) return 0.25;
+  if (q === -2) return 0.50;
+  if (q === -1) return 0.80;
+  if (q === 0)  return 1.00;
+  if (q === 1)  return 0.60;
+  if (q === 2)  return 0.30;
+  if (q === 3)  return 0.10;
+  return 0;
+}
+
+// ── 判断某城市是否为当前活跃盛事的主办城市 ──
+function isMegaEventHost(cityId, maxQ) {
+  if (!G.activeMegaEvents || G.activeMegaEvents.length === 0) return false;
+  const qLimit = maxQ !== undefined ? maxQ : 0;
+  return G.activeMegaEvents.some(evt =>
+    evt.cityId === cityId && evt.quartersFromEvent <= qLimit
+  );
+}
+
+// ── 盛事/灾害综合需求调制系数 ──
+function getEventDemandModifier(cityA, cityB) {
+  let modifier = 1.0;
+
+  // 正向：盛事需求加成
+  if (G.activeMegaEvents && G.activeMegaEvents.length > 0) {
+    G.activeMegaEvents.forEach(evt => {
+      const hostCity = getCity(evt.cityId);
+      if (!hostCity) return;
+
+      if (evt.cityId === cityA.id || evt.cityId === cityB.id) {
+        modifier *= (1 + evt.currentBoost);
+      } else if (hostCity.region === cityA.region || hostCity.region === cityB.region) {
+        modifier *= (1 + evt.currentBoost * MEGA_EVENT_SPILLOVER);
+      } else {
+        if (cityA.level >= 2 || cityB.level >= 2) {
+          modifier *= (1 + evt.currentBoost * MEGA_EVENT_REMOTE_SPILLOVER);
+        }
+      }
+    });
+  }
+
+  // 负向：灾害需求抑制（含盛事豁免权）
+  if (G.disasterRegions && G.disasterRegions.length > 0) {
+    const aAffected = isDisasterAffected(cityA.region, cityA.subRegion);
+    const bAffected = isDisasterAffected(cityB.region, cityB.subRegion);
+    if (aAffected || bAffected) {
+      const aImmune = isMegaEventHost(cityA.id, 0);
+      const bImmune = isMegaEventHost(cityB.id, 0);
+
+      if (aAffected && bAffected) {
+        if (aImmune && bImmune) { /* 双方均豁免 */ }
+        else if (aImmune || bImmune) { modifier *= DISASTER_ONE_CITY; }
+        else { modifier *= DISASTER_BOTH_CITIES; }
+      } else {
+        const immuneCity = aAffected ? aImmune : bImmune;
+        if (!immuneCity) { modifier *= DISASTER_ONE_CITY; }
+      }
+    }
+  }
+
+  return modifier;
+}
+
 function calcLoadFactor(route,price,brand,competitors){
   const cityA=getCity(route.from),cityB=getCity(route.to);
-  if(isDisasterAffected(cityA.region,cityA.subRegion)||isDisasterAffected(cityB.region,cityB.subRegion))return 0;
-  let demand=baseDemand(cityA,cityB)*seasonModifier(G.quarter);
+  // ── 盛事/灾害综合调制（替代二元灾害检查） ──
+  const eventModifier = getEventDemandModifier(cityA, cityB);
+  let demand=baseDemand(cityA,cityB)*seasonModifier(G.quarter)*eventModifier;
   const refPrice=route.suggestedPrice;
   const priceRatio=price/refPrice;
   const priceEffect=Math.pow(priceRatio,PRICE_ELASTICITY);

@@ -82,3 +82,16 @@ const STOCK_MAX_HOLDING = 100;            // 单只股票持仓上限100M
 const STOCK_SECTOR_SHOCK_OIL = 0.08;      // 油价冲击系数
 const STOCK_SECTOR_SHOCK_DISASTER = 0.12; // 灾害冲击系数
 const STOCK_SECTOR_SHOCK_NEWS = 0.05;     // 普通新闻冲击（保留兼容）
+
+// --- Angel Investment Rescue (天使投资救助) ---
+const ANGEL_INVEST_MIN      = 50;    // 救助最低金额 (M)
+const ANGEL_INVEST_MAX      = 100;   // 救助最高金额 (M)
+const ANGEL_INVEST_STEP     = 5;     // 金额档位步长 (M): 50,55,60,...,100
+
+// --- Mega Events (盛事系统) ---
+const MEGA_EVENT_SPILLOVER        = 0.30;  // 同区域城市溢出系数 [待测试]
+const MEGA_EVENT_REMOTE_SPILLOVER = 0.15;  // 跨区域枢纽溢出系数 [待测试]
+const MEGA_EVENT_PRE_ANNOUNCE     = 4;     // 提前N个季度开始预报
+const MEGA_EVENT_DECAY_LENGTH     = 3;     // 会后持续影响N个季度
+const DISASTER_BOTH_CITIES        = 0.1;   // 双端灾害LF系数（原硬归零→0.1） [待测试]
+const DISASTER_ONE_CITY           = 0.3;   // 单端灾害LF系数（原硬归零→0.3） [待测试]

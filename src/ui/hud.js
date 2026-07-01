@@ -3,6 +3,9 @@ import { byId, fmt, fmtPct, getCity } from '../domain/helpers.js';
 import { getMilestoneStats } from '../domain/milestones.js';
 import { calcNasdouIndex } from '../domain/stocks.js';
 
+let megaEventRotateTimer = null;
+let megaEventBadgeIndex = 0;
+
 export function updateHUD(state) {
   const companyEl = byId('hud-company-name');
   if (companyEl) {
@@ -57,7 +60,44 @@ export function updateHUD(state) {
       loanWrap.style.display = 'none';
     }
   }
+  updateMegaEventBadge(state);
   updateNasdouBadge(state);
+}
+
+export function updateMegaEventBadge(state) {
+  const badge = byId('mega-event-badge');
+  if (!badge) return;
+  const events = [...(state?.activeMegaEvents || [])].filter((event) => event.currentBoost > 0);
+  if (events.length === 0) {
+    badge.hidden = true;
+    badge.className = '';
+    badge.textContent = '';
+    badge.removeAttribute('title');
+    clearMegaEventRotation();
+    megaEventBadgeIndex = 0;
+    return;
+  }
+
+  events.sort((a, b) => b.currentBoost - a.currentBoost);
+  badge.hidden = false;
+  badge.className = 'mega-badge-active';
+  badge._megaEvents = events;
+  if (megaEventBadgeIndex >= events.length) megaEventBadgeIndex = 0;
+  renderMegaEventBadgeLabel(badge);
+
+  if (events.length > 1 && !megaEventRotateTimer) {
+    megaEventRotateTimer = window.setInterval(() => {
+      const currentEvents = badge._megaEvents || [];
+      if (currentEvents.length <= 1) {
+        clearMegaEventRotation();
+        return;
+      }
+      megaEventBadgeIndex = (megaEventBadgeIndex + 1) % currentEvents.length;
+      renderMegaEventBadgeLabel(badge);
+    }, 3000);
+  } else if (events.length <= 1) {
+    clearMegaEventRotation();
+  }
 }
 
 export function updateNasdouBadge(state) {
@@ -72,4 +112,19 @@ export function updateNasdouBadge(state) {
   const color = nasdou > 0.001 ? '#ef4444' : nasdou < -0.001 ? '#22c55e' : '#fbbf24';
   const sign = nasdou > 0.001 ? '+' : '';
   badge.innerHTML = `📈 NASDOU <span style="color:${color};font-size:10px">${sign}${(nasdou * 100).toFixed(1)}%</span>`;
+}
+
+function renderMegaEventBadgeLabel(badge) {
+  const events = badge._megaEvents || [];
+  const event = events[megaEventBadgeIndex % events.length];
+  if (!event) return;
+  badge.textContent = `🏆 ${event.name}`;
+  badge.title = `${event.cityName || event.name}航线需求提升`;
+  badge.style.animationDuration = event.currentBoost >= event.maxBoost * 0.8 ? '1s' : '2s';
+}
+
+function clearMegaEventRotation() {
+  if (!megaEventRotateTimer) return;
+  window.clearInterval(megaEventRotateTimer);
+  megaEventRotateTimer = null;
 }

@@ -271,3 +271,386 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--c-bg-dark);color:v
 .route-page-info{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:#7ba3cc}
 .delivery-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:150;display:flex;align-items:center;justify-content:center}
 .delivery-modal{background:#111d33;border:1px solid #16a34a;border-radius:12px;padding:24px;min-width:360px;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.6)}
+/* Mega event pulse animation */
+@keyframes mega-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212,160,23,0.6); }
+  50%      { box-shadow: 0 0 0 6px rgba(212,160,23,0); }
+}
+#mega-event-badge { transition: opacity 0.3s; }
+/* Mega event badge — gradient blue bg + gold text */
+.mega-badge-active {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb, #1e40af) !important;
+  color: #fbbf24 !important;
+  font-weight: 700;
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  border: 1px solid #3b82f6;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+
+/* ══════════════════════════════════════
+   ANGEL INVESTMENT RESCUE — 天使投资救助UI
+   ══════════════════════════════════════ */
+
+/* ── 通用覆盖层 ── */
+.angel-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: angelFadeIn 0.4s ease-out;
+}
+@keyframes angelFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── PHASE 1: 危机警告 ── */
+.angel-crisis-overlay {
+  background: radial-gradient(ellipse at center, #1a0505 0%, #0a0202 100%);
+  animation: angelCrisisPulse 0.6s ease-in-out 3;
+}
+@keyframes angelCrisisPulse {
+  0%, 100% { background: radial-gradient(ellipse at center, #1a0505 0%, #0a0202 100%); }
+  50%      { background: radial-gradient(ellipse at center, #2a0a0a 0%, #100404 100%); }
+}
+.angel-crisis-content {
+  text-align: center;
+  animation: angelCrisisShake 0.5s ease-in-out 2;
+}
+@keyframes angelCrisisShake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+.angel-crisis-icon {
+  font-size: 64px;
+  color: #f87171;
+  animation: crisisIconPulse 0.8s ease-in-out infinite;
+  text-shadow: 0 0 30px rgba(248,113,113,0.6);
+}
+@keyframes crisisIconPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.15); opacity: 0.8; }
+}
+.angel-crisis-title {
+  font-size: 42px;
+  font-weight: 900;
+  color: #f87171;
+  margin-top: 16px;
+  letter-spacing: 8px;
+  text-shadow: 0 0 20px rgba(248,113,113,0.5);
+}
+.angel-crisis-desc {
+  color: #fca5a5;
+  font-size: 18px;
+  margin-top: 12px;
+}
+.angel-crisis-amount {
+  color: #94a3b8;
+  font-size: 14px;
+  margin-top: 16px;
+}
+.angel-crisis-cash {
+  color: #f87171;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+/* ── PHASE 2: 天使降临 ── */
+.angel-descend-overlay {
+  background: radial-gradient(ellipse at center, #1a1505 0%, #0a0802 100%);
+}
+.angel-descend-content {
+  text-align: center;
+  animation: angelDescendIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes angelDescendIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.angel-logo {
+  margin-bottom: 20px;
+}
+.angel-logo-coin {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffd700, #daa520, #b8860b);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px rgba(218,165,32,0.5), 0 0 80px rgba(218,165,32,0.2), inset 0 -4px 8px rgba(0,0,0,0.15);
+  animation: angelCoinGlow 2s ease-in-out infinite;
+}
+@keyframes angelCoinGlow {
+  0%, 100% { box-shadow: 0 0 40px rgba(218,165,32,0.5), 0 0 80px rgba(218,165,32,0.2); }
+  50%      { box-shadow: 0 0 60px rgba(218,165,32,0.7), 0 0 120px rgba(218,165,32,0.3); }
+}
+.angel-logo-text {
+  font-size: 40px;
+  font-weight: 900;
+  color: #8b6914;
+  text-shadow: 0 1px 3px rgba(255,255,255,0.3);
+}
+.angel-descend-title {
+  font-size: 28px;
+  font-weight: 900;
+  color: #fbbf24;
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px rgba(251,191,36,0.4);
+  margin-bottom: 16px;
+}
+.angel-descend-quote {
+  font-size: 18px;
+  color: #e0e8f0;
+  font-style: italic;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  opacity: 0.9;
+}
+.angel-descend-info {
+  background: rgba(218,165,32,0.08);
+  border: 1px solid rgba(218,165,32,0.2);
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: 16px 0;
+  color: #c0d0e0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.angel-start-btn {
+  margin-top: 20px;
+  padding: 14px 48px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 20px rgba(217,119,6,0.4);
+  transition: all 0.2s;
+}
+.angel-start-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(217,119,6,0.5);
+}
+
+/* ── PHASE 3: 老虎机抽取 ── */
+.angel-slot-overlay {
+  background: radial-gradient(ellipse at center, #0f0d05 0%, #080602 100%);
+}
+.angel-slot-content {
+  text-align: center;
+  animation: angelFadeIn 0.5s ease-out;
+}
+.angel-slot-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fbbf24;
+  letter-spacing: 3px;
+  margin-bottom: 24px;
+  text-shadow: 0 0 15px rgba(251,191,36,0.3);
+}
+.angel-slot-machine {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.angel-slot-reel-frame {
+  position: relative;
+  width: 220px;
+  background: linear-gradient(180deg, #2a1f08, #1a1405, #2a1f08);
+  border: 3px solid #b8860b;
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 0 30px rgba(184,134,11,0.3), inset 0 0 20px rgba(0,0,0,0.5);
+}
+.angel-slot-window {
+  width: 100%;
+  height: 80px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0a0805;
+  border: 1px solid #4a3a15;
+}
+.angel-slot-strip {
+  transition: transform 0.06s linear;
+  will-change: transform;
+}
+.angel-slot-num {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 900;
+  color: #fbbf24;
+  text-shadow: 0 0 10px rgba(251,191,36,0.3);
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.angel-slot-pointer {
+  position: absolute;
+  top: 50%;
+  left: -10px;
+  right: -10px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ffd700, transparent);
+  transform: translateY(-50%);
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(255,215,0,0.6);
+}
+.angel-slot-pointer::before,
+.angel-slot-pointer::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+}
+.angel-slot-pointer::before {
+  left: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 12px solid #ffd700;
+}
+.angel-slot-pointer::after {
+  right: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 12px solid #ffd700;
+}
+.angel-lock-btn {
+  padding: 12px 40px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 20px rgba(220,38,38,0.4);
+  transition: all 0.2s;
+}
+.angel-lock-btn:hover:not(:disabled) {
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(220,38,38,0.5);
+}
+.angel-lock-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+.angel-lock-btn.btn-locked {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+}
+.angel-slot-hint {
+  color: #7ba3cc;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* ── PHASE 4: 结果揭示 ── */
+.angel-result-overlay {
+  background: radial-gradient(ellipse at center, #1a1505 0%, #0a0802 100%);
+}
+.angel-result-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  animation: angelResultIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes angelResultIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.angel-result-glow {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251,191,36,0.25) 0%, transparent 70%);
+  pointer-events: none;
+  animation: resultGlowPulse 2s ease-in-out infinite;
+}
+@keyframes resultGlowPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.8; }
+  50%      { transform: translateX(-50%) scale(1.1); opacity: 1; }
+}
+.angel-result-title {
+  font-size: 28px;
+  font-weight: 900;
+  color: #4ade80;
+  letter-spacing: 4px;
+  margin-bottom: 24px;
+  text-shadow: 0 0 15px rgba(74,222,128,0.3);
+}
+.angel-result-amount {
+  margin: 20px 0 24px;
+  line-height: 1;
+}
+.angel-result-dollar {
+  font-size: 36px;
+  font-weight: 700;
+  color: #fbbf24;
+  vertical-align: top;
+  margin-right: 2px;
+}
+.angel-result-num {
+  font-size: 72px;
+  font-weight: 900;
+  color: #fbbf24;
+  text-shadow: 0 0 30px rgba(251,191,36,0.4);
+}
+.angel-result-unit {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fbbf24;
+  vertical-align: super;
+  margin-left: 4px;
+}
+.angel-result-warning {
+  color: #f87171;
+  font-size: 13px;
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.2);
+  border-radius: 6px;
+  padding: 8px 16px;
+  display: inline-block;
+  margin: 16px 0 0;
+}
+.angel-continue-btn {
+  padding: 14px 48px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 2px;
+  box-shadow: 0 4px 20px rgba(34,197,94,0.4);
+  transition: all 0.2s;
+}
+.angel-continue-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(34,197,94,0.5);
+}

@@ -92,6 +92,7 @@ export function renderMap(state, uiState) {
     const isBranchSelected = uiState.branchSelectMode && uiState.selectedBranch === c.id;
     const isSelected = !uiState.hqSelectMode && !uiState.branchSelectMode && state.selectedCity === c.id;
     const hasRoute = routedCities.has(c.id);
+    const isMegaEventHost = (state.activeMegaEvents || []).some((event) => event.cityId === c.id && event.currentBoost > 0);
     const r = cityRadius(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom });
     const cy = cityY(c);
     const classes = cityClasses(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute });
@@ -103,6 +104,7 @@ export function renderMap(state, uiState) {
       if (isHQ || isBranch || isBranchBuilding || isBranchSelected || isSelected || hasRoute) {
         svg += `<circle cx="${cx}" cy="${cy}" r="${r + cityHaloExtra({ isHQ, isBranch: isBranch || isBranchBuilding, zoom })}" class="${cityHaloClasses({ isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute })}" />`;
       }
+      if (isMegaEventHost) svg += renderMegaEventRing(cx, cy, r, zoom);
       svg += `<circle cx="${cx}" cy="${cy}" r="${r}" class="${classes}" data-action="city-click" data-city-id="${c.id}" />`;
       cityTouchTargets += `<button class="city-touch-target" type="button" style="left:${xPct}%;top:${yPct}%" data-action="city-click" data-city-id="${c.id}" data-city-touch-target="true" aria-label="选择${c.name}" title="${c.name}"></button>`;
       if (shouldShowCityLabel(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom })) {
@@ -252,6 +254,11 @@ function renderCityLabel(city, { isHQ, isBranch, isBranchBuilding, isBranchSelec
   const y = isHQ || isBranch || isBranchBuilding || isBranchSelected || isSelected || hasRoute ? cy + labelSize + radiusAwareOffset(4.5, zoom) : cy - radiusAwareOffset(7, zoom);
   const classes = ['city-label', city.level >= 3 ? 'city-label-major' : '', isHQ ? 'city-label-hq' : '', isBranch ? 'city-label-branch' : '', isBranchBuilding ? 'city-label-branch-building' : ''].filter(Boolean).join(' ');
   return `<text x="${cx + dx}" y="${y}" font-size="${labelSize}" text-anchor="${anchor}" class="${classes}">${city.name}</text>`;
+}
+
+function renderMegaEventRing(cx, cy, cityRadiusValue, zoom) {
+  const radius = Math.max(cityRadiusValue + radiusAwareOffset(5, zoom), radiusAwareOffset(9, zoom));
+  return `<circle cx="${cx}" cy="${cy}" r="${radius}" class="city-mega-ring"><animate attributeName="r" from="${radius}" to="${radius + radiusAwareOffset(7, zoom)}" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.85" to="0" dur="1.5s" repeatCount="indefinite"/></circle>`;
 }
 
 function mapStageStyle() {

@@ -382,9 +382,18 @@ function loadGameFromTutorial(){
 // ===== SAVE MIGRATION =====
 function migrateSave(data){
   const g=data.g;
-  const defaults={loan:0,loanRate:LOAN_RATE,disasterRegions:[],branches:[],branchesConstructing:[],deliveredThisTurn:[],redPacketClaimed:false,_newsUsedPerYear:{},consecutiveProfit:0,lastNewspaperHtml:'',leaseExpiredThisTurn:[],playerTrait:null,traitChosen:false,_lastTraitFund:0,_lastBranchCompleted:[],milestones:{},stocks:{},portfolio:{},stockEvents:[],_lastStockDividend:0};
+  const defaults={loan:0,loanRate:LOAN_RATE,disasterRegions:[],branches:[],branchesConstructing:[],deliveredThisTurn:[],redPacketClaimed:false,_newsUsedPerYear:{},consecutiveProfit:0,lastNewspaperHtml:'',leaseExpiredThisTurn:[],playerTrait:null,traitChosen:false,_lastTraitFund:0,_lastBranchCompleted:[],milestones:{},stocks:{},portfolio:{},stockEvents:[],_lastStockDividend:0,activeMegaEvents:[]};
   Object.entries(defaults).forEach(([k,v])=>{if(g[k]===undefined)g[k]=typeof v==='object'?JSON.parse(JSON.stringify(v)):v;});
   if(!g.cityStates){g.cityStates=initCityStates(g.era);}
+  // Migrate: ensure new mega-event cities have cityState entries
+  CITIES.forEach(c => {
+    if (!g.cityStates[c.id]) {
+      const d = CITY_ERA_DATA[c.id];
+      g.cityStates[c.id] = d
+        ? { pop: d[0][0], biz: d[0][1], tour: d[0][2] }
+        : { pop: c.pop, biz: 20, tour: 15 };
+    }
+  });
   if(g.routes)g.routes.forEach(r=>{
     const rDefaults={isNew:false,_priceAdjusted:false,_planeChanged:false,_lastLf:r.loadFactor||0,_lastProfit:r.profit||0,suspended:false,_reopened:false};
     Object.entries(rDefaults).forEach(([k,v])=>{if(r[k]===undefined)r[k]=v;});
@@ -422,6 +431,7 @@ function loadGame(){
     migrateSave(data);
     G=data.g;
     rebuildFleetMap();
+    migrateGameState();
     const hqCity=getCity(G.hq);
     if(hqCity)G.mapPanX=((500-_rx(hqCity)*1000)%1000+1000)%1000;
     hqSelectMode=false;

@@ -1,5 +1,6 @@
 import { STOCKS, STOCK_MAP, STOCK_SECTORS } from '../data/stocks.js';
 import { clamp, rand } from './helpers.js';
+import { MODIFIER_MODES } from './modifiers.js';
 
 export { STOCKS, STOCK_MAP, STOCK_SECTORS };
 
@@ -117,7 +118,7 @@ export function updateStockPrices(state) {
   });
 
   (state.activeModifiers || []).forEach((modifier) => {
-    if (modifier.type !== 'suspension') return;
+    if (modifier.type !== 'suspension' && modifier.mode !== MODIFIER_MODES.disasterDemand) return;
     sectorShock.tourism -= STOCK_SECTOR_SHOCK_DISASTER * 0.5;
     sectorShock.culture -= STOCK_SECTOR_SHOCK_DISASTER * 0.2;
   });

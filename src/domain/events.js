@@ -1,7 +1,8 @@
 import { NEWS_POOL } from '../data/news.js';
 import { PLANES } from '../data/planes.js';
 import { clamp, fmtPct, getCity, rand, randInt } from './helpers.js';
-import { addCostModifier, addDemandModifier, addSuspensionModifier, advanceActiveModifiers, selectRouteKeys } from './modifiers.js';
+import { megaEventNewsFor, syncMegaEventState } from './megaEvents.js';
+import { addCostModifier, addDemandModifier, addDisasterDemandModifier, addSuspensionModifier, advanceActiveModifiers, selectRouteKeys } from './modifiers.js';
 import { updateStockPrices } from './stocks.js';
 
 export function generateEvents(state) {
@@ -17,6 +18,14 @@ export function generateEvents(state) {
       severity: Math.abs(oilChange) > 0.05 ? 'high' : 'low',
     });
   }
+  const activeMegaEvents = syncMegaEventState(state);
+  activeMegaEvents
+    .map(megaEventNewsFor)
+    .filter(Boolean)
+    .forEach((item) => {
+      state.newsItems.push(item);
+      state.events.push({ type: 'mega_event', text: item.title, severity: item._isHeadline ? 'high' : 'medium' });
+    });
   const numNews = randInt(2, 4);
   const categories = Object.keys(NEWS_POOL);
   const picked = new Set();
@@ -24,12 +33,14 @@ export function generateEvents(state) {
     let cat;
     let news;
     let tries = 0;
+    let rejected = false;
     do {
       cat = categories[randInt(0, categories.length - 1)];
       news = NEWS_POOL[cat][randInt(0, NEWS_POOL[cat].length - 1)];
       tries++;
-    } while (picked.has(news.title) && tries < 10);
-    if (picked.has(news.title)) continue;
+      rejected = picked.has(news.title) || isDisasterProtectedByMegaEvent(state, cat, news);
+    } while (rejected && tries < 20);
+    if (picked.has(news.title) || isDisasterProtectedByMegaEvent(state, cat, news)) continue;
     picked.add(news.title);
     const item = { category: cat, title: news.title, desc: news.desc, effect: news.effect, stockEffect: news.stockEffect || null };
     state.newsItems.push(item);
@@ -40,6 +51,7 @@ export function generateEvents(state) {
         clamp,
         addCostModifier,
         addDemandModifier,
+        addDisasterDemandModifier,
         addSuspensionModifier,
         selectRouteKeys,
       });
@@ -76,4 +88,14 @@ export function advanceTemporaryModifiers(state) {
 
 export function advanceTemporaryRouteEffects(state) {
   advanceTemporaryModifiers(state);
+}
+
+function isDisasterProtectedByMegaEvent(state, category, news) {
+  if (category !== 'disaster') return false;
+  const peakEvents = (state.activeMegaEvents || []).filter((event) => event.quartersFromEvent === 0);
+  if (peakEvents.length === 0) return false;
+  return peakEvents.some((event) => {
+    const hostCity = getCity(event.cityId);
+    return hostCity && news.subRegion && hostCity.subRegion === news.subRegion;
+  });
 }

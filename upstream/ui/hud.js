@@ -46,4 +46,37 @@ function updateHUD(){
     else{loanWrap.style.display='none';}
   }
   // v2.5: 顶部HUD不再显示证券市值（改由底部NASDOU徽章+证券市场Modal展示）
+  // ── 盛事徽章（渐变蓝底金字，双盛事轮播） ──
+  const megaBadge=$('mega-event-badge');
+  if(megaBadge){
+    if(G.activeMegaEvents&&G.activeMegaEvents.length>0){
+      megaBadge.style.display='inline-flex';
+      megaBadge.classList.add('mega-badge-active');
+      // Store all active events for rotation
+      megaBadge._megaEvents=[...G.activeMegaEvents];
+      // Show primary (highest boost) by default
+      if(!megaBadge._megaIdx)megaBadge._megaIdx=0;
+      const evt=G.activeMegaEvents[megaBadge._megaIdx%G.activeMegaEvents.length];
+      megaBadge.innerHTML=`🏆 ${evt.name}`;
+      megaBadge.style.animation=evt.currentBoost>=evt.maxBoost*0.8
+        ?'mega-pulse 1s infinite':'mega-pulse 2s infinite';
+      // Rotation timer for dual mega events
+      if(G.activeMegaEvents.length>1){
+        if(!megaBadge._rotateTimer){
+          megaBadge._rotateTimer=setInterval(()=>{
+            megaBadge._megaIdx=(megaBadge._megaIdx+1)%megaBadge._megaEvents.length;
+            const e=megaBadge._megaEvents[megaBadge._megaIdx];
+            if(e)megaBadge.innerHTML=`🏆 ${e.name}`;
+          },3000);
+        }
+      }else{
+        if(megaBadge._rotateTimer){clearInterval(megaBadge._rotateTimer);megaBadge._rotateTimer=null;}
+      }
+    }else{
+      megaBadge.style.display='none';
+      megaBadge.classList.remove('mega-badge-active');
+      if(megaBadge._rotateTimer){clearInterval(megaBadge._rotateTimer);megaBadge._rotateTimer=null;}
+      megaBadge._megaIdx=0;
+    }
+  }
 }

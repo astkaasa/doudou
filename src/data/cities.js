@@ -176,6 +176,17 @@ export const CITIES = [
     "capital": false
   },
   {
+    "id": "osaka",
+    "name": "大阪",
+    "lat": 34.69,
+    "lon": 135.5,
+    "pop": 2700,
+    "level": 2,
+    "region": "asia",
+    "subRegion": "east_asia",
+    "capital": false
+  },
+  {
     "id": "singapore",
     "name": "新加坡",
     "lat": 1.3,
@@ -660,6 +671,39 @@ export const CITIES = [
     "capital": false
   },
   {
+    "id": "seville",
+    "name": "塞维利亚",
+    "lat": 37.39,
+    "lon": -5.99,
+    "pop": 700,
+    "level": 1,
+    "region": "europe",
+    "subRegion": "europe",
+    "capital": false
+  },
+  {
+    "id": "hannover",
+    "name": "汉诺威",
+    "lat": 52.37,
+    "lon": 9.73,
+    "pop": 500,
+    "level": 1,
+    "region": "europe",
+    "subRegion": "europe",
+    "capital": false
+  },
+  {
+    "id": "milan",
+    "name": "米兰",
+    "lat": 45.46,
+    "lon": 9.19,
+    "pop": 1300,
+    "level": 2,
+    "region": "europe",
+    "subRegion": "europe",
+    "capital": false
+  },
+  {
     "id": "algiers",
     "name": "阿尔及尔",
     "lat": 36.79,
@@ -869,6 +913,17 @@ export const CITIES = [
     "capital": false
   },
   {
+    "id": "montreal",
+    "name": "蒙特利尔",
+    "lat": 45.5,
+    "lon": -73.57,
+    "pop": 1700,
+    "level": 2,
+    "region": "namerica",
+    "subRegion": "east_namerica",
+    "capital": false
+  },
+  {
     "id": "havana",
     "name": "哈瓦那",
     "lat": 23.09,
@@ -998,6 +1053,17 @@ export const CITIES = [
     "level": 2,
     "region": "namerica",
     "subRegion": "west_namerica",
+    "capital": false
+  },
+  {
+    "id": "rio",
+    "name": "里约热内卢",
+    "lat": -22.91,
+    "lon": -43.17,
+    "pop": 6700,
+    "level": 3,
+    "region": "samerica",
+    "subRegion": "samerica",
     "capital": false
   },
   {

@@ -4,7 +4,8 @@ import { NEWS_POOL } from '../src/data/news.js';
 import { PLANES } from '../src/data/planes.js';
 import { advanceTemporaryModifiers } from '../src/domain/events.js';
 import { clamp, getCity } from '../src/domain/helpers.js';
-import { addDemandModifier, addSuspensionModifier, selectRouteKeys } from '../src/domain/modifiers.js';
+import { megaEventNewsFor, syncMegaEventState } from '../src/domain/megaEvents.js';
+import { addDemandModifier, addDisasterDemandModifier, addSuspensionModifier, routeDemandMultiplier, selectRouteKeys } from '../src/domain/modifiers.js';
 import { openRoute, updateRouteMetrics } from '../src/domain/routes.js';
 import { initState } from '../src/domain/state.js';
 
@@ -16,24 +17,27 @@ function stateWithRoute(from, to) {
 }
 
 describe('news event effects', () => {
-  it('suspends matching sub-region routes regardless of direction', () => {
+  it('adds soft disaster demand modifiers for matching sub-region routes', () => {
     const eastAsiaTyphoon = NEWS_POOL.disaster.find((item) => item.title.includes('台风席卷东亚'));
     const outbound = stateWithRoute('beijing', 'tokyo');
     const inbound = stateWithRoute('tokyo', 'beijing');
 
-    eastAsiaTyphoon.effectFn({ state: outbound, getCity, clamp, addSuspensionModifier, selectRouteKeys });
-    eastAsiaTyphoon.effectFn({ state: inbound, getCity, clamp, addSuspensionModifier, selectRouteKeys });
+    eastAsiaTyphoon.effectFn({ state: outbound, getCity, clamp, addDisasterDemandModifier, selectRouteKeys });
+    eastAsiaTyphoon.effectFn({ state: inbound, getCity, clamp, addDisasterDemandModifier, selectRouteKeys });
 
     expect(outbound.activeModifiers[0]).toMatchObject({
-      type: 'suspension',
+      type: 'demand',
+      mode: 'disasterDemand',
       turnsRemaining: 1,
       scope: { kind: 'subRegion', subRegions: ['east_asia'] },
     });
     expect(inbound.activeModifiers[0]).toMatchObject({
-      type: 'suspension',
+      type: 'demand',
+      mode: 'disasterDemand',
       turnsRemaining: 1,
       scope: { kind: 'subRegion', subRegions: ['east_asia'] },
     });
+    expect(routeDemandMultiplier(outbound, outbound.routes[0])).toBeCloseTo(0.1);
   });
 
   it('applies suspension for one calculated turn and then restores service', () => {
@@ -72,5 +76,25 @@ describe('news event effects', () => {
     const recession = NEWS_POOL.economy.find((item) => item.title.includes('全球股市暴跌'));
 
     expect(recession.stockEffect).toEqual({ finance: -0.08, tech: -0.05, tourism: -0.04 });
+  });
+
+  it('builds active mega events and news metadata for the current quarter', () => {
+    const state = initState('beijing', 'era3');
+    state.year = 2000;
+    state.quarter = 3;
+
+    const activeEvents = syncMegaEventState(state);
+    const sydney = activeEvents.find((event) => event.id === 'oly_s2000');
+    const hannover = activeEvents.find((event) => event.id === 'expo_2000');
+
+    expect(sydney).toMatchObject({ cityId: 'sydney', quartersFromEvent: 0, currentBoost: 0.4 });
+    expect(hannover).toMatchObject({ cityId: 'hannover', quartersFromEvent: 1, currentBoost: 0.18 });
+    expect(state.activeModifiers.filter((modifier) => modifier.mode === 'megaEvent')).toHaveLength(2);
+    expect(megaEventNewsFor(sydney)).toMatchObject({
+      category: 'mega_event',
+      _megaEventId: 'oly_s2000',
+      _isHeadline: true,
+      stockEffect: { tourism: 0.1, culture: 0.08 },
+    });
   });
 });

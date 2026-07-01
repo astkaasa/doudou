@@ -61,6 +61,40 @@ function initState(hq, era) {
     turnProfit:0, turnRevenue:0, turnCost:0, totalProfit:0, turnsPlayed:0, consecutiveProfit:0,
     gameOver:false, selectedCity:null, planeIdCounter:1, history:[], mapZoom:1, mapPanX:0, mapPanY:0,
     onboardStep:0, deliveredThisTurn:[], leaseExpiredThisTurn:[], redPacketClaimed:false,
-    playerTrait:null, traitChosen:false, milestones:{}
+    playerTrait:null, traitChosen:false, milestones:{},
+    activeMegaEvents:[], bankruptRescued:false
   };
+}
+
+// ── 存档迁移：补全新增字段+新城市cityState ──
+function migrateGameState() {
+  if (!G.activeMegaEvents) G.activeMegaEvents = [];
+  if (G.bankruptRescued === undefined) G.bankruptRescued = false;
+  // Ensure new cities have cityState entries
+  CITIES.forEach(c => {
+    if (!G.cityStates[c.id]) {
+      const d = CITY_ERA_DATA[c.id];
+      G.cityStates[c.id] = d
+        ? { pop: d[0][0], biz: d[0][1], tour: d[0][2] }
+        : { pop: c.pop, biz: 20, tour: 15 };
+    }
+  });
+  // Rebuild activeMegaEvents from current game date (handles mid-cycle loads)
+  if (G.year && G.quarter && typeof MEGA_EVENTS !== 'undefined') {
+    MEGA_EVENTS.forEach(evt => {
+      const quartersFromEvent = (G.year - evt.year) * 4 + (G.quarter - evt.quarter);
+      const inWindow = quartersFromEvent >= -MEGA_EVENT_PRE_ANNOUNCE
+                    && quartersFromEvent <= MEGA_EVENT_DECAY_LENGTH;
+      if (inWindow && !G.activeMegaEvents.find(a => a.id === evt.id)) {
+        const boost = evt.maxBoost * megaEventBoostCurve(quartersFromEvent);
+        G.activeMegaEvents.push({
+          id: evt.id, type: evt.type, cityId: evt.cityId,
+          name: evt.name, fullName: evt.fullName,
+          maxBoost: evt.maxBoost, currentBoost: boost,
+          stockEffect: evt.stockEffect,
+          quartersFromEvent: quartersFromEvent
+        });
+      }
+    });
+  }
 }

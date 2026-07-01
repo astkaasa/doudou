@@ -3,6 +3,7 @@ import './styles/app.css';
 import { ERAS } from './data/eras.js';
 import { normalizePlayerTrait } from './data/playerTraits.js';
 import { closeBranch as closeBranchDomain, isBase, isBranchConstructing, openBranch } from './domain/bases.js';
+import { applyAngelInvestment } from './domain/angelInvestment.js';
 import { DEFAULT_COMPANY_NAME } from './domain/constants.js';
 import { buyPlane, returnLease, sellPlane } from './domain/fleet.js';
 import { byId, cityDist, fmt, getCity, routeKey } from './domain/helpers.js';
@@ -75,6 +76,7 @@ import {
   showTutorial,
 } from './ui/tutorial.js';
 import { openTraitCoins, removeTraitOverlay, revealSelectedTrait, showTraitEnvelope } from './ui/traits.js';
+import { clearAngelTimers, lockAngelSlot, showAngelInvestment, showAngelSlotPhase } from './ui/angelInvestment.js';
 
 const APP_SETTINGS_KEY = 'doudou.appSettings';
 const appSettings = loadAppSettings();
@@ -620,11 +622,29 @@ function sellSelectedStock(target) {
   showBanner(`卖出 ${result.stock.code} ${target.dataset.shares}M，到账 ${fmt(result.netRevenue)}`, '#d97706');
 }
 
+function applyAngelRescue(target) {
+  if (!G) return;
+  const result = applyAngelInvestment(G, Number(target.dataset.amount));
+  if (!result.ok) {
+    showBanner(result.message, '#b91c1c');
+    return;
+  }
+  clearAngelTimers();
+  closeModalRoot();
+  renderGame();
+  showBanner(`辣豆基金注资 ${fmt(result.amount)}，重振旗鼓`, '#d97706');
+}
+
 function advanceTurn() {
   if (!G || G.gameOver) return;
   const report = advanceTurnState(G);
   if (!report) return;
-  if (G.cash < -5) {
+  if (report.angelRescue) {
+    renderGame();
+    showAngelInvestment(G);
+    return;
+  }
+  if (report.gameOver) {
     showGameOver(G);
     return;
   }
@@ -670,6 +690,15 @@ function handleClick(event) {
       break;
     case 'show-version-log':
       showVersionLog();
+      break;
+    case 'start-angel-slot':
+      showAngelSlotPhase();
+      break;
+    case 'lock-angel-slot':
+      lockAngelSlot();
+      break;
+    case 'apply-angel-rescue':
+      applyAngelRescue(target);
       break;
     case 'cancel-hq-select':
       cancelHQSelect();

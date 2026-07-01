@@ -122,6 +122,15 @@ function renderMap() {
     else { fill = '#ffffff'; stroke = '#f0a0a0'; }
     [-1000, 0, 1000].forEach(offset => {
       cityHtml += `<circle cx="${_rx(c) * 1000 + offset}" cy="${c.y * 500}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}"${dashArr} class="city-node" onclick="onCityClick('${c.id}')" />`;
+      // Mega event gold pulse ring
+      if (G.activeMegaEvents) {
+        const isHost = G.activeMegaEvents.some(e => e.cityId === c.id && e.currentBoost > 0);
+        if (isHost) {
+          const cx = _rx(c) * 1000 + offset;
+          const cy = c.y * 500;
+          cityHtml += `<circle cx="${cx}" cy="${cy}" r="8" fill="none" stroke="#d4a017" stroke-width="2" opacity="0.8"><animate attributeName="r" from="6" to="14" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.8" to="0" dur="1.5s" repeatCount="indefinite"/></circle>`;
+        }
+      }
       if (_isHQ || _isBranch || _isConstructing || isSelected || _isBranchSel) {
         labelHtml += `<text x="${_rx(c) * 1000 + offset}" y="${c.y * 500 + labelOff}" fill="${_isConstructing ? '#fbbf24' : '#c0d0e0'}" font-size="${labelSize}" text-anchor="middle" font-weight="500" pointer-events="none">${c.name}${_isConstructing ? ' 🏗' : ''}</text>`;
       }

@@ -60,6 +60,7 @@
     <span id="season-badge"></span>
     <span id="oil-badge" style="padding:2px 10px;border-radius:10px;font-size:13px;font-weight:600;background:#33415580;color:#fbbf24"></span>
     <span id="nasdou-badge" style="padding:2px 10px;border-radius:10px;font-size:13px;font-weight:600;background:#33415580;color:#fbbf24;cursor:pointer" onclick="openStockModal()">📈 NASDOU</span>
+    <span id="mega-event-badge" style="display:none;padding:3px 12px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer" onclick="showNewspaper()">🏆 盛事</span>
     <span id="reread-news-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#1e3a5f80;color:#93c5fd;cursor:pointer" onclick="showNewspaper()">📰 上季报纸</span>
     <span id="reread-report-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#16a34a20;color:#4ade80;cursor:pointer" onclick="showReportAlone()">📊 上季财报</span>
     <span style="font-size:13px;color:#7ba3cc" id="bottom-hint">选择总部或分部作为起飞城市</span>
@@ -92,6 +93,7 @@
 
 <script src="data/version.js"></script>
 <script src="data/balance.js"></script>
+<script src="data/mega-events.js"></script>
 <script src="data/constants.js"></script>
 <script src="data/stocks.js"></script>
 <script src="data/credits.js"></script>
@@ -122,6 +124,7 @@
 <script src="ui/loan.js"></script>
 <script src="ui/trait.js"></script>
 <script src="ui/milestone-ui.js"></script>
+<script src="ui/angel-invest.js"></script>
 <script src="ui/tutorial.js"></script>
 <script>
 // ===== INIT =====
@@ -161,6 +164,10 @@ on('game:over', d => {
   } else if(d.reason==='era_end'){
     $('modal-root').innerHTML=`<div class="modal-overlay"><div class="modal gameover"><h1>时代落幕</h1><p style="color:#fbbf24;font-size:15px">${d.eraName} 已结束</p><p>存活了 ${d.turnsPlayed} 个季度</p><p>最终资金：${fmt(d.cash)}</p><p>累计利润：${fmt(d.totalProfit)}</p><p>拥有 ${d.routes} 条航线、${d.fleet} 架飞机</p><button class="btn btn-primary" onclick="location.reload()" style="margin-top:16px;padding:10px 32px">重新开始</button></div></div>`;
   }
+});
+
+on('game:angel', d => {
+  showAngelInvest();
 });
 </script>
 </body>

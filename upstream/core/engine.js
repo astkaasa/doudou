@@ -66,6 +66,12 @@ function advanceTurn(){
   G.history.push({year:settledYear,quarter:settledQuarter,cash:G.cash,profit,rev:totalRev,cost:totalCost,routes:G.routes.length,fleet:G.fleet.length});
   G.routes.forEach(r=>{/* frequency is always 1 now */});
   if(G.cash<BANKRUPTCY_THRESHOLD){
+    // 首次破产：触发辣豆基金天使投资救助
+    if(!G.bankruptRescued){
+      G.bankruptRescued=true;
+      emit('game:angel',{turnsPlayed:G.turnsPlayed,routes:G.routes.length,fleet:G.fleet.length});
+      return;
+    }
     G.gameOver=true;
     emit('game:over',{reason:'bankrupt',turnsPlayed:G.turnsPlayed,routes:G.routes.length,fleet:G.fleet.length});
     return;

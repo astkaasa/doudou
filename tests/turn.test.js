@@ -107,4 +107,24 @@ describe('turn progression', () => {
     expect(state.branchesConstructing).toEqual([]);
     expect(state.history[0].branchCompleted).toEqual(['shanghai']);
   });
+
+  it('triggers one-time angel rescue before bankruptcy game over', () => {
+    const state = initState('beijing', 'era3');
+    state.ai = [];
+    state.cash = -5;
+    state.fleet = [];
+    state.routes = [];
+
+    const firstReport = advanceTurnState(state);
+    expect(firstReport.angelRescue).toBe(true);
+    expect(firstReport.gameOver).toBe(false);
+    expect(state.bankruptRescued).toBe(true);
+    expect(state.gameOver).toBe(false);
+
+    state.cash = -5;
+    const secondReport = advanceTurnState(state);
+    expect(secondReport.angelRescue).toBe(false);
+    expect(secondReport.gameOver).toBe(true);
+    expect(state.gameOver).toBe(true);
+  });
 });

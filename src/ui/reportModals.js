@@ -17,8 +17,9 @@ function buildNewspaperHtml(state, includeFooter = true, period = null) {
       <div class="date">${dateStr}</div>
     </div>
     <div class="newspaper-body">`;
-  if (newsItems.length > 0) {
-    html += `<div class="newspaper-headline">⚡ ${newsItems[0].title}</div>`;
+  const headline = pickNewspaperHeadline(state, newsItems);
+  if (headline) {
+    html += `<div class="newspaper-headline">${headline.category === 'mega_event' ? '🏆' : '⚡'} ${headline.title}</div>`;
   }
   const oilChange = state.prevOilPrice > 0 ? ((state.oilPrice - state.prevOilPrice) / state.prevOilPrice * 100) : 0;
   const oilArrow = oilChange > 0.01 ? '↑' : oilChange < -0.01 ? '↓' : '→';
@@ -48,11 +49,15 @@ function buildNewspaperHtml(state, includeFooter = true, period = null) {
     </div>`;
   }
   newsItems.forEach((item) => {
-    const catName = { politics: '时政', entertainment: '娱乐', culture: '文化', disaster: '灾害', economy: '财经', tech: '科技', sports: '体育', health: '卫生', ads: '广告', aviation: '航空' }[item.category] || '综合';
-    const featured = item.category === 'aviation' ? ' style="background:#ebe6d6;border:1px solid #0284c7;border-radius:4px;padding:10px;margin-bottom:14px"' : '';
+    const catName = { politics: '时政', entertainment: '娱乐', culture: '文化', disaster: '灾害', economy: '财经', tech: '科技', sports: '体育', health: '卫生', ads: '广告', aviation: '航空', mega_event: '盛事' }[item.category] || '综合';
+    const featured = item.category === 'aviation'
+      ? ' style="background:#ebe6d6;border:1px solid #0284c7;border-radius:4px;padding:10px;margin-bottom:14px"'
+      : item.category === 'mega_event'
+        ? ' style="background:#fdf6e3;border:2px solid #d4a017;border-radius:4px;padding:10px;margin-bottom:14px"'
+        : '';
     html += `<div class="newspaper-item"${featured}>
       <span class="cat ${item.category}">${catName}</span>
-      <div class="title">${item.title}</div>
+      <div class="title">${item.category === 'mega_event' ? '🏆 ' : ''}${item.title}</div>
       <div class="desc">${item.desc}</div>
       ${item.effect ? `<div class="effect">→ ${item.effect}</div>` : ''}
     </div>`;
@@ -68,8 +73,22 @@ function buildNewspaperHtml(state, includeFooter = true, period = null) {
   return html;
 }
 
+function pickNewspaperHeadline(state, newsItems) {
+  const megaItems = newsItems.filter((item) => item.category === 'mega_event');
+  const peakMega = megaItems.find((item) => item._isHeadline);
+  if (peakMega) return peakMega;
+  if (megaItems.length > 0) {
+    return megaItems.reduce((best, item) => {
+      const bestEvent = (state.activeMegaEvents || []).find((event) => event.id === best._megaEventId);
+      const itemEvent = (state.activeMegaEvents || []).find((event) => event.id === item._megaEventId);
+      return (itemEvent?.currentBoost || 0) > (bestEvent?.currentBoost || 0) ? item : best;
+    }, megaItems[0]);
+  }
+  return newsItems.find((item) => item.category !== 'ads') || newsItems[0] || null;
+}
+
 export function showNewspaper(state) {
-  const html = buildNewspaperHtml(state, true, state?.lastReportData?.period || null);
+  const html = buildNewspaperHtml(state, true, state?.lastReportData?.newsPeriod || state?.lastReportData?.nextPeriod || state?.lastReportData?.period || null);
   byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop" style="align-items:flex-start;padding-top:40px">${html}</div>`;
   const reread = byId('reread-news-btn');
   if (reread) reread.style.display = '';
@@ -171,8 +190,9 @@ export function showFinancialReport(state, rev, cost, profit, period = null, int
 
 export function showTurnSummary(state, report) {
   const snapshot = createFinancialReportSnapshot(state);
-  state.lastReportData = { ...report, snapshot };
-  const newsHtml = buildNewspaperHtml(state, false, report.period);
+  const newsPeriod = report.nextPeriod || null;
+  state.lastReportData = { ...report, newsPeriod, snapshot };
+  const newsHtml = buildNewspaperHtml(state, false, newsPeriod);
   const reportHtml = buildFinancialReportHtml(state, report.rev, report.cost, report.profit, report.period, report.interest, snapshot);
   byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" data-action="close-modal" style="padding:10px 40px;border-radius:8px">知道了，继续经营</button></div></div></div></div>`;
   const newsBtn = byId('reread-news-btn');

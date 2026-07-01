@@ -1,6 +1,7 @@
 import { getCity, routeKey, STORAGE_KEYS } from './helpers.js';
 import { normalizeCityStates } from '../data/cityEraData.js';
 import { suggestedPrice } from './economy.js';
+import { syncMegaEventState } from './megaEvents.js';
 import { normalizeMilestoneState } from './milestones.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, normalizeModifierState } from './modifiers.js';
 import { normalizeStockState } from './stocks.js';
@@ -40,6 +41,7 @@ export function normalizeLoadedState(state) {
   normalizeUpstreamStateFields(state);
   normalizeModifierState(state);
   migrateLegacyRouteModifiers(state);
+  syncMegaEventState(state);
   return state;
 }
 
@@ -54,8 +56,10 @@ function normalizeUpstreamStateFields(state) {
   state.cityStates = normalizeCityStates(state);
   normalizeMilestoneState(state);
   normalizeStockState(state);
+  if (!Array.isArray(state.activeMegaEvents)) state.activeMegaEvents = [];
   if (!Array.isArray(state.deliveredThisTurn)) state.deliveredThisTurn = [];
   if (state.redPacketClaimed === undefined) state.redPacketClaimed = false;
+  if (state.bankruptRescued === undefined) state.bankruptRescued = false;
   state.playerTrait = normalizePlayerTrait(state.playerTrait);
   if (!state.playerTrait) state.traitChosen = false;
   else if (state.traitChosen === undefined) state.traitChosen = true;

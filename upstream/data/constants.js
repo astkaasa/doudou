@@ -25,6 +25,7 @@ const CITIES = [
   {id:'sapporo',name:'札幌',x:0.8925,y:0.2606,pop:2.6,level:1,region:'asia',subRegion:'east_asia'},
   {id:'okinawa',name:'冲绳',x:0.8547,y:0.3539,pop:1.4,level:1,region:'asia',subRegion:'east_asia',_dx:2.8},
   {id:'ulanbator',name:'乌兰巴托',x:0.7969,y:0.2339,pop:1.4,level:1,region:'asia',subRegion:'east_asia'},
+  {id:'osaka',name:'大阪',x:0.8764,y:0.3073,pop:2.7,level:2,region:'asia',subRegion:'east_asia'},
   // ===== 亚洲-东南亚 =====
   {id:'singapore',name:'新加坡',x:0.7883,y:0.4928,pop:5.7,level:3,region:'asia',subRegion:'southeast_asia'},
   {id:'bangkok',name:'曼谷',x:0.7792,y:0.4233,pop:10.5,level:2,region:'asia',subRegion:'southeast_asia'},
@@ -72,6 +73,9 @@ const CITIES = [
   {id:'marseille',name:'马赛',x:0.5150,y:0.2594,pop:0.86,level:1,region:'europe',subRegion:'europe'},
   {id:'munich',name:'慕尼黑',x:0.5322,y:0.2328,pop:1.45,level:2,region:'europe',subRegion:'europe'},
   {id:'stpetersburg',name:'圣彼得堡',x:0.5842,y:0.1671,pop:5.4,level:2,region:'europe',subRegion:'europe'},
+  {id:'seville',name:'塞维利亚',x:0.4834,y:0.2923,pop:0.7,level:1,region:'europe',subRegion:'europe'},
+  {id:'hannover',name:'汉诺威',x:0.5271,y:0.2091,pop:0.5,level:1,region:'europe',subRegion:'europe'},
+  {id:'milan',name:'米兰',x:0.5255,y:0.2474,pop:1.3,level:2,region:'europe',subRegion:'europe'},
   // ===== 非洲-北部 =====
   {id:'algiers',name:'阿尔及尔',x:0.5083,y:0.2956,pop:3.2,level:2,region:'africa',subRegion:'north_africa'},
   {id:'dakar',name:'达喀尔',x:0.4517,y:0.4183,pop:2.8,level:1,region:'africa',subRegion:'north_africa'},
@@ -95,6 +99,7 @@ const CITIES = [
   {id:'washington',name:'华盛顿',x:0.2861,y:0.2839,pop:6.9,level:2,region:'namerica',subRegion:'east_namerica'},
   {id:'ottawa',name:'渥太华',x:0.2897,y:0.2478,pop:1,level:2,region:'namerica',subRegion:'east_namerica'},
   {id:'atlanta',name:'亚特兰大',x:0.2656,y:0.3128,pop:0.6,level:2,region:'namerica',subRegion:'east_namerica'},
+  {id:'montreal',name:'蒙特利尔',x:0.2956,y:0.2472,pop:1.7,level:2,region:'namerica',subRegion:'east_namerica'},
   {id:'havana',name:'哈瓦那',x:0.2711,y:0.3717,pop:2.1,level:2,region:'namerica',subRegion:'caribbean'},
   {id:'kingston',name:'金斯顿',x:0.2867,y:0.4000,pop:0.66,level:1,region:'namerica',subRegion:'caribbean',_dx:0.8},
   {id:'santodomingo',name:'圣多明各',x:0.3058,y:0.3972,pop:0.99,level:1,region:'namerica',subRegion:'caribbean'},
@@ -110,6 +115,7 @@ const CITIES = [
   {id:'honolulu',name:'檀香山',x:0.0615,y:0.3816,pop:1,level:2,region:'namerica',subRegion:'west_namerica'},
   {id:'sanfrancisco',name:'旧金山',x:0.1600,y:0.2900,pop:0.87,level:2,region:'namerica',subRegion:'west_namerica'},
   // ===== 南美洲 =====
+  {id:'rio',name:'里约热内卢',x:0.3801,y:0.6273,pop:6.7,level:3,region:'samerica',subRegion:'samerica'},
   {id:'saopaulo',name:'圣保罗',x:0.3706,y:0.6306,pop:12.3,level:3,region:'samerica',subRegion:'samerica'},
   {id:'buenosaires',name:'布宜诺斯艾利斯',x:0.3378,y:0.6922,pop:15,level:2,region:'samerica',subRegion:'samerica'},
   {id:'brasilia',name:'巴西利亚',x:0.3669,y:0.5878,pop:3,level:1,region:'samerica',subRegion:'samerica'},
@@ -195,17 +201,17 @@ const AI_PROFILES = [
 const NEWS_POOL = {
   politics: [
     {title:'多国领导人峰会在海牙闭幕',desc:'峰会发布联合声明，强调加强国际合作与多边贸易机制。分析人士认为这为全球出行市场注入稳定信号。',stockEffect:{finance:+0.03,tourism:+0.04}},
-    {title:'联合国大会通过新决议',desc:'安理会就区域安全问题达成一致，国际社会对此表示谨慎乐观。签证政策有望放宽。',stockEffect:{finance:+0.03,tourism:+0.05}},
-    {title:'某区域选举结果引发执政更迭',desc:'新政府承诺推动经济改革与开放政策，外交关系有望缓和。市场预期趋稳。',stockEffect:{finance:+0.04,tourism:+0.03}},
-    {title:'国际法庭对领土争端做出裁决',desc:'长期悬而未决的边界问题取得法律进展，相关区域局势趋于平稳。',stockEffect:{finance:+0.02}},
+    {title:'联合国大会通过新决议',desc:'大会就促进国际航空便利化达成共识，各国签证政策有望进一步放宽。',stockEffect:{finance:+0.03,tourism:+0.05}},
+    {title:'某国新政府推动经济改革',desc:'新政府承诺推动经济改革与开放政策，跨国贸易关系有望改善。市场预期趋稳。',stockEffect:{finance:+0.04,tourism:+0.03}},
+    {title:'国际航空法庭裁决航线准入纠纷',desc:'长期悬而未决的跨国航线准入问题取得法律进展，相关区域航运趋于平稳。',stockEffect:{finance:+0.02}},
     {title:'多国签署跨境基础设施协议',desc:'新协定将促进交通枢纽建设与人员往来便利化，航空出行有望受益。',stockEffect:{tourism:+0.05,finance:+0.02}},
     {title:'亚太经合组织峰会达成贸易共识',desc:'成员国在关税减免和签证便利方面取得突破，区域商务出行有望升温。',stockEffect:{tourism:+0.06,finance:+0.03}},
     {title:'欧盟通过航空业补贴改革方案',desc:'新规统一成员国航空补贴标准，旨在营造公平竞争环境。中小航司获得更多发展空间。',stockEffect:{finance:+0.04,tourism:+0.02}},
     {title:'非盟首脑会议聚焦互联互通',desc:'非洲领导人一致同意加快跨境航空自由化进程，推动"单一非洲航空运输市场"建设。',stockEffect:{tourism:+0.04,finance:+0.02}},
     {title:'G7峰会宣布气候与交通联合倡议',desc:'主要经济体承诺推动可持续航空燃料研发，承诺为绿色航空技术提供资金支持。',stockEffect:{finance:+0.03,tech:+0.04}},
-    {title:'中东和平进程取得阶段性成果',desc:'相关方签署停火协议，国际航班开始恢复飞往此前受限空域的航线。',stockEffect:{tourism:+0.05,finance:+0.03}},
+    {title:'中东航空开放协定正式签署',desc:'相关方达成空域开放协议，国际航班获准飞往更多中东城市。',stockEffect:{tourism:+0.05,finance:+0.03}},
     {title:'拉美区域一体化组织扩员',desc:'新增三个成员国加入南方共同市场，区域内部航空市场进一步开放。',stockEffect:{tourism:+0.04,finance:+0.02}},
-    {title:'北极航道主权争议获得外交解决',desc:'各方同意设立联合管理机制，北极航线的商业飞行规则逐步明确。',stockEffect:{finance:+0.02,tourism:+0.03}},
+    {title:'北极航道通航规则获得多方共识',desc:'各国同意设立联合管理机制，北极航线的商业飞行规则逐步明确。',stockEffect:{finance:+0.02,tourism:+0.03}},
     {title:'东南亚国家联盟签署免签互惠协议',desc:'成员国公民可免签互访，区域旅游市场预计迎来爆发式增长。',stockEffect:{tourism:+0.08,culture:+0.03}},
   ],
   economy: [

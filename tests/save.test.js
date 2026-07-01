@@ -168,6 +168,31 @@ describe('save migration', () => {
     expect(result.state.portfolio).toEqual({});
   });
 
+  it('adds new city markets and rebuilds active mega events for old saves', () => {
+    const raw = JSON.stringify({
+      v: 8,
+      g: {
+        era: 'era3',
+        year: 2000,
+        quarter: 3,
+        routes: [],
+        fleet: [],
+        cityStates: {
+          beijing: { pop: 10.5, biz: 68, tour: 47 },
+        },
+      },
+    });
+
+    const result = loadGameState(memoryStorage(raw));
+
+    expect(result.ok).toBe(true);
+    expect(result.state.cityStates.rio).toEqual({ pop: 6.7, biz: 35, tour: 55 });
+    expect(result.state.cityStates.hannover).toEqual({ pop: 0.5, biz: 38, tour: 15 });
+    expect(result.state.activeMegaEvents.map((event) => event.id)).toEqual(expect.arrayContaining(['oly_s2000', 'expo_2000']));
+    expect(result.state.activeModifiers.filter((modifier) => modifier.mode === 'megaEvent')).toHaveLength(2);
+    expect(result.state.bankruptRescued).toBe(false);
+  });
+
   it('persists official report data while dropping legacy transient report cache', () => {
     const storage = writableStorage();
     const state = {
