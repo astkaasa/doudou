@@ -62,7 +62,8 @@ function initState(hq, era) {
     gameOver:false, selectedCity:null, planeIdCounter:1, history:[], mapZoom:1, mapPanX:0, mapPanY:0,
     onboardStep:0, deliveredThisTurn:[], leaseExpiredThisTurn:[], redPacketClaimed:false,
     playerTrait:null, traitChosen:false, milestones:{},
-    activeMegaEvents:[], bankruptRescued:false
+    activeMegaEvents:[], bankruptRescued:false,
+    mainQuest:{ currentStage:1, stageCompleted:[], victoryGrade:null, victoryTurn:null }
   };
 }
 
@@ -79,6 +80,8 @@ function migrateGameState() {
         : { pop: c.pop, biz: 20, tour: 15 };
     }
   });
+  // Main quest migration
+  if (!G.mainQuest) G.mainQuest = { currentStage:1, stageCompleted:[], victoryGrade:null, victoryTurn:null };
   // Rebuild activeMegaEvents from current game date (handles mid-cycle loads)
   if (G.year && G.quarter && typeof MEGA_EVENTS !== 'undefined') {
     MEGA_EVENTS.forEach(evt => {

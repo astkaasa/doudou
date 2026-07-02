@@ -114,7 +114,7 @@ function renderStockModal() {
       <div style="font-size:12px;color:#94a3b8;margin-bottom:6px">── 买入 ──</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap">`;
     
-    [1, 5, 10, 50].forEach(amt => {
+    [1, 5, 10, 50, 100].forEach(amt => {
       const cost = state.price * amt;
       const fee = cost * STOCK_TRADE_FEE;
       const total = cost + fee;
@@ -136,7 +136,7 @@ function renderStockModal() {
       <div style="font-size:12px;color:#94a3b8;margin-bottom:6px">── 卖出 ──</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">`;
     
-    [1, 5, 10, 50].forEach(amt => {
+    [1, 5, 10, 50, 100].forEach(amt => {
       const disabled = holding < amt;
       html += `<button class="btn btn-sm" style="
         background:${disabled ? '#1e293b' : '#b91c1c'};color:${disabled ? '#475569' : '#fff'};

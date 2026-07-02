@@ -79,4 +79,6 @@ function advanceTurn(){
   emit('turn:advanced',{year:settledYear,quarter:settledQuarter,revenue:totalRev,cost:totalCost,profit,traitFund,branchCompleted});
   // Check milestones after turn advance (profit, survival, etc.)
   updateMilestones();
+  // Check main quest progress after milestones
+  updateMainQuest();
 }

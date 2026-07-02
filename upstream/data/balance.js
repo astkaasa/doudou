@@ -10,6 +10,10 @@ const DIST_PREMIUM_LONG    = 1.4;   // >8000km: 洲际航线需求加成
 const DIST_PREMIUM_MID     = 1.2;   // >4000km: 远程航线需求加成
 const DIST_SHORT_PENALTY   = 0.85;  // <2000km: 短途高铁竞争
 const CROSS_REGION_BONUS   = 1.1;   // 跨区域: 不同市场连接加成
+const YIELD_INTERCONT_LONG = 1.50;  // >8000km跨区域: 真洲际收益系数 [待测试]
+const YIELD_INTERCONT_MID  = 1.35;  // >4500km跨区域: 跨洲远程收益系数 [待测试]
+const YIELD_INTERCONT_SHORT= 1.15;  // >3000km跨区域: 跨洲中途收益系数 [待测试]
+const YIELD_CROSS_SUB_LONG = 1.12;  // >3000km跨子区域: 同区跨经济圈长途收益系数 [待测试]
 const SEASON_MODIFIERS     = [0.85, 0.9, 1.0, 0.95]; // Q1-Q4
 
 // --- Pricing & Load Factor ---

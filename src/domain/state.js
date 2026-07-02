@@ -4,6 +4,7 @@ import { ERAS } from '../data/eras.js';
 import { DEFAULT_COMPANY_NAME } from './constants.js';
 import { availablePlaneTemplates } from './fleet.js';
 import { randInt } from './helpers.js';
+import { createMainQuestState } from './mainQuest.js';
 import { initStockState } from './stocks.js';
 
 export function initState(hq, era) {
@@ -65,6 +66,7 @@ function createBaseState(era, overrides = {}) {
     turnsPlayed: 0,
     consecutiveProfit: 0,
     milestones: {},
+    mainQuest: createMainQuestState(),
     bankruptRescued: false,
     gameOver: false,
     selectedCity: null,

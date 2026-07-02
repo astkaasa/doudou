@@ -2,6 +2,7 @@ import { getCity, routeKey, STORAGE_KEYS } from './helpers.js';
 import { normalizeCityStates } from '../data/cityEraData.js';
 import { suggestedPrice } from './economy.js';
 import { syncMegaEventState } from './megaEvents.js';
+import { normalizeMainQuestState } from './mainQuest.js';
 import { normalizeMilestoneState } from './milestones.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, normalizeModifierState } from './modifiers.js';
 import { normalizeStockState } from './stocks.js';
@@ -55,6 +56,7 @@ function normalizeUpstreamStateFields(state) {
   state.branchesConstructing = normalizeConstructingBranches(state);
   state.cityStates = normalizeCityStates(state);
   normalizeMilestoneState(state);
+  normalizeMainQuestState(state);
   normalizeStockState(state);
   if (!Array.isArray(state.activeMegaEvents)) state.activeMegaEvents = [];
   if (!Array.isArray(state.deliveredThisTurn)) state.deliveredThisTurn = [];

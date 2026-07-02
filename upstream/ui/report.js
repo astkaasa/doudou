@@ -28,10 +28,23 @@ function buildFinancialReportHtml(rev,cost,profit,settledYear,settledQuarter){
     const sorted=Object.values(cityRevenue).sort((a,b)=>(b.isHQ?1:0)-(a.isHQ?1:0)||b.profit-a.profit);
     sorted.forEach(c=>{
       const rc=c.profit>=0?'#4ade80':'#f87171';
-      const tag=c.isHQ?'⌂ 总部':'⑂ 分部';
+      const tag=c.isHQ?'📍 总部':'🏬 分部';
       html+=`<div class="report-row"><span>${tag} ${c.name} (${c.routeCount}线)</span><span style="color:${rc}">${fmt(c.profit)}</span></div>`;
     });
     html+=`</div>`;
+  }
+  // ── 投资收益分区（紧跟航线收益，先于通知区块） ──
+  if(G.stocks&&Object.keys(G.portfolio).length>0){
+    const pv=calcPortfolioValue();
+    const pvlColor=pv.floatingPnL>=0?'#ef4444':'#22c55e';
+    const pvlSign=pv.floatingPnL>=0?'+':'';
+    const dividend=G._lastStockDividend||0;
+    html+=`<h3 style="font-size:13px;color:#7ba3cc;margin:8px 0 4px">📈 投资收益</h3>
+      <div class="report-section">
+        <div class="report-row"><span>持仓市值</span><span>$${pv.marketValue.toFixed(1)}M</span></div>
+        <div class="report-row"><span>本季浮盈</span><span style="color:${pvlColor}">${pvlSign}$${pv.floatingPnL.toFixed(1)}M</span></div>
+        ${dividend>0?`<div class="report-row"><span>本季分红(Q4)</span><span style="color:#fbbf24">+$${dividend.toFixed(1)}M</span></div>`:''}
+      </div>`;
   }
   // Delivery notification: aggregate by plane model
   if(G.deliveredThisTurn&&G.deliveredThisTurn.length>0){
@@ -51,19 +64,6 @@ function buildFinancialReportHtml(rev,cost,profit,settledYear,settledQuarter){
   if(G._lastBranchCompleted&&G._lastBranchCompleted.length>0){
     const names=G._lastBranchCompleted.map(b=>getCity(b.cityId).name).join('、');
     html+=`<div style="text-align:center;margin:10px 0 0;padding:8px 12px;background:#7c3aed18;border:1px solid #7c3aed50;border-radius:8px;font-size:13px"><span style="color:#a78bfa;font-weight:600">🏗 分部完工:</span> <span style="color:#e0e8f0">${names}</span><span style="color:#4ade80;font-size:11px;margin-left:6px">可开通航线</span></div>`;
-  }
-  // ── 投资收益分区 ──
-  if(G.stocks&&Object.keys(G.portfolio).length>0){
-    const pv=calcPortfolioValue();
-    const pvlColor=pv.floatingPnL>=0?'#ef4444':'#22c55e';
-    const pvlSign=pv.floatingPnL>=0?'+':'';
-    const dividend=G._lastStockDividend||0;
-    html+=`<h3 style="font-size:13px;color:#7ba3cc;margin:8px 0 4px">📈 投资收益</h3>
-      <div class="report-section">
-        <div class="report-row"><span>持仓市值</span><span>$${pv.marketValue.toFixed(1)}M</span></div>
-        <div class="report-row"><span>本季浮盈</span><span style="color:${pvlColor}">${pvlSign}$${pv.floatingPnL.toFixed(1)}M</span></div>
-        ${dividend>0?`<div class="report-row"><span>本季分红(Q4)</span><span style="color:#fbbf24">+$${dividend.toFixed(1)}M</span></div>`:''}
-      </div>`;
   }
   return html;
 }

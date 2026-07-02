@@ -27,7 +27,7 @@ function _showCrisisPhase() {
   root.innerHTML = `
     <div class="angel-overlay angel-crisis-overlay" id="angel-phase-1">
       <div class="angel-crisis-content">
-        <div class="angel-crisis-icon">⚠</div>
+        <div class="angel-crisis-icon">⚠️</div>
         <h1 class="angel-crisis-title">资金告急</h1>
         <p class="angel-crisis-desc">你的航空公司资金已跌破安全线！</p>
         <p class="angel-crisis-amount">当前资金：<span class="angel-crisis-cash">${fmt(G.cash)}</span></p>

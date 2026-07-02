@@ -1,5 +1,6 @@
 import { PLAYER_TRAITS } from '../data/playerTraits.js';
 import { byId, fmt, fmtPct, getCity } from '../domain/helpers.js';
+import { getMainQuestStats } from '../domain/mainQuest.js';
 import { getMilestoneStats } from '../domain/milestones.js';
 import { calcNasdouIndex } from '../domain/stocks.js';
 
@@ -49,6 +50,16 @@ export function updateHUD(state) {
   if (milestoneEl) {
     const stats = getMilestoneStats(state);
     milestoneEl.textContent = `${stats.unlocked}/${stats.total}`;
+  }
+  const mainQuestEl = byId('hud-main-quest-stage');
+  const mainQuestBtn = byId('hud-main-quest-btn');
+  if (mainQuestEl && mainQuestBtn) {
+    const stats = getMainQuestStats(state);
+    const progress = stats.progress;
+    mainQuestEl.textContent = stats.victoryGrade || String(stats.currentStage);
+    mainQuestBtn.title = stats.victoryGrade
+      ? `苍穹之路已通关：${stats.victoryGrade}`
+      : `${progress?.title || '苍穹之路'} · ${progress?.metCount || 0}/4`;
   }
   byId('hud-turn').textContent = state.year + ' Q' + state.quarter;
   const loanWrap = byId('hud-loan-wrap');

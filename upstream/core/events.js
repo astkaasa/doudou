@@ -150,7 +150,7 @@ function generateEvents(){
     const q = a.quartersFromEvent;
 
     if (q === -4) {
-      title = `${city.name}将举办${a.name}！`;
+      title = `${city.name}将举办${typeLabel === '夏奥' ? '奥运会' : '世博会'}！`;
       desc = `国际${typeLabel === '夏奥' ? '奥委会' : '展览局'}正式宣布，${city.name}获得举办权。预计将吸引数百万国际游客。`;
       effectText = `${city.name}航线需求开始升温`;
     } else if (q === -2) {

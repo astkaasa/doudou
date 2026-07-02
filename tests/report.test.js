@@ -50,6 +50,7 @@ describe('financial report snapshots', () => {
     const html = buildFinancialReportHtml(state, 9, 2, 7, null, 0);
 
     expect(html).toContain('<details class="report-base"');
+    expect(html).toContain('📍 总部 北京');
     expect(html).toContain('北京 → 上海');
     expect(html).toContain('客座率 80.0%');
     expect(html).toContain('收 $9.0M / 成 $2.0M');

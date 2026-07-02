@@ -6,6 +6,7 @@ import { advanceFleetAge } from './fleet.js';
 import { BANKRUPTCY_THRESHOLD, SPICY_TRAIT_FUND_RATIO } from './constants.js';
 import { clamp } from './helpers.js';
 import { loanInterest } from './loans.js';
+import { updateMainQuest } from './mainQuest.js';
 import { updateRouteMetrics } from './routes.js';
 import { calcStockDividend } from './stocks.js';
 
@@ -73,7 +74,8 @@ export function advanceTurnState(state) {
       state.gameOver = true;
     }
   }
-  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, branchCompleted, gameOver: state.gameOver, angelRescue };
+  const mainQuestUpdate = state.gameOver || angelRescue ? null : updateMainQuest(state);
+  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, branchCompleted, gameOver: state.gameOver, angelRescue, mainQuestUpdate };
 }
 
 export function calculateTurnFinancials(state, extraRevenue = 0) {

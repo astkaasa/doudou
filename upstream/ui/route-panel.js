@@ -107,8 +107,8 @@ function renderRouteList(){
   else if(uiState.routeStatusFilter==='suspended')rows=rows.filter(r=>r.suspended);
   // Filter by city
   const baseCities=[{id:'all',name:'全部'}];
-  if(G.hq){const hqCity=getCity(G.hq);if(hqCity)baseCities.push({id:G.hq,name:'⌂'+hqCity.name});}
-  if(G.branches)G.branches.forEach(bid=>{const bc=getCity(bid);if(bc)baseCities.push({id:bid,name:'>'+bc.name});});
+  if(G.hq){const hqCity=getCity(G.hq);if(hqCity)baseCities.push({id:G.hq,name:'📍'+hqCity.name});}
+  if(G.branches)G.branches.forEach(bid=>{const bc=getCity(bid);if(bc)baseCities.push({id:bid,name:'🏬'+bc.name});});
   if(G.branchesConstructing)G.branchesConstructing.forEach(b=>{const bc=getCity(b.cityId);if(bc)baseCities.push({id:b.cityId,name:'🏗'+bc.name});});
   if(uiState.routeCityFilter!=='all')rows=rows.filter(r=>r.fromId===uiState.routeCityFilter||r.toId===uiState.routeCityFilter);
   // Sort

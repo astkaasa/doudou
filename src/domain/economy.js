@@ -1,5 +1,6 @@
 import { getCityMarketState } from '../data/cityEraData.js';
 import { cityDist, clamp, getCity } from './helpers.js';
+import { YIELD_CROSS_SUB_LONG, YIELD_INTERCONT_LONG, YIELD_INTERCONT_MID, YIELD_INTERCONT_SHORT } from './constants.js';
 import { routeCostMultiplier, routeDemandMultiplier, routeServiceMultiplier } from './modifiers.js';
 
 export const ROUTE_REVENUE_DIVISOR = 28000;
@@ -69,13 +70,29 @@ export function distanceServiceMultiplier(distanceKm) {
   return 1;
 }
 
+export function routeYieldPremium(cityA, cityB) {
+  if (!cityA || !cityB) return 1;
+  const distanceKm = cityDist(cityA, cityB);
+  const crossRegion = cityA.region !== cityB.region;
+  const crossSubRegion = cityA.subRegion !== cityB.subRegion;
+  if (crossRegion && distanceKm > 8000) return YIELD_INTERCONT_LONG;
+  if (crossRegion && distanceKm > 4500) return YIELD_INTERCONT_MID;
+  if (crossRegion && distanceKm > 3000) return YIELD_INTERCONT_SHORT;
+  if (crossSubRegion && distanceKm > 3000) return YIELD_CROSS_SUB_LONG;
+  return 1;
+}
+
 export function routeRevenue(state, route, assignedPlanes = getRouteAssignedPlanes(state, route)) {
+  const cityA = getCity(route.from);
+  const cityB = getCity(route.to);
+  if (!cityA || !cityB) return { pax: 0, rev: 0, cargoRev: 0, total: 0 };
   const lf = route.loadFactor;
   const totalSeats = routeSeatCapacity(state, route, assignedPlanes);
   const serviceMultiplier = effectiveServiceMultiplier(state, route);
+  const yieldPremium = routeYieldPremium(cityA, cityB);
   const pax = Math.round(totalSeats * lf) * serviceMultiplier;
-  const rev = pax * route.price / ROUTE_REVENUE_DIVISOR;
-  const cargoRev = pax * 0.02 * route.price * 0.3 / ROUTE_REVENUE_DIVISOR;
+  const rev = pax * route.price * yieldPremium / ROUTE_REVENUE_DIVISOR;
+  const cargoRev = pax * 0.02 * route.price * 0.3 * yieldPremium / ROUTE_REVENUE_DIVISOR;
   return { pax, rev, cargoRev, total: rev + cargoRev };
 }
 

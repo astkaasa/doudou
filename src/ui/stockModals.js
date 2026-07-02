@@ -113,7 +113,7 @@ function renderTradePanel(state) {
   </div>
   <div class="stock-actions">
     <strong>买入</strong>
-    <div class="stock-action-row">${[1, 5, 10, 50].map((shares) => {
+    <div class="stock-action-row">${[1, 5, 10, 50, 100].map((shares) => {
       const total = stockState.price * shares * (1 + STOCK_TRADE_FEE);
       const disabled = !canBuyMore || holding.shares + shares > STOCK_MAX_HOLDING || state.cash < total;
       return tradeButton('buy-stock', selectedStockId, shares, disabled);
@@ -123,7 +123,7 @@ function renderTradePanel(state) {
   <div class="stock-actions">
     <strong>卖出</strong>
     <div class="stock-action-row">
-      ${[1, 5, 10, 50].map((shares) => tradeButton('sell-stock', selectedStockId, shares, holding.shares < shares)).join('')}
+      ${[1, 5, 10, 50, 100].map((shares) => tradeButton('sell-stock', selectedStockId, shares, holding.shares < shares)).join('')}
       ${tradeButton('sell-stock', selectedStockId, holding.shares, holding.shares <= 0, '全部')}
     </div>
     <small>1M到账 $${(stockState.price * (1 - STOCK_TRADE_FEE)).toFixed(1)}M，扣手续费1%</small>

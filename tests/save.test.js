@@ -79,6 +79,12 @@ describe('save migration', () => {
     expect(result.state.branchesConstructing).toEqual([{ cityId: 'tokyo', constructIn: 2 }]);
     expect(result.state.cityStates.beijing).toEqual({ pop: 5.5, biz: 30, tour: 22 });
     expect(result.state.milestones).toEqual({ first_route: true });
+    expect(result.state.mainQuest).toEqual({
+      currentStage: 1,
+      stageCompleted: [],
+      victoryGrade: null,
+      victoryTurn: null,
+    });
     expect(result.state.lastNewspaperHtml).toBeUndefined();
     expect(result.state._lastReportData).toBeUndefined();
     expect(result.state.lastReportData).toEqual({ rev: 1 });
@@ -147,6 +153,32 @@ describe('save migration', () => {
     expect(result.state.portfolio).toEqual({ lan_royal_bank: { shares: 100, avgCost: 120 } });
     expect(result.state.stockEvents).toEqual([]);
     expect(result.state._lastStockDividend).toBe(0);
+  });
+
+  it('normalizes main quest state from older or malformed saves', () => {
+    const raw = JSON.stringify({
+      v: 9,
+      g: {
+        routes: [],
+        fleet: [],
+        mainQuest: {
+          currentStage: 99,
+          stageCompleted: [1, 1, 4, '2'],
+          victoryGrade: 'Z',
+          victoryTurn: -1,
+        },
+      },
+    });
+
+    const result = loadGameState(memoryStorage(raw));
+
+    expect(result.ok).toBe(true);
+    expect(result.state.mainQuest).toEqual({
+      currentStage: 3,
+      stageCompleted: [1, 2],
+      victoryGrade: null,
+      victoryTurn: null,
+    });
   });
 
   it('initializes missing stock prices for old saves with an empty portfolio', () => {

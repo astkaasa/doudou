@@ -77,7 +77,7 @@ export function megaEventNewsFor(event) {
   let effect = '';
 
   if (q === -4) {
-    title = `${event.cityName}将举办${event.name}！`;
+    title = `${event.cityName}将举办${typeLabel === '夏奥' ? '奥运会' : '世博会'}！`;
     desc = `国际${typeLabel === '夏奥' ? '奥委会' : '展览局'}正式宣布，${event.cityName}获得举办权。预计将吸引数百万国际游客。`;
     effect = `${event.cityName}航线需求开始升温`;
   } else if (q === -2) {

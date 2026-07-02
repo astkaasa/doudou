@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { PLANES } from '../src/data/planes.js';
+import { suggestedPrice } from '../src/domain/economy.js';
 import { advanceTurnState, calculateTurnFinancials } from '../src/domain/turn.js';
 import { initState } from '../src/domain/state.js';
 import { openBranch } from '../src/domain/bases.js';
@@ -106,6 +108,36 @@ describe('turn progression', () => {
     expect(state.branches).toEqual(['shanghai']);
     expect(state.branchesConstructing).toEqual([]);
     expect(state.history[0].branchCompleted).toEqual(['shanghai']);
+  });
+
+  it('emits main quest stage updates after profitable quarterly settlement', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const state = initState('beijing', 'era1');
+    const plane = { ...PLANES.find((item) => item.id === 'b777'), uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 };
+    const price = suggestedPrice('beijing', 'shanghai');
+    state.ai = [];
+    state.cash = 300;
+    state.branches = ['london'];
+    state.fleet = [plane];
+    state.consecutiveProfit = 3;
+    state.routes = Array.from({ length: 8 }, () => ({
+      from: 'beijing',
+      to: 'shanghai',
+      price,
+      suggestedPrice: price,
+      serviceMultiplier: 1,
+      assignedPlanes: [1],
+      loadFactor: 0,
+    }));
+
+    const report = advanceTurnState(state);
+
+    expect(report.mainQuestUpdate).toMatchObject({
+      type: 'stage_complete',
+      stage: 1,
+      nextStage: 2,
+    });
+    expect(state.mainQuest.currentStage).toBe(2);
   });
 
   it('triggers one-time angel rescue before bankruptcy game over', () => {

@@ -114,7 +114,7 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
     html += '<h3>基地收益</h3><div class="report-section report-base-section">';
     getBaseRouteTotals(snapshot).forEach((base) => {
       const rc = base.profit >= 0 ? '#4ade80' : '#f87171';
-      const tag = base.isHQ ? '⌂ 总部' : '⑂ 分部';
+      const tag = base.isHQ ? '📍 总部' : '🏬 分部';
       const openAttr = snapshot.routes.length <= 4 && base.routeCount <= 4 ? ' open' : '';
       html += `<details class="report-base"${openAttr}>
         <summary>

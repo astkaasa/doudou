@@ -4,8 +4,8 @@ function openBuyPlaneModal(){
   const leaseMax=maxLeasedPlanes();
   const canLease=boughtCount>=1&&leasedCount<leaseMax;
   let leaseTip='';
-  if(boughtCount<1)leaseTip='<div style="background:#dc262620;border:1px solid #dc262660;border-radius:6px;padding:8px;margin-bottom:10px;font-size:12px;color:#f87171">⚠ 租赁限制：需先购买至少1架飞机后才能租赁</div>';
-  else if(leasedCount>=leaseMax)leaseTip='<div style="background:#dc262620;border:1px solid #dc262660;border-radius:6px;padding:8px;margin-bottom:10px;font-size:12px;color:#f87171">⚠ 租赁限制：租赁飞机数量已达上限（购买'+boughtCount+'架，最多租赁'+leaseMax+'架）</div>';
+  if(boughtCount<1)leaseTip='<div style="background:#dc262620;border:1px solid #dc262660;border-radius:6px;padding:8px;margin-bottom:10px;font-size:12px;color:#f87171">⚠️ 租赁限制：需先购买至少1架飞机后才能租赁</div>';
+  else if(leasedCount>=leaseMax)leaseTip='<div style="background:#dc262620;border:1px solid #dc262660;border-radius:6px;padding:8px;margin-bottom:10px;font-size:12px;color:#f87171">⚠️ 租赁限制：租赁飞机数量已达上限（购买'+boughtCount+'架，最多租赁'+leaseMax+'架）</div>';
   else leaseTip='<div style="background:#16a34a20;border:1px solid #16a34a60;border-radius:6px;padding:8px;margin-bottom:10px;font-size:12px;color:#4ade80">租赁信息：已购'+boughtCount+'架 · 已租'+leasedCount+'架 · 剩余可租'+(leaseMax-leasedCount)+'架 · 租期最长10年</div>';
 
   // Group planes by manufacturer

@@ -97,4 +97,14 @@ describe('news event effects', () => {
       stockEffect: { tourism: 0.1, culture: 0.08 },
     });
   });
+
+  it('uses generic Olympics naming for four-quarter mega event announcements', () => {
+    const state = initState('beijing', 'era1');
+    state.year = 1959;
+    state.quarter = 3;
+    const activeEvents = syncMegaEventState(state);
+    const rome = activeEvents.find((event) => event.id === 'oly_s1960');
+
+    expect(megaEventNewsFor(rome).title).toBe('罗马将举办奥运会！');
+  });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
-import { baseDemand, calcLoadFactor, distanceServiceMultiplier, routeCost, routeRevenue, routeSeatCapacity, suggestedPrice } from '../src/domain/economy.js';
+import { baseDemand, calcLoadFactor, distanceServiceMultiplier, routeCost, routeRevenue, routeSeatCapacity, routeYieldPremium, suggestedPrice } from '../src/domain/economy.js';
 import { cityDist, getCity } from '../src/domain/helpers.js';
 import { addSuspensionModifier, routeServiceMultiplier } from '../src/domain/modifiers.js';
 import { initState } from '../src/domain/state.js';
@@ -60,6 +60,36 @@ describe('economy model', () => {
     expect(serviceMultiplier).toBe(4);
     expect(revenue.pax).toBe(pax);
     expect(revenue.rev).toBeCloseTo(pax * route.price / 28000);
+  });
+
+  it('adds yield premiums for cross-region and cross-subregion long routes', () => {
+    expect(routeYieldPremium(getCity('newyork'), getCity('london'))).toBeCloseTo(1.35);
+    expect(routeYieldPremium(getCity('newyork'), getCity('losangeles'))).toBeCloseTo(1.12);
+    expect(routeYieldPremium(getCity('beijing'), getCity('shanghai'))).toBe(1);
+  });
+
+  it('applies the yield premium to passenger and cargo revenue', () => {
+    const state = initState('newyork', 'era3');
+    const plane = { ...PLANES.find((item) => item.id === 'b777'), uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 };
+    state.fleet.push(plane);
+    const route = {
+      from: 'newyork',
+      to: 'london',
+      price: suggestedPrice('newyork', 'london'),
+      suggestedPrice: suggestedPrice('newyork', 'london'),
+      serviceMultiplier: 1,
+      assignedPlanes: [1],
+      loadFactor: 0.5,
+    };
+
+    const revenue = routeRevenue(state, route);
+    const serviceMultiplier = distanceServiceMultiplier(cityDist(getCity(route.from), getCity(route.to)));
+    const pax = Math.round(plane.seats * route.loadFactor) * serviceMultiplier;
+    const yieldPremium = routeYieldPremium(getCity(route.from), getCity(route.to));
+
+    expect(revenue.pax).toBe(pax);
+    expect(revenue.rev).toBeCloseTo(pax * route.price * yieldPremium / 28000);
+    expect(revenue.cargoRev).toBeCloseTo(pax * 0.02 * route.price * 0.3 * yieldPremium / 28000);
   });
 
   it('keeps route service multiplier out of seat capacity and applies it once as service volume', () => {

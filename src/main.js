@@ -24,6 +24,7 @@ import {
 import { advanceTurnState } from './domain/turn.js';
 import { updateHUD } from './ui/hud.js';
 import { closeModalRoot, showBanner, showModal } from './ui/modal.js';
+import { closeMainQuestOverlay, continueFromVictory, showMainQuestPanel, showMainQuestStageNotification, showMainQuestVictory, showVictoryEnding } from './ui/mainQuest.js';
 import { showMilestoneList, showMilestoneNotification } from './ui/milestones.js';
 import { showVersionLog } from './ui/versionLog.js';
 import { describeRouteSelection, initMapDrag, renderMap, setMapZoom } from './ui/map.js';
@@ -654,6 +655,11 @@ function advanceTurn() {
   }
   showTurnSummary(G, report);
   updateMilestones();
+  if (report.mainQuestUpdate?.type === 'stage_complete') {
+    showMainQuestStageNotification(report.mainQuestUpdate);
+  } else if (report.mainQuestUpdate?.type === 'victory') {
+    showMainQuestVictory(report.mainQuestUpdate);
+  }
 }
 
 function handleClick(event) {
@@ -723,6 +729,9 @@ function handleClick(event) {
       break;
     case 'open-stock-market':
       if (G) showStockMarket(G);
+      break;
+    case 'open-main-quest':
+      if (G) showMainQuestPanel(G);
       break;
     case 'select-stock':
       if (G) showStockMarket(G, target.dataset.stockId);
@@ -810,6 +819,20 @@ function handleClick(event) {
     case 'close-modal':
     case 'modal-backdrop':
       closeModal();
+      break;
+    case 'close-main-quest-overlay':
+      closeMainQuestOverlay(target.closest('.main-quest-overlay'));
+      break;
+    case 'continue-victory-game':
+      continueFromVictory();
+      break;
+    case 'end-victory-game':
+      if (G) {
+        G.gameOver = true;
+        closeMainQuestOverlay(target.closest('.main-quest-overlay'));
+        renderGame();
+        showVictoryEnding(G);
+      }
       break;
     case 'confirm-open-route':
       confirmOpenRoute(target.dataset.from, target.dataset.to);

@@ -10,3 +10,7 @@ export const MEGA_EVENT_PRE_ANNOUNCE = 4;
 export const MEGA_EVENT_DECAY_LENGTH = 3;
 export const DISASTER_BOTH_CITIES = 0.1;
 export const DISASTER_ONE_CITY = 0.3;
+export const YIELD_INTERCONT_LONG = 1.5;
+export const YIELD_INTERCONT_MID = 1.35;
+export const YIELD_INTERCONT_SHORT = 1.15;
+export const YIELD_CROSS_SUB_LONG = 1.12;

@@ -74,7 +74,7 @@ function confirmClaimRedPacket(){
       <div style="font-size:13px;color:#7ba3cc;margin-top:4px">无利息 · 无手续费 · 一次性领取</div>
     </div>
     <div style="background:#fbbf2420;border:1px solid #fbbf2460;border-radius:8px;padding:12px;margin:12px 0;text-align:center">
-      <div style="font-size:14px;color:#fbbf24;font-weight:700">⚠ 只能领取1次，可能影响正常游戏体验，请慎重考虑！</div>
+      <div style="font-size:14px;color:#fbbf24;font-weight:700">⚠️ 只能领取1次，可能影响正常游戏体验，请慎重考虑！</div>
       <div style="font-size:12px;color:#7ba3cc;margin-top:4px">确认后将立即到账 $1000M，此操作不可撤销。</div>
     </div>
     <div style="margin-top:16px;display:flex;gap:8px;justify-content:center">

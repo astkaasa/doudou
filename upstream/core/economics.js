@@ -130,6 +130,20 @@ function suggestedPrice(from,to){const d=cityDist(getCity(from),getCity(to));ret
 
 function routeOpenCost(from,to){const a=getCity(from),b=getCity(to);const avgLevel=(a.level+b.level)/2;const d=cityDist(a,b);const distFactor=d>8000?2:d>3000?1.5:1;return Math.round(ROUTE_OPEN_COST_BASE*avgLevel*distFactor);}
 
+// ─── 洲际收益系数：跨区域长途航线的票价-频率补偿 ───
+// 设计依据：收入公式 price×freq 中，freq阶跃下降(2.5→1.5=-40%)，线性票价增长无法补偿
+// 此系数补偿频率劣势，使洲际航线收入 ≥ 同距离级国内航线
+function routeYieldPremium(cityA,cityB){
+  const d=cityDist(cityA,cityB);
+  const crossRegion=cityA.region!==cityB.region;
+  const crossSub=cityA.subRegion!==cityB.subRegion;
+  if(crossRegion&&d>8000) return YIELD_INTERCONT_LONG;    // 真洲际(大洋越洋)
+  if(crossRegion&&d>4500) return YIELD_INTERCONT_MID;     // 跨洲远程(北大西洋等)
+  if(crossRegion&&d>3000) return YIELD_INTERCONT_SHORT;   // 跨洲中短途
+  if(crossSub&&d>3000)    return YIELD_CROSS_SUB_LONG;    // 同区跨经济圈长途
+  return 1.0;
+}
+
 // ─── 距离-频率分层：短途高频、长途低频 ───
 function routeFreqFactor(distKm){
   if(distKm<2000)  return 4;    // 短途: ~2班/天
@@ -144,9 +158,10 @@ function routeRevenue(route){
   const cityA=getCity(route.from),cityB=getCity(route.to);
   const distKm=cityDist(cityA,cityB);
   const freq=routeFreqFactor(distKm);
+  const yieldMult=routeYieldPremium(cityA,cityB);
   const pax=Math.round(totalSeats*lf);
-  let rev=pax*route.price*freq/ROUTE_REVENUE_DIVISOR;
-  const cargoRev=pax*0.02*route.price*0.3*freq/ROUTE_REVENUE_DIVISOR;
+  let rev=pax*route.price*freq*yieldMult/ROUTE_REVENUE_DIVISOR;
+  const cargoRev=pax*0.02*route.price*0.3*freq*yieldMult/ROUTE_REVENUE_DIVISOR;
   return {pax:pax*freq,rev,cargoRev,total:rev+cargoRev};
 }
 

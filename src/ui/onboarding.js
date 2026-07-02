@@ -33,6 +33,12 @@ const ONBOARD_STEPS = [
     body: '试试购买更多飞机、开设分部扩展基地，或使用「银行贷款」加速扩张。',
     trigger: (state) => state.turnsPlayed >= 2 && state.turnsPlayed <= 4,
   },
+  {
+    id: 'main-quest',
+    title: '苍穹之路',
+    body: '点击顶部「苍穹之路」查看主线目标。四个维度全部达标后会进入下一阶段。',
+    trigger: (state) => state.turnsPlayed >= 3 && !state.mainQuest?.victoryGrade,
+  },
 ];
 
 let onboardingDismissed = readOnboardingDismissed();
