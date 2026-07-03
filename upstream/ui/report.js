@@ -3,12 +3,12 @@ function buildFinancialReportHtml(rev,cost,profit,settledYear,settledQuarter){
   let loanInfo='';
   if(G.loan>0)loanInfo=`<div class="report-row"><span>贷款利息</span><span style="color:#f87171">-${fmt(G.loan*G.loanRate)}</span></div>`;
   let traitInfo='';
-  if(G.playerTrait==='辣'&&G._lastTraitFund>0)traitInfo=`<div class="report-row"><span>辣豆基金 🪙</span><span style="color:#fbbf24">+${fmt(G._lastTraitFund)}</span></div>`;
+  if(G.playerTrait==='辣'&&G._lastTraitFund>0)traitInfo=`<div class="report-row"><span>辣豆基金 ${ICON.coin}</span><span style="color:#fbbf24">+${fmt(G._lastTraitFund)}</span></div>`;
   // 标题标注实际结算的季度（上季度），不是当前季度
   const sy=settledYear||G.year, sq=settledQuarter||G.quarter;
-  let html=`<h2>上季财报 — ${sy} Q${sq} ${seasonEmoji(sq)}${seasonName(sq)}</h2>`;
+  let html=`<h2>${ICON.report} 上季财报 — ${sy} Q${sq} ${seasonEmoji(sq)}${seasonName(sq)}</h2>`;
   html+=`<div class="report-section"><div class="report-row"><span>航线收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${traitInfo}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${loanInfo}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
-    <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(G.cash)}</span></div>${G.loan>0?`<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(G.loan)}</span></div>`:''}<div class="report-row"><span>航线数</span><span>${G.routes.length}</span></div><div class="report-row"><span>机队规模</span><span>${G.fleet.length} 架 (购${countBoughtPlanes()} / 租${countLeasedPlanes()})</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5,Math.floor(G.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${G.oilPrice.toFixed(0)}/桶</span></div></div>`;
+    <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(G.cash)}</span></div>${G.loan>0?`<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(G.loan)}</span></div>`:''}<div class="report-row"><span>航线数</span><span>${G.routes.length}</span></div><div class="report-row"><span>机队规模</span><span>${G.fleet.length} 架 (购${countBoughtPlanes()} / 租${countLeasedPlanes()})</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5,Math.floor(G.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${G.oilPrice.toFixed(0)}/桶</span></div><div class="report-row"><span>运营效能</span><span style="color:${G.opsEfficiency>=1.0?'#4ade80':G.opsEfficiency>=0.7?'#fbbf24':'#f87171'}">${G.opsEfficiency>0?(G.opsEfficiency*100).toFixed(0)+'%':'--'}</span></div></div>`;
   if(G.routes.length>0){
     html+=`<h3 style="font-size:13px;color:#7ba3cc;margin:8px 0 4px">🛫 航线收益</h3><div class="report-section">`;
     // Group routes by departure base city (HQ or branches)
@@ -65,6 +65,18 @@ function buildFinancialReportHtml(rev,cost,profit,settledYear,settledQuarter){
     const names=G._lastBranchCompleted.map(b=>getCity(b.cityId).name).join('、');
     html+=`<div style="text-align:center;margin:10px 0 0;padding:8px 12px;background:#7c3aed18;border:1px solid #7c3aed50;border-radius:8px;font-size:13px"><span style="color:#a78bfa;font-weight:600">🏗 分部完工:</span> <span style="color:#e0e8f0">${names}</span><span style="color:#4ade80;font-size:11px;margin-left:6px">可开通航线</span></div>`;
   }
+  // v0.6: 退休通知
+  if(G._retiredThisTurn>0){
+    html+=`<div style="text-align:center;margin:10px 0 0;padding:8px 12px;background:#33415530;border:1px solid #33415550;border-radius:8px;font-size:13px"><span style="color:#7ba3cc;font-weight:600">🍂 员工退休:</span> <span style="color:#e0e8f0">本季退休 ${G._retiredThisTurn*1000|0} 人</span></div>`;
+  }
+  // v0.6: 故障通知
+  if(G._faultsThisTurn&&G._faultsThisTurn.length>0){
+    const severityMap = { minor: '轻微', major: '严重', critical: '致命' };
+    const colorMap = { minor: '#fbbf24', major: '#f87171', critical: '#dc2626' };
+    G._faultsThisTurn.forEach(f => {
+      html+=`<div style="text-align:center;margin:10px 0 0;padding:8px 12px;background:${colorMap[f.severity]}18;border:1px solid ${colorMap[f.severity]}50;border-radius:8px;font-size:13px"><span style="color:${colorMap[f.severity]};font-weight:600">⚠ ${severityMap[f.severity]}故障:</span> <span style="color:#e0e8f0">${f.planeName}</span><span style="color:#7ba3cc;font-size:11px;margin-left:6px">收入-${(f.lossPct*100).toFixed(0)}%${f.severity==='critical'?' · 飞机损失':''}</span></div>`;
+    });
+  }
   return html;
 }
 
@@ -82,11 +94,19 @@ function showTurnSummary(rev,cost,profit,settledYear,settledQuarter){
   const reportHtml=buildFinancialReportHtml(rev,cost,profit,settledYear,settledQuarter);
   const html=`<div class="turn-summary">
     <div>${newsHtml}</div>
-    <div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" onclick="closeModal()" style="padding:10px 40px;border-radius:8px">知道了，继续经营</button></div></div>
+    <div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" onclick="closeTurnSummary()" style="padding:10px 40px;border-radius:8px">知道了，继续经营</button></div></div>
   </div>`;
-  $('modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()">${html}</div>`;
+  $('modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeTurnSummary()">${html}</div>`;
   $('reread-news-btn').style.display='';
   $('reread-report-btn').style.display='';
+}
+
+function closeTurnSummary(){
+  closeModal();
+  // v0.6.3: 关闭财报后浮现合同卡片（取代旧弹窗弹出）
+  if(G && !G.gameOver){
+    spawnPendingContracts();
+  }
 }
 
 function showReportAlone(){

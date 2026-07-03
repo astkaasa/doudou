@@ -1,4 +1,5 @@
 import { getCity } from './helpers.js';
+import { syncStaffToNeeded } from './operations.js';
 
 export const MAX_BRANCHES = 10;
 export const BRANCH_CONSTRUCT_TURNS = 1;
@@ -36,6 +37,7 @@ export function openBranch(state, cityId) {
   if (state.cash < cost) return { ok: false, message: `资金不足，需要 ${cost.toFixed(1)}M` };
   state.cash -= cost;
   state.branchesConstructing.push({ cityId, constructIn: BRANCH_CONSTRUCT_TURNS });
+  syncStaffToNeeded(state, 0.8);
   return { ok: true, cost, constructIn: BRANCH_CONSTRUCT_TURNS };
 }
 
@@ -44,6 +46,7 @@ export function closeBranch(state, cityId) {
   const { affectedRoutes, affectedPlaneIds } = previewCloseBranchImpact(state, cityId);
   state.routes = state.routes.filter((route) => route.from !== cityId);
   state.branches = state.branches.filter((id) => id !== cityId);
+  syncStaffToNeeded(state, 0);
   return { ok: true, affectedRoutes, affectedPlaneIds };
 }
 
@@ -67,5 +70,6 @@ export function advanceBranchConstruction(state) {
   completed.forEach((cityId) => {
     if (!isBase(state, cityId) && getCity(cityId)) state.branches.push(cityId);
   });
+  if (completed.length > 0) syncStaffToNeeded(state, 0.8);
   return completed;
 }

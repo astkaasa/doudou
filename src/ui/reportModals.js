@@ -100,8 +100,8 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
   const interest = reportInterest;
   const stockDividend = snapshot.stockDividend || 0;
   let html = `<h2>上季财报 — ${reportPeriod.year} Q${reportPeriod.quarter} ${seasonEmoji(reportPeriod.quarter)}${seasonName(reportPeriod.quarter)}</h2>
-    <div class="report-section"><div class="report-row"><span>营业收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span style="color:#4ade80">+${fmt(snapshot.traitFund)}</span></div>` : ''}${stockDividend > 0 ? `<div class="report-row"><span>证券分红(Q4)</span><span style="color:#fbbf24">+${fmt(stockDividend)}</span></div>` : ''}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
-    <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(snapshot.loan)}</span></div>` : ''}<div class="report-row"><span>航线数</span><span>${snapshot.routeCount}</span></div><div class="report-row"><span>机队规模</span><span>${snapshot.fleetCount} 架 (购${snapshot.boughtCount} / 租${snapshot.leasedCount})</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5, Math.floor(snapshot.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${snapshot.oilPrice.toFixed(0)}/桶</span></div></div>`;
+    <div class="report-section"><div class="report-row"><span>营业收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span style="color:#4ade80">+${fmt(snapshot.traitFund)}</span></div>` : ''}${stockDividend > 0 ? `<div class="report-row"><span>证券分红(Q4)</span><span style="color:#fbbf24">+${fmt(stockDividend)}</span></div>` : ''}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${snapshot.opsCost > 0 ? `<div class="report-row"><span>其中运营预算</span><span style="color:#f87171">-${fmt(snapshot.opsCost)}</span></div>` : ''}${snapshot.faultLoss > 0 ? `<div class="report-row"><span>其中故障损失</span><span style="color:#f87171">-${fmt(snapshot.faultLoss)}</span></div>` : ''}${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
+    <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(snapshot.loan)}</span></div>` : ''}<div class="report-row"><span>航线数</span><span>${snapshot.routeCount}</span></div><div class="report-row"><span>机队规模</span><span>${snapshot.fleetCount} 架 (购${snapshot.boughtCount} / 租${snapshot.leasedCount})</span></div><div class="report-row"><span>运营效能</span><span style="color:${snapshot.opsEfficiency >= 1 ? '#4ade80' : snapshot.opsEfficiency >= 0.7 ? '#fbbf24' : '#f87171'}">${snapshot.opsEfficiency > 0 ? `${(snapshot.opsEfficiency * 100).toFixed(0)}%` : '--'}</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5, Math.floor(snapshot.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${snapshot.oilPrice.toFixed(0)}/桶</span></div></div>`;
   if (snapshot.portfolio && snapshot.portfolio.marketValue > 0) {
     const pnl = snapshot.portfolio.floatingPnL || 0;
     const pnlColor = pnl >= 0 ? '#ef4444' : '#22c55e';
@@ -130,6 +130,15 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
   }
   if (snapshot.deliveredThisTurn.length > 0) {
     html += '<div style="text-align:center;margin:12px 0 0;position:relative;display:inline-block;width:100%"><button class="delivery-mail" type="button" data-action="show-delivery-popup" title="点击查看飞机交付通知">✉️<span>NEW</span></button></div>';
+  }
+  if (snapshot.retiredThisTurn > 0) {
+    html += `<div class="report-notice"><strong>员工退休</strong><span>本季退休 ${Math.round(snapshot.retiredThisTurn * 1000)} 人</span></div>`;
+  }
+  if (snapshot.faults.length > 0) {
+    const severityMap = { minor: '轻微', major: '严重', critical: '致命' };
+    snapshot.faults.forEach((fault) => {
+      html += `<div class="report-notice report-fault-${fault.severity}"><strong>${severityMap[fault.severity] || '未知'}故障</strong><span>${escapeHtml(fault.planeName || '飞机')} 收入-${((fault.lossPct || 0) * 100).toFixed(0)}%${fault.severity === 'critical' ? ' · 飞机损失' : ''}</span></div>`;
+    });
   }
   return html;
 }

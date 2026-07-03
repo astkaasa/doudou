@@ -71,4 +71,26 @@ describe('financial report snapshots', () => {
     expect(html).toContain('$60.0M');
     expect(html).toContain('+$8.0M');
   });
+
+  it('captures and renders operations report fields', () => {
+    const state = initState('beijing', 'era3');
+    state.opsEfficiency = 0.82;
+    state._opsCostThisTurn = 1.25;
+    state._faultLossThisTurn = 2.5;
+    state._retiredThisTurn = 0.003;
+    state._faultsThisTurn = [{ planeUid: 1, planeName: 'DC-6', severity: 'major', lossPct: 0.5 }];
+
+    const snapshot = createFinancialReportSnapshot(state);
+    const html = buildFinancialReportHtml(state, 10, 5, 5, { year: 2000, quarter: 2 }, 0, snapshot);
+
+    expect(snapshot.opsEfficiency).toBe(0.82);
+    expect(snapshot.opsCost).toBe(1.25);
+    expect(snapshot.faultLoss).toBe(2.5);
+    expect(html).toContain('运营效能');
+    expect(html).toContain('82%');
+    expect(html).toContain('其中运营预算');
+    expect(html).toContain('其中故障损失');
+    expect(html).toContain('员工退休');
+    expect(html).toContain('严重故障');
+  });
 });

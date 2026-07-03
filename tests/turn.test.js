@@ -25,7 +25,7 @@ describe('turn progression', () => {
     expect(state.history[0]).toMatchObject({ year: 2000, quarter: 1 });
   });
 
-  it('includes overhead and lease cost in turn financials', () => {
+  it('includes overhead, lease cost, and operations budget in turn financials', () => {
     const state = initState('beijing', 'era3');
     state.routes.push({ revenue: 2, cost: 0.75 });
     state.fleet.push({ isLease: false, leasePrice: 0 });
@@ -33,8 +33,9 @@ describe('turn progression', () => {
 
     const result = calculateTurnFinancials(state);
     expect(result.totalRev).toBe(2);
-    expect(result.totalCost).toBeCloseTo(3.85);
-    expect(result.profit).toBeCloseTo(-1.85);
+    expect(result.opsCost).toBeCloseTo(0.45);
+    expect(result.totalCost).toBeCloseTo(4.3);
+    expect(result.profit).toBeCloseTo(-2.3);
   });
 
   it('includes loan interest in turn financials', () => {
@@ -46,8 +47,8 @@ describe('turn progression', () => {
     const result = calculateTurnFinancials(state);
 
     expect(result.interest).toBeCloseTo(2);
-    expect(result.totalCost).toBeCloseTo(4.2);
-    expect(result.profit).toBeCloseTo(0.8);
+    expect(result.totalCost).toBeCloseTo(4.45);
+    expect(result.profit).toBeCloseTo(0.55);
   });
 
   it('adds spicy bean trait fund to quarterly revenue', () => {
@@ -81,6 +82,23 @@ describe('turn progression', () => {
     expect(state._lastStockDividend).toBe(0.2);
     expect(state.turnProfit).toBeCloseTo(-1.0);
     expect(state.history[0].stockDividend).toBe(0.2);
+  });
+
+  it('schedules contract cards after Q3 and Q4 settlements', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const state = initState('beijing', 'era3');
+    state.ai = [];
+    state.quarter = 3;
+
+    advanceTurnState(state);
+    expect(state.quarter).toBe(4);
+    expect(state._pendingRecruit).toBe(true);
+    expect(state._pendingBonus).toBe(false);
+
+    state._pendingRecruit = false;
+    advanceTurnState(state);
+    expect(state.quarter).toBe(1);
+    expect(state._pendingBonus).toBe(true);
   });
 
   it('does not turn spicy bean trait fund into a debt penalty', () => {

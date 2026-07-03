@@ -20,6 +20,7 @@ function buyPlane(planeId,isLease,count=1){
     G.fleet.push(plane);
   }
   rebuildFleetMap();
+  syncStaffToNeeded(0.80); // v0.6.2: 买飞机自动补员80%
   emit('fleet:changed',{action:isLease?'lease':'buy',planeName:template.name,count,isLease,fee:fee*count});
   return {ok:true,action:isLease?'lease':'buy',planeName:template.name,count,isLease,fee:fee*count};
 }

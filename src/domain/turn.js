@@ -7,6 +7,7 @@ import { BANKRUPTCY_THRESHOLD, SPICY_TRAIT_FUND_RATIO } from './constants.js';
 import { clamp } from './helpers.js';
 import { loanInterest } from './loans.js';
 import { updateMainQuest } from './mainQuest.js';
+import { calcOpsBudgetCost, finishQuarterOperations, prepareQuarterOperations, schedulePendingContracts, settleOperationalFaultLosses } from './operations.js';
 import { updateRouteMetrics } from './routes.js';
 import { calcStockDividend } from './stocks.js';
 
@@ -17,11 +18,14 @@ export function advanceTurnState(state) {
   const branchCompleted = advanceBranchConstruction(state);
   advanceFleetAge(state);
   growCityStates(state);
+  prepareQuarterOperations(state);
   updateRouteMetrics(state);
+  const faultLoss = settleOperationalFaultLosses(state);
   const traitFund = rollTraitFund(state);
   const { totalRev, totalCost, profit, interest } = calculateTurnFinancials(state, traitFund);
   const stockDividend = calcStockDividend(state);
   const netProfit = profit + stockDividend;
+  finishQuarterOperations(state);
 
   state.cash += netProfit;
   state.turnRevenue = totalRev;
@@ -32,7 +36,7 @@ export function advanceTurnState(state) {
   state._lastStockDividend = stockDividend;
   state.turnsPlayed++;
   if (netProfit > 0) {
-    state.brand = clamp(state.brand + 0.05, 1, 10);
+    state.brand = clamp(state.brand + 0.05 * (state.opsEfficiency || 1), 1, 10);
     state.consecutiveProfit = (state.consecutiveProfit || 0) + 1;
   } else {
     state.brand = clamp(state.brand - 0.02, 1, 10);
@@ -43,6 +47,7 @@ export function advanceTurnState(state) {
   const nextPeriod = { year: state.year, quarter: state.quarter };
   advanceTemporaryModifiers(state);
   generateEvents(state);
+  schedulePendingContracts(state);
   state.ai.forEach((ai) => aiTurn(state, ai));
 
   state.history.push({
@@ -54,6 +59,8 @@ export function advanceTurnState(state) {
     interest,
     traitFund,
     stockDividend,
+    opsCost: state._opsCostThisTurn || 0,
+    faultLoss,
     routes: state.routes.length,
     fleet: state.fleet.length,
     branchCompleted,
@@ -75,7 +82,7 @@ export function advanceTurnState(state) {
     }
   }
   const mainQuestUpdate = state.gameOver || angelRescue ? null : updateMainQuest(state);
-  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, branchCompleted, gameOver: state.gameOver, angelRescue, mainQuestUpdate };
+  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, opsCost: state._opsCostThisTurn || 0, faultLoss, branchCompleted, gameOver: state.gameOver, angelRescue, mainQuestUpdate };
 }
 
 export function calculateTurnFinancials(state, extraRevenue = 0) {
@@ -85,11 +92,14 @@ export function calculateTurnFinancials(state, extraRevenue = 0) {
     return totals;
   }, { totalRev: 0, totalCost: 0 });
   const overhead = state.fleet.length * 0.20 + 1.2;
+  const opsBudget = calcOpsBudgetCost(state);
+  const opsCost = state._opsCostThisTurn || opsBudget.total;
+  const faultLoss = state._faultLossThisTurn || 0;
   const leaseCost = state.fleet
     .filter((plane) => plane.isLease)
     .reduce((sum, plane) => sum + plane.leasePrice, 0);
   const interest = loanInterest(state);
-  const totalCost = routeTotals.totalCost + overhead + leaseCost + interest;
+  const totalCost = routeTotals.totalCost + overhead + leaseCost + interest + opsCost + faultLoss;
   const totalRev = routeTotals.totalRev + extraRevenue;
   return {
     totalRev,
@@ -97,6 +107,10 @@ export function calculateTurnFinancials(state, extraRevenue = 0) {
     profit: totalRev - totalCost,
     interest,
     traitFund: extraRevenue,
+    overhead,
+    leaseCost,
+    opsCost,
+    faultLoss,
   };
 }
 

@@ -4,6 +4,7 @@ import { PLANES } from '../src/data/planes.js';
 import { baseDemand, calcLoadFactor, distanceServiceMultiplier, routeCost, routeRevenue, routeSeatCapacity, routeYieldPremium, suggestedPrice } from '../src/domain/economy.js';
 import { cityDist, getCity } from '../src/domain/helpers.js';
 import { addSuspensionModifier, routeServiceMultiplier } from '../src/domain/modifiers.js';
+import { calcOpsBudgetCost } from '../src/domain/operations.js';
 import { initState } from '../src/domain/state.js';
 
 describe('economy model', () => {
@@ -150,7 +151,7 @@ describe('economy model', () => {
     expect(routeCost(state, route).total).toBe(0);
   });
 
-  it('applies player trait cost reductions to fuel and maintenance', () => {
+  it('applies fuel trait to route fuel and maintenance trait to operations budget', () => {
     const baseState = initState('beijing', 'era3');
     const fuelState = initState('beijing', 'era3');
     const maintState = initState('beijing', 'era3');
@@ -175,6 +176,8 @@ describe('economy model', () => {
     const maintCost = routeCost(maintState, route);
 
     expect(fuelCost.fuel).toBeCloseTo(baseCost.fuel * 0.9);
-    expect(maintCost.maint).toBeCloseTo(baseCost.maint * 0.9);
+    expect(baseCost.maint).toBe(0);
+    expect(maintCost.maint).toBe(0);
+    expect(calcOpsBudgetCost(maintState).maintCost).toBeCloseTo(calcOpsBudgetCost(baseState).maintCost * 0.9);
   });
 });

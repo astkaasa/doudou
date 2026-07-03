@@ -457,6 +457,7 @@ function startGame(){
   G.fleet.push({...starterPlane,uid:G.planeIdCounter++,age:0,isLease:false,leasePrice:0,delivering:false,deliverIn:0,leaseTurns:0,maxLeaseTurns:MAX_LEASE_TURNS});
   G.fleet.push({...starterPlane,uid:G.planeIdCounter++,age:2,isLease:false,leasePrice:0,delivering:false,deliverIn:0,leaseTurns:0,maxLeaseTurns:MAX_LEASE_TURNS});
   rebuildFleetMap();
+  syncStaffToNeeded(0.90); // v0.6.2: 初始2架飞机自动补员90%
   G.ai.forEach(ai=>{for(let i=0;i<3;i++){const ap=getAvailablePlanes();const template=ap.length>0?ap[i<2?0:Math.min(ap.length-1,Math.floor(ap.length/2))]:PLANES[0];ai.fleet.push({uid:ai.name+'_'+i,...template,age:randInt(1,5),assigned:false});}});
   hqSelectMode=false;
   $('app').style.display = '';  // 恢复游戏界面

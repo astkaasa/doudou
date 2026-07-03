@@ -40,6 +40,18 @@ function updateHUD(){
   $('hud-load').textContent=fmtPct(avgLF*100);
   $('hud-brand-val').textContent='★'.repeat(Math.min(5,Math.floor(G.brand)));
   $('hud-turn').textContent=G.year+' Q'+G.quarter;
+  // v0.6: 运营效能徽章 — 首回合前显示"--"
+  const opsBadge=$('hud-ops-eff');
+  if(opsBadge){
+    if(G.turnsPlayed === 0 || G.opsEfficiency === 0){
+      opsBadge.textContent = '--';
+      opsBadge.style.color = '#7ba3cc';
+    } else {
+      const eff=G.opsEfficiency||1.0;
+      opsBadge.textContent=(eff*100).toFixed(0)+'%';
+      opsBadge.style.color=eff>=1.0?'#4ade80':eff>=0.7?'#fbbf24':'#f87171';
+    }
+  }
   const loanWrap=$('hud-loan-wrap');
   if(loanWrap){
     if(G.loan>0){loanWrap.style.display='flex';$('hud-loan').textContent=fmt(G.loan);}
@@ -79,4 +91,6 @@ function updateHUD(){
       megaBadge._megaIdx=0;
     }
   }
+  // 合同状态联动：确保推进按钮反映最新 pending 状态
+  if (typeof updateAdvanceBtn === 'function') updateAdvanceBtn();
 }

@@ -45,13 +45,12 @@ function updatePricePreview(){
     if(G.playerTrait==='豆')fuelRate*=TRAIT_FUEL_DISCOUNT;
     if(G.playerTrait==='机')maintRate*=TRAIT_MAINT_DISCOUNT;
     let fuelC=fuelRate*(G.oilPrice/80)*(d/5000);
-    let maintC=maintRate*(1+MAINT_AGING*plane.age);
-    let crewC=CREW_PER_180*(plane.seats/180);
+    // v0.6: maint+crew已移至运营预算系统，航线成本仅含fuel+landing+catering
     const cityA=getCity(tempRoute.from),cityB=getCity(tempRoute.to);
     const freqScale=1+(freq-1)*FREQ_COST_SCALE;
     const landingFee=(LANDING_BASE+(cityA.level+cityB.level)*LANDING_PER_LEVEL*Math.sqrt(d/LANDING_DIST_REF))*freqScale;
     const catering=CATERING_PER_FLIGHT*freqScale;
-    const totalCost=fuelC+maintC+crewC+landingFee+catering;
+    const totalCost=fuelC+landingFee+catering;
     const estProfit=totalRev-totalCost;
     document.getElementById('price-est').textContent=`预估客座率: ${fmtPct(estLF*100)} | 利润: ${fmt(estProfit)}`;
   }
@@ -72,6 +71,7 @@ function confirmOpenRoute(from,to){
   const sp=suggestedPrice(from,to);
   G.cash-=openCost;
   G.routes.push({from,to,price,suggestedPrice:sp,assignedPlanes:[planeUid],loadFactor:0,profit:0,revenue:0,cost:0,isNew:true,suspended:false,_reopened:false});
+  syncStaffToNeeded(0.85); // v0.6.2: 开航线自动补员85%，避免fillRate骤降
   updateRouteMetrics();updateHUD();renderMap();renderPanel();closeModal();hideRouteCreateInfo();
   showBanner('航线开通：'+getCity(from).name+' → '+getCity(to).name+'  开通费用 $'+openCost+'M','#16a34a');
   updateOnboarding();

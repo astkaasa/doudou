@@ -18,6 +18,7 @@
     <div class="hud-item"><span class="hud-label">航线</span><span class="hud-val" id="hud-routes">0</span></div>
     <div class="hud-item"><span class="hud-label">机队</span><span class="hud-val" id="hud-fleet">购0/租0</span></div>
     <div class="hud-item"><span class="hud-label">客座率</span><span class="hud-val" id="hud-load">0%</span></div>
+    <div class="hud-item"><span class="hud-label">运营效能</span><span class="hud-val" id="hud-ops-eff">--</span></div>
     <div id="hud-brand"><span class="hud-label">品牌</span><span class="hud-val" id="hud-brand-val">★</span></div>
     <div class="hud-item" style="cursor:pointer;padding:3px 12px;border-radius:12px;background:linear-gradient(90deg,#1e3a8a,#2563eb);font-size:13px;font-weight:700" onclick="openMainQuestPanel()" title="苍穹之路·主线任务"><span style="color:#fff">🛫 苍穹之路 🛬</span></div>
     <div class="hud-item" style="cursor:pointer" onclick="openMilestoneList()" title="查看里程碑"><span class="hud-label" style="color:#fbbf24">🏆里程碑</span></div>
@@ -35,12 +36,13 @@
     <div id="panel">
       <div class="panel-section">
         <div class="panel-title">快捷操作</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
           <button class="btn btn-primary btn-sm" onclick="openBuyPlaneModal()">购买飞机</button>
           <button class="btn btn-warning btn-sm" onclick="openFleetPanel()">机队管理</button>
           <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" onclick="openRouteList()">航线管理</button>
-          <button class="btn btn-sm" style="background:#b45309;color:#fff" onclick="openLoanModal()">银行贷款</button>
+          <button class="btn btn-sm" style="background:#0891b2;color:#fff" onclick="openOperationsPanel()">运营管理</button>
           <button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="openBranchModal()">分部管理</button>
+          <button class="btn btn-sm" style="background:#b45309;color:#fff" onclick="openLoanModal()">银行贷款</button>
         </div>
       </div>
       <div class="panel-section" id="panel-info">
@@ -71,11 +73,13 @@
       <button class="btn btn-sm" style="background:#334155;color:#e0e8f0;padding:2px 8px" onclick="setMapZoom(1.5)" id="zoom15">1.5x</button>
       <button class="btn btn-sm" style="background:#334155;color:#e0e8f0;padding:2px 8px" onclick="setMapZoom(2)" id="zoom2">2x</button>
     </div>
-    <button id="advance-btn" onclick="advanceTurn()" style="margin-left:10px">推进回合 ▶</button>
+    <button id="advance-btn" onclick="handleAdvance()" style="margin-left:10px">推进回合 ▶</button>
   </div>
 </div>
 <div id="event-banner"></div>
 <div id="modal-root"></div>
+<!-- 合同卡片区域 — 底栏右下角推进按钮上方 -->
+<div id="contract-zone"></div>
 <div id="delivery-root"></div>
 <div id="onboard-hint"><div class="hint-title"></div><div class="hint-body"></div><div class="hint-step"></div></div>
 <div id="tutorial">
@@ -128,6 +132,8 @@
 <script src="ui/report.js"></script>
 <script src="ui/stock.js"></script>
 <script src="ui/branch.js"></script>
+<script src="ui/operations.js"></script>
+<script src="ui/contract-ui.js"></script>
 <script src="ui/loan.js"></script>
 <script src="ui/trait.js"></script>
 <script src="ui/milestone-ui.js"></script>
@@ -155,6 +161,9 @@ on('fleet:changed', d => {
 on('turn:advanced', d => {
   applySeasonTheme(); updateHUD(); renderMap(); renderPanel(); updateOnboarding();
   showTurnSummary(d.revenue, d.cost, d.profit, d.year, d.quarter);
+  // 合同卡片浮现（由 closeTurnSummary 触发，此处为兜底）
+  spawnPendingContracts();
+  updateAdvanceBtn();
 });
 
 on('stock:changed', d => {

@@ -2,6 +2,7 @@ import { getCityMarketState } from '../data/cityEraData.js';
 import { cityDist, clamp, getCity } from './helpers.js';
 import { YIELD_CROSS_SUB_LONG, YIELD_INTERCONT_LONG, YIELD_INTERCONT_MID, YIELD_INTERCONT_SHORT } from './constants.js';
 import { routeCostMultiplier, routeDemandMultiplier, routeServiceMultiplier } from './modifiers.js';
+import { operationDemandMultiplier } from './operations.js';
 
 export const ROUTE_REVENUE_DIVISOR = 28000;
 
@@ -13,13 +14,11 @@ const DIST_PREMIUM_LONG = 1.4;
 const DIST_PREMIUM_MID = 1.2;
 const DIST_SHORT_PENALTY = 0.85;
 const CROSS_REGION_BONUS = 1.1;
-const LANDING_BASE = 0.3;
-const LANDING_PER_LEVEL = 0.15;
+const LANDING_BASE = 0.2;
+const LANDING_PER_LEVEL = 0.10;
 const LANDING_DIST_REF = 3000;
 const CATERING_PER_FLIGHT = 0.03;
 const SERVICE_COST_SCALE = 0.3;
-const MAINT_AGING = 0.04;
-const CREW_PER_180 = 0.20;
 
 export function baseDemand(cityA, cityB, state = null) {
   const marketA = getCityMarketState(state, cityA.id);
@@ -46,7 +45,10 @@ export function calcLoadFactor(state, route, price, brand, competitors, assigned
   const cityB = getCity(route.to);
   if (!cityA || !cityB) return 0;
   if (routeServiceMultiplier(state, route) <= 0) return 0;
-  const baseDemandVal = baseDemand(cityA, cityB, state) * seasonModifier(state.quarter) * routeDemandMultiplier(state, route);
+  const baseDemandVal = baseDemand(cityA, cityB, state)
+    * seasonModifier(state.quarter)
+    * routeDemandMultiplier(state, route)
+    * operationDemandMultiplier(state);
   const refPrice = route.suggestedPrice;
   const priceRatio = price / refPrice;
   const priceEffect = Math.pow(priceRatio, -0.8);
@@ -105,25 +107,20 @@ export function routeCost(state, route, assignedPlanes = getRouteAssignedPlanes(
   if (serviceMultiplier <= 0) return { fuel: 0, maint: 0, crew: 0, landing: 0, catering: 0, total: 0 };
   const serviceCostScale = 1 + (serviceMultiplier - 1) * SERVICE_COST_SCALE;
   let fuelCost = 0;
-  let maintCost = 0;
-  let crewCost = 0;
   let landingFee = 0;
   let catering = 0;
   for (const plane of assignedPlanes) {
     const fuelRate = state.playerTrait === '豆' ? plane.fuel * 0.9 : plane.fuel;
-    const maintRate = state.playerTrait === '机' ? plane.maint * 0.9 : plane.maint;
     fuelCost += fuelRate * (state.oilPrice / 80) * (d / 5000);
-    maintCost += maintRate * (1 + MAINT_AGING * plane.age);
-    crewCost += CREW_PER_180 * (plane.seats / 180);
     landingFee += (LANDING_BASE + (cityA.level + cityB.level) * LANDING_PER_LEVEL * Math.sqrt(d / LANDING_DIST_REF)) * serviceCostScale;
     catering += CATERING_PER_FLIGHT * serviceCostScale;
   }
-  const subtotal = fuelCost + maintCost + crewCost + landingFee + catering;
+  const subtotal = fuelCost + landingFee + catering;
   const costMultiplier = routeCostMultiplier(state, route);
   return {
     fuel: fuelCost,
-    maint: maintCost,
-    crew: crewCost,
+    maint: 0,
+    crew: 0,
     landing: landingFee,
     catering,
     total: subtotal * costMultiplier,

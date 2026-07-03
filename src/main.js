@@ -20,12 +20,26 @@ import {
   openRoute,
   resumeRoute,
   suspendRoute,
+  updateRouteMetrics,
 } from './domain/routes.js';
 import { advanceTurnState } from './domain/turn.js';
+import { hasPendingContracts, setOpsTier, signBonusContract, signRecruitContract } from './domain/operations.js';
 import { updateHUD } from './ui/hud.js';
 import { closeModalRoot, showBanner, showModal } from './ui/modal.js';
 import { closeMainQuestOverlay, continueFromVictory, showMainQuestPanel, showMainQuestStageNotification, showMainQuestVictory, showVictoryEnding } from './ui/mainQuest.js';
 import { showMilestoneList, showMilestoneNotification } from './ui/milestones.js';
+import {
+  clearSignedContract,
+  focusContractFromPanel,
+  getContractSelection,
+  markContractSigned,
+  restoreContractState,
+  selectContractOption,
+  showAdvanceContractGuide,
+  showOperationsPanel,
+  spawnPendingContracts,
+  toggleContract,
+} from './ui/operations.js';
 import { showVersionLog } from './ui/versionLog.js';
 import { describeRouteSelection, initMapDrag, renderMap, setMapZoom } from './ui/map.js';
 import { showRouteCreateInfo as renderRouteCreateInfo, hideRouteCreateInfo, renderPanel, renderRouteCityPicker } from './ui/panel.js';
@@ -104,6 +118,7 @@ function renderGame() {
   renderMap(G, uiState);
   renderPanel(G, uiState);
   updateOnboarding(G, uiState);
+  spawnPendingContracts(G);
 }
 
 function renderMapOnly() {
@@ -249,6 +264,7 @@ function loadGame() {
     removeTraitOverlay();
     byId('app').hidden = false;
     renderGame();
+    restoreContractState(G);
     showTraitEnvelope(G);
     showBanner('存档已载入！' + G.companyName + ' - ' + G.year + ' Q' + G.quarter, '#16a34a');
   } catch (e) {
@@ -304,6 +320,7 @@ function startGame() {
   hideTutorial();
   byId('app').hidden = false;
   renderGame();
+  restoreContractState(G);
   showTraitEnvelope(G);
   setBottomHint();
 }
@@ -638,6 +655,10 @@ function applyAngelRescue(target) {
 
 function advanceTurn() {
   if (!G || G.gameOver) return;
+  if (hasPendingContracts(G)) {
+    showAdvanceContractGuide(G);
+    return;
+  }
   const report = advanceTurnState(G);
   if (!report) return;
   if (report.angelRescue) {
@@ -660,6 +681,36 @@ function advanceTurn() {
   } else if (report.mainQuestUpdate?.type === 'victory') {
     showMainQuestVictory(report.mainQuestUpdate);
   }
+}
+
+function updateOpsTier(target) {
+  if (!G) return;
+  if (!setOpsTier(G, target.dataset.field, target.dataset.tier)) return;
+  updateRouteMetrics(G);
+  renderGame();
+  showOperationsPanel(G);
+}
+
+function signContract(target) {
+  if (!G) return;
+  const type = target.dataset.contractType;
+  const selected = getContractSelection(type);
+  const result = type === 'bonus'
+    ? signBonusContract(G, selected)
+    : signRecruitContract(G, selected);
+  markContractSigned(G, type, result);
+  renderGame();
+  showBanner(result.message, type === 'bonus' ? '#d97706' : '#2563eb');
+  window.setTimeout(() => {
+    clearSignedContract(G, type);
+    renderGame();
+  }, 2500);
+}
+
+function focusNextPendingContract() {
+  if (!G) return;
+  const type = G._pendingRecruit ? 'recruit' : G._pendingBonus ? 'bonus' : null;
+  if (type) focusContractFromPanel(G, type);
 }
 
 function handleClick(event) {
@@ -726,6 +777,28 @@ function handleClick(event) {
       break;
     case 'open-loan-modal':
       if (G) showLoanModal(G);
+      break;
+    case 'open-operations-panel':
+      if (G) showOperationsPanel(G);
+      break;
+    case 'set-ops-tier':
+      updateOpsTier(target);
+      break;
+    case 'toggle-contract':
+      if (G) toggleContract(G, target.dataset.contractType);
+      break;
+    case 'select-contract-option':
+      if (G) selectContractOption(G, target.dataset.contractType, target.dataset.option);
+      break;
+    case 'sign-contract':
+      signContract(target);
+      break;
+    case 'open-contract-from-panel':
+      closeModalRoot();
+      if (G) focusContractFromPanel(G, target.dataset.contractType);
+      break;
+    case 'advance-contract-guide':
+      focusNextPendingContract();
       break;
     case 'open-stock-market':
       if (G) showStockMarket(G);

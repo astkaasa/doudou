@@ -223,6 +223,32 @@ describe('save migration', () => {
     expect(result.state.activeMegaEvents.map((event) => event.id)).toEqual(expect.arrayContaining(['oly_s2000', 'expo_2000']));
     expect(result.state.activeModifiers.filter((modifier) => modifier.mode === 'megaEvent')).toHaveLength(2);
     expect(result.state.bankruptRescued).toBe(false);
+    expect(result.state.staffNeeded).toBeGreaterThan(0);
+    expect(result.state.staffCount).toBeGreaterThan(0);
+    expect(result.state.staffMorale).toBe(40);
+    expect(result.state.serviceTier).toBe('mid');
+    expect(result.state.maintTier).toBe('mid');
+    expect(result.state.adTier).toBe('mid');
+    expect(result.state._pendingRecruit).toBe(false);
+    expect(result.state._pendingBonus).toBe(false);
+  });
+
+  it('migrates legacy pending operations modal into contract flags', () => {
+    const raw = JSON.stringify({
+      v: 9,
+      g: {
+        routes: [],
+        fleet: [],
+        _pendingOpsModal: 'bonus',
+      },
+    });
+
+    const result = loadGameState(memoryStorage(raw));
+
+    expect(result.ok).toBe(true);
+    expect(result.state._pendingOpsModal).toBeUndefined();
+    expect(result.state._pendingRecruit).toBe(false);
+    expect(result.state._pendingBonus).toBe(true);
   });
 
   it('persists official report data while dropping legacy transient report cache', () => {

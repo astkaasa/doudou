@@ -1,6 +1,7 @@
 import { calcLoadFactor, getRouteAssignedPlanes, routeCost, routeRevenue, suggestedPrice } from './economy.js';
 import { isBase } from './bases.js';
 import { cityDist, getCity, routeKey } from './helpers.js';
+import { syncStaffToNeeded } from './operations.js';
 
 export function availablePlanes(state) {
   const assigned = new Set();
@@ -81,6 +82,7 @@ export function openRoute(state, from, to, planeUid, price) {
     _reopened: false,
   };
   state.routes.push(route);
+  syncStaffToNeeded(state, 0.85);
   updateRouteMetrics(state);
   return { ok: true, route, cost: openCost };
 }
@@ -102,6 +104,7 @@ export function adjustRoutePrice(state, from, to, price) {
 export function closeRoute(state, from, to) {
   const key = routeKey(from, to);
   state.routes = state.routes.filter((r) => routeKey(r.from, r.to) !== key);
+  syncStaffToNeeded(state, 0);
   updateRouteMetrics(state);
 }
 

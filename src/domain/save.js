@@ -5,11 +5,12 @@ import { syncMegaEventState } from './megaEvents.js';
 import { normalizeMainQuestState } from './mainQuest.js';
 import { normalizeMilestoneState } from './milestones.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, normalizeModifierState } from './modifiers.js';
+import { normalizeOperationsState } from './operations.js';
 import { normalizeStockState } from './stocks.js';
 import { PLAYER_TRAIT_SYMBOLS, normalizePlayerTrait } from '../data/playerTraits.js';
 
 export function saveGameState(state, storage = localStorage) {
-  const saveData = JSON.stringify({ v: 9, ts: Date.now(), g: serializeGameState(state) });
+  const saveData = JSON.stringify({ v: 10, ts: Date.now(), g: serializeGameState(state) });
   storage.setItem(STORAGE_KEYS.save, saveData);
   const info = {
     ts: Date.now(),
@@ -58,6 +59,7 @@ function normalizeUpstreamStateFields(state) {
   normalizeMilestoneState(state);
   normalizeMainQuestState(state);
   normalizeStockState(state);
+  normalizeOperationsState(state);
   if (!Array.isArray(state.activeMegaEvents)) state.activeMegaEvents = [];
   if (!Array.isArray(state.deliveredThisTurn)) state.deliveredThisTurn = [];
   if (state.redPacketClaimed === undefined) state.redPacketClaimed = false;

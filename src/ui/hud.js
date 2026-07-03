@@ -40,6 +40,17 @@ export function updateHUD(state) {
   byId('hud-fleet').textContent = `购${boughtPlanes}/租${leasedPlanes}`;
   const avgLF = state.routes.length > 0 ? state.routes.reduce((s, r) => s + r.loadFactor, 0) / state.routes.length : 0;
   byId('hud-load').textContent = fmtPct(avgLF * 100);
+  const opsEl = byId('hud-ops-eff');
+  if (opsEl) {
+    const efficiency = state.opsEfficiency || 0;
+    if (state.turnsPlayed === 0 || efficiency <= 0) {
+      opsEl.textContent = '--';
+      opsEl.style.color = '#7ba3cc';
+    } else {
+      opsEl.textContent = `${(efficiency * 100).toFixed(0)}%`;
+      opsEl.style.color = efficiency >= 1 ? '#4ade80' : efficiency >= 0.7 ? '#fbbf24' : '#f87171';
+    }
+  }
   const hq = getCity(state.hq);
   const hqName = hq ? hq.name : '待选择';
   const hqEl = byId('hud-hq');

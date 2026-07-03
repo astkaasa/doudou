@@ -30,8 +30,8 @@ const ROUTE_OPEN_COST_BASE = 1;
 // --- Cost per Route ---
 const MAINT_AGING        = 0.04;   // per year of age
 const CREW_PER_180       = 0.20;   // crew cost per 180-seat equivalent
-const LANDING_PER_LEVEL  = 0.15;   // landing fee per city-level point
-const LANDING_BASE       = 0.3;    // base landing fee (always applied)
+const LANDING_PER_LEVEL  = 0.10;   // landing fee per city-level point (v0.6.2: reduced from 0.15)
+const LANDING_BASE       = 0.2;    // base landing fee (v0.6.2: reduced from 0.3)
 const LANDING_DIST_REF   = 3000;   // distance reference for landing fee scaling
 const CATERING_PER_FLIGHT = 0.03;  // 每航班餐食成本（配合频率因子），替代 CATERING_PER_PLANE
 const FREQ_COST_SCALE    = 0.3;   // 频率成本折扣系数：高频航班起降/餐食享受批量折扣
@@ -99,3 +99,51 @@ const MEGA_EVENT_PRE_ANNOUNCE     = 4;     // 提前N个季度开始预报
 const MEGA_EVENT_DECAY_LENGTH     = 3;     // 会后持续影响N个季度
 const DISASTER_BOTH_CITIES        = 0.1;   // 双端灾害LF系数（原硬归零→0.1） [待测试]
 const DISASTER_ONE_CITY           = 0.3;   // 单端灾害LF系数（原硬归零→0.3） [待测试]
+
+// ═══════════════════════════════════════════════════════
+// OPERATIONS MANAGEMENT (v0.6: 运营管理系统)
+// 设计依据：operations_design.md v0.3
+// ═══════════════════════════════════════════════════════
+
+// --- 员工系统 ---
+// 数值校准依据：瑞安航空~80人/架、汉莎~180人/架；游戏以窄体为主，取低端区间
+// 单位为K(千人)，早期2航线2飞机≈0.21K=210人，后期50航线40飞机≈3.55K=3550人
+const STAFF_PER_ROUTE           = 0.03;  // 每航线所需员工(K)=30人 [待测试]
+const STAFF_PER_PLANE           = 0.05;  // 每飞机所需员工(K)=50人 [待测试]
+const STAFF_PER_BRANCH          = 0.1;   // 每分部所需员工(K)=100人 [待测试]
+const STAFF_HQ_BASE             = 0.05;  // 总部基础员工(K)=50人 [待测试]
+const STAFF_RECRUIT_COST        = 0.5;   // 招聘成本($M/K人) [待测试]
+const STAFF_NATURAL_FILL_RATE   = 0.3;   // 每季度自动补人率(缺口×此值) [待测试]
+const STAFF_NATURAL_FILL_TARGET = 0.75;  // 自然补充只补到需求×此值 [待测试]
+const STAFF_RETIRE_RATE         = 0.01;  // Q1退休率(1%) [待测试]
+const RECRUIT_TARGET_EXPAND     = 1.25;  // 扩员方案目标满编率 [待测试]
+const RECRUIT_TARGET_STANDARD   = 1.05;  // 标准方案目标满编率 [待测试]
+
+// --- 奖金系统 ---
+// 校准：早期0.2K人×2.0=0.4M(可承受)，后期3.5K人×2.0=7M(重大支出但非致命)
+const BONUS_COST_HIGH           = 2.0;   // 丰厚奖金($M/K人) [待测试]
+const BONUS_COST_MID            = 1.0;   // 标准奖金($M/K人) [待测试]
+const BONUS_COST_LOW            = 0.2;   // 象征性奖金($M/K人) [待测试]
+const BONUS_MORALE_HIGH         = 30;    // 丰厚奖金士气增量 [待测试]
+const BONUS_MORALE_MID          = 15;    // 标准奖金士气增量 [待测试]
+const BONUS_MORALE_LOW          = 5;     // 象征性奖金士气增量 [待测试]
+
+// --- 服务/维修/广告预算 ---
+// v0.6.2: 基线对标旧 maint+crew (~0.47M/2窄体+1航线)，mid档=1.0x基线
+// 校准：1航线2飞机mid档≈0.15+0.20+0.10=0.45M，约占6M收入7.5%
+const SERVICE_COST_PER_ROUTE    = 0.15;  // 服务基础费用($M/航线) [待测试]
+const MAINT_BUDGET_PER_PLANE    = 0.10;  // 维修基础费用($M/飞机) [待测试]
+const AD_COST_PER_ROUTE         = 0.10;  // 广告基础费用($M/航线) [待测试]
+const AD_COST_PER_BRANCH        = 0.3;   // 分部广告费($M/分部) [待测试]
+
+// --- 故障系统 ---
+const FAULT_BASE_CHANCE         = 0.03;  // 基础故障率3%/季/架 [待测试]
+const FAULT_AGE_FACTOR          = 0.05;  // 机龄故障递增系数 [待测试]
+
+// --- 预算档位映射表 ---
+// v0.6.2: mid=1.0x（基线=合理成本），low=0.3x（节省但有负面影响），high=2.5x（豪华但昂贵）
+const SERVICE_MULTIPLIER = { low: 0.90, mid: 1.00, high: 1.10 };
+const MAINT_FAULT_MULT   = { low: 1.8,  mid: 1.0,  high: 0.4  };
+const AD_MULTIPLIER      = { low: 0.97, mid: 1.00, high: 1.06 };
+const BUDGET_COST_MULT   = { low: 0.3,  mid: 1.0,  high: 2.5  };  // 服务/维修
+const AD_COST_MULT       = { low: 0.3,  mid: 1.0,  high: 2.5  };  // 广告

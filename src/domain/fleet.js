@@ -1,5 +1,6 @@
 import { PLANES } from '../data/planes.js';
 import { clamp, randInt } from './helpers.js';
+import { syncStaffToNeeded } from './operations.js';
 
 export function availablePlaneTemplates(state) {
   if (!state) return PLANES;
@@ -62,6 +63,7 @@ export function buyPlane(state, planeId, isLease, count = 1) {
     planes.push(plane);
     state.fleet.push(plane);
   }
+  syncStaffToNeeded(state, 0.8);
   return { ok: true, plane: planes[0], planes, totalCost, leaseFee: leaseFee * safeCount };
 }
 
@@ -75,6 +77,7 @@ export function sellPlane(state, uid) {
   state.routes.forEach((r) => {
     r.assignedPlanes = r.assignedPlanes.filter((id) => id !== uid);
   });
+  syncStaffToNeeded(state, 0);
   return { plane, sellPrice };
 }
 
@@ -85,6 +88,7 @@ export function returnLease(state, uid) {
   state.routes.forEach((r) => {
     r.assignedPlanes = r.assignedPlanes.filter((id) => id !== uid);
   });
+  syncStaffToNeeded(state, 0);
   return { plane };
 }
 
@@ -109,4 +113,5 @@ export function advanceFleetAge(state) {
   state.routes.forEach((route) => {
     route.assignedPlanes = route.assignedPlanes.filter((uid) => activeUids.has(uid));
   });
+  syncStaffToNeeded(state, 0);
 }

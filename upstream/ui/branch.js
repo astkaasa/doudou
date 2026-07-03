@@ -95,6 +95,7 @@ function confirmBranchFromMap(){
   G.cash-=cost;
   if(!G.branchesConstructing)G.branchesConstructing=[];
   G.branchesConstructing.push({cityId:cityId,constructIn:BRANCH_CONSTRUCT_TURNS});
+  syncStaffToNeeded(0.80); // v0.6.2: 开分部自动补员80%
   branchSelectMode=false;
   selectedBranch=null;
   $('app').classList.remove('branch-selecting');

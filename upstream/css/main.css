@@ -654,3 +654,319 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:var(--c-bg-dark);color:v
   transform: translateY(-2px);
   box-shadow: 0 6px 28px rgba(34,197,94,0.5);
 }
+
+/* ══════════════════════════════════════
+   OPERATIONS MANAGEMENT (v0.6)
+   ══════════════════════════════════════ */
+.ops-section {
+  background: #0a1628;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  border: 1px solid #1a2d48;
+}
+.ops-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+.ops-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #1a2d48;
+}
+.ops-row:last-child {
+  border-bottom: none;
+}
+.ops-row .label {
+  color: #7ba3cc;
+}
+.ops-row .val {
+  font-weight: 600;
+}
+.ops-tier-btn {
+  transition: all 0.15s;
+}
+.ops-tier-btn:hover {
+  filter: brightness(1.2);
+}
+.recruit-option:hover {
+  border-color: #2563eb !important;
+  background: #1e3a5f !important;
+}
+.bonus-option:hover {
+  border-color: #2563eb !important;
+  background: #1e3a5f !important;
+}
+
+/* ══════════════════════════════════════
+   CONTRACT CARD — 合同签署卡片 (v0.6.3)
+   ══════════════════════════════════════ */
+
+/* ── 合同区域：推进按钮上方 ── */
+#contract-zone {
+  position: fixed;
+  bottom: 44px;        /* 底栏上方 */
+  right: 16px;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+/* ── 合同卡片基础 ── */
+.contract-card {
+  background: #111d33;
+  border: 1px solid #1e3a5f;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* ── 折叠态 ── */
+.contract-folded {
+  height: 40px;
+  cursor: pointer;
+}
+.contract-folded .contract-body { display: none; }
+.contract-folded:hover {
+  border-color: #d97706;
+  box-shadow: 0 4px 20px rgba(217,119,6,0.2);
+}
+
+/* ── 展开态 ── */
+.contract-expanded {
+  max-height: 260px;
+}
+.contract-expanded .contract-body {
+  display: block;
+  padding: 0 12px 10px;
+}
+
+/* ── 卡片头部 ── */
+.contract-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  user-select: none;
+}
+.contract-folded .contract-header { height: 40px; }
+.contract-icon { font-size: 15px; }
+.contract-title { color: #e0e8f0; }
+.contract-quarter { color: #7ba3cc; font-size: 11px; font-weight: 500; margin-left: 4px; }
+
+/* ── 未签署/已签署徽章 ── */
+.contract-badge {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.contract-badge.unsigned {
+  background: #dc262620;
+  color: #f87171;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+.contract-badge.signed {
+  background: #16a34a20;
+  color: #4ade80;
+}
+@keyframes badgePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ── 脉冲红点 ── */
+.dot-pulse {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f87171;
+  margin-left: 4px;
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+/* ── 箭头 ── */
+.contract-arrow {
+  color: #7ba3cc;
+  font-size: 10px;
+  margin-left: 4px;
+  transition: transform 0.2s;
+}
+
+/* ── 卡片信息行 ── */
+.contract-info {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: #7ba3cc;
+  margin-bottom: 8px;
+  padding-top: 2px;
+}
+
+/* ── 选项列表 ── */
+.contract-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.contract-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #1e3a5f;
+  background: #0a1628;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 12px;
+}
+.contract-option:hover {
+  border-color: #2563eb;
+  background: #162d50;
+}
+.contract-option.selected {
+  border-color: #2563eb;
+  background: #1e3a5f;
+}
+.contract-option .opt-name {
+  font-weight: 700;
+  color: #4ade80;
+  min-width: 44px;
+}
+.contract-option .opt-desc {
+  color: #7ba3cc;
+  flex: 1;
+}
+.contract-option .opt-cost {
+  font-weight: 600;
+  font-size: 12px;
+}
+.contract-option .opt-qty {
+  font-size: 11px;
+  color: #556;
+  margin-left: 4px;
+}
+
+/* ── 签署按钮 ── */
+.contract-sign-btn {
+  width: 100%;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 1px;
+}
+.contract-sign-btn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34,197,94,0.3);
+}
+.contract-sign-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── 已签署收据态 ── */
+.contract-signed {
+  border-color: #16a34a40;
+  background: #0f2818;
+  animation: stampShake 0.4s ease-in-out;
+}
+.contract-receipt-text {
+  padding: 4px 12px 8px;
+  font-size: 12px;
+  color: #4ade80;
+  font-weight: 600;
+}
+@keyframes stampShake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-3px) rotate(-1deg); }
+  30% { transform: translateX(3px) rotate(1deg); }
+  45% { transform: translateX(-2px); }
+  60% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+}
+
+/* ── 卡片浮现动画 ── */
+.contract-enter {
+  animation: contractSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes contractSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 高亮闪烁（引导注意） ── */
+.contract-highlight {
+  animation: contractFlash 0.3s ease-in-out 2;
+}
+@keyframes contractFlash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0); }
+  50% { box-shadow: 0 0 0 4px rgba(217,119,6,0.5); }
+}
+
+/* ── 引导条（守门第二层） ── */
+.advance-guide {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #1e293b;
+  border: 1px solid #d9770640;
+  border-radius: 8px;
+  font-size: 12px;
+  animation: contractSlideUp 0.3s ease-out;
+}
+.guide-text {
+  color: #fbbf24;
+  font-weight: 600;
+  flex: 1;
+}
+.guide-sign-btn {
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  border-radius: 4px;
+  background: #d97706;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.guide-sign-btn:hover {
+  filter: brightness(1.15);
+}
+
+/* ── 推进按钮预警态 ── */
+#advance-btn.advance-warned {
+  animation: advanceWarnPulse 2s ease-in-out infinite;
+}
+@keyframes advanceWarnPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217,119,6,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(217,119,6,0); }
+}

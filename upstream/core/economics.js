@@ -120,7 +120,13 @@ function calcLoadFactor(route,price,brand,competitors){
   const priceEffect=Math.pow(priceRatio,PRICE_ELASTICITY);
   const brandEffect=1+(brand-1)*BRAND_EFFECT_FACTOR;
   const compEffect=1/(1+competitors*COMP_EFFECT_FACTOR);
-  const effectiveDemand=demand*priceEffect*brandEffect*compEffect;
+  // ── v0.6: 运营管理乘数 ──
+  const opsEffect  = 0.7 + G.opsEfficiency * 0.3;               // 员工效能→客座率
+  const svcEffect  = SERVICE_MULTIPLIER[G.serviceTier] || 1.0;   // 服务档位
+  const adEffect   = AD_MULTIPLIER[G.adTier] || 1.0;            // 广告档位
+  // 事故后效
+  const accidentEffect = 1 + (G.accidentPenalty || 0);
+  const effectiveDemand=demand*priceEffect*brandEffect*compEffect*opsEffect*svcEffect*adEffect*accidentEffect;
   const totalSeats=route.assignedPlanes.reduce((s,pid)=>{const plane=G.fleetMap[pid];return s+(plane?plane.seats:0);},0);
   if(totalSeats===0)return 0;
   return clamp(effectiveDemand/totalSeats,0,1);
@@ -171,19 +177,17 @@ function routeCost(route){
   const freq=routeFreqFactor(d);
   // 高频航班批量折扣：freq=1→1.0x, freq=4→1.9x（而非4x）
   const freqScale=1+(freq-1)*FREQ_COST_SCALE;
-  let fuelCost=0,maintCost=0,crewCost=0;
+  let fuelCost=0;
   let landingFee=0,catering=0;
   for(const pid of route.assignedPlanes){
     const plane=G.fleetMap[pid];if(!plane)continue;
     let fuelRate=plane.fuel;
-    let maintRate=plane.maint;
     if(G.playerTrait==='豆')fuelRate*=TRAIT_FUEL_DISCOUNT;
-    if(G.playerTrait==='机')maintRate*=TRAIT_MAINT_DISCOUNT;
     fuelCost+=fuelRate*(G.oilPrice/80)*(d/5000);
-    maintCost+=maintRate*(1+MAINT_AGING*plane.age);
-    crewCost+=CREW_PER_180*(plane.seats/180);
+    // maint和crew移至运营预算系统(v0.6)，不再按航线逐架扣款
     landingFee+=(LANDING_BASE+(cityA.level+cityB.level)*LANDING_PER_LEVEL*Math.sqrt(d/LANDING_DIST_REF))*freqScale;
     catering+=CATERING_PER_FLIGHT*freqScale;
   }
-  return {fuel:fuelCost,maint:maintCost,crew:crewCost,landing:landingFee,catering:catering,total:fuelCost+maintCost+crewCost+landingFee+catering};
+  // 保留旧字段名为0以兼容财报展示
+  return {fuel:fuelCost,maint:0,crew:0,landing:landingFee,catering:catering,total:fuelCost+landingFee+catering};
 }

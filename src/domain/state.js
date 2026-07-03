@@ -5,6 +5,7 @@ import { DEFAULT_COMPANY_NAME } from './constants.js';
 import { availablePlaneTemplates } from './fleet.js';
 import { randInt } from './helpers.js';
 import { createMainQuestState } from './mainQuest.js';
+import { STAFF_HQ_BASE, calcStaffNeeded, syncStaffToNeeded } from './operations.js';
 import { initStockState } from './stocks.js';
 
 export function initState(hq, era) {
@@ -28,7 +29,7 @@ export function createSetupState(companyName, eraId) {
 
 function createBaseState(era, overrides = {}) {
   const stockState = initStockState(era.id);
-  return {
+  const state = {
     companyName: DEFAULT_COMPANY_NAME,
     hq: null,
     era: era.id,
@@ -58,6 +59,23 @@ function createBaseState(era, overrides = {}) {
     stockEvents: stockState.stockEvents,
     activeModifiers: [],
     activeMegaEvents: [],
+    staffCount: STAFF_HQ_BASE,
+    staffNeeded: STAFF_HQ_BASE,
+    staffMorale: 40,
+    serviceTier: 'mid',
+    maintTier: 'mid',
+    adTier: 'mid',
+    opsEfficiency: 0,
+    accidentPenalty: 0,
+    accidentPenaltyTurns: 0,
+    _pendingRecruit: false,
+    _pendingBonus: false,
+    _retiredThisTurn: 0,
+    _recruitCostThisTurn: 0,
+    _bonusCostThisTurn: 0,
+    _opsCostThisTurn: 0,
+    _faultLossThisTurn: 0,
+    _faultsThisTurn: [],
     modifierIdCounter: 1,
     turnProfit: 0,
     turnRevenue: 0,
@@ -82,6 +100,8 @@ function createBaseState(era, overrides = {}) {
     _lastStockDividend: 0,
     ...overrides,
   };
+  state.staffNeeded = calcStaffNeeded(state);
+  return state;
 }
 
 function findEra(eraId) {
@@ -93,6 +113,7 @@ export function seedInitialFleet(state) {
   const starterPlane = availablePlanes.find((p) => p.type === 'narrow') || availablePlanes[0];
   state.fleet.push({ ...starterPlane, uid: state.planeIdCounter++, age: 0, isLease: false, leasePrice: 0, leaseTurns: 0, maxLeaseTurns: 40, delivering: false, deliverIn: 0 });
   state.fleet.push({ ...starterPlane, uid: state.planeIdCounter++, age: 2, isLease: false, leasePrice: 0, leaseTurns: 0, maxLeaseTurns: 40, delivering: false, deliverIn: 0 });
+  syncStaffToNeeded(state, 0.9);
   state.ai.forEach((ai) => {
     for (let i = 0; i < 3; i++) {
       const template = availablePlanes[i < 2 ? 0 : Math.min(availablePlanes.length - 1, Math.floor(availablePlanes.length / 2))] || starterPlane;
