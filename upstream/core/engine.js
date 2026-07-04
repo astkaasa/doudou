@@ -219,11 +219,13 @@ function advanceTurn(){
   // ══════════════════════════════════════════
   // v0.6.3: 合同卡片取代弹窗
   // 季度变更时设置 pending 标志，UI 层浮现合同卡片
+  // 时序：Q3招聘（秋季窗口）→ Q4奖金（年末发放）
+  // 注意：此检查使用季度推进后的 G.quarter 值
   // ══════════════════════════════════════════
-  if(G.quarter === 4 && !G.gameOver && !G._pendingRecruit){
+  if(G.quarter === 3 && !G.gameOver && !G._pendingRecruit){
     G._pendingRecruit = true;
   }
-  if(G.quarter === 1 && !G.gameOver && !G._pendingBonus){
+  if(G.quarter === 4 && !G.gameOver && !G._pendingBonus){
     G._pendingBonus = true;
   }
 

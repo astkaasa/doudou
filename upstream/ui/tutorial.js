@@ -440,6 +440,7 @@ function loadGame(){
     $('tutorial').style.display='none';
     stopCreditsAutoScroll();
     applySeasonTheme();renderMap();updateHUD();renderPanel();
+    restoreContractState();
     if(G.newsItems&&G.newsItems.length>0){const nb=$('reread-news-btn');if(nb)nb.style.display='';}
     if(G._lastReportData){const rb=$('reread-report-btn');if(rb)rb.style.display='';}
     showBanner('存档已载入！'+G.companyName+' - '+G.year+' Q'+G.quarter,'#16a34a');

@@ -180,8 +180,8 @@ export function finishQuarterOperations(state) {
 
 export function schedulePendingContracts(state) {
   if (!state || state.gameOver) return;
-  if (state.quarter === 4 && !state._pendingRecruit) state._pendingRecruit = true;
-  if (state.quarter === 1 && !state._pendingBonus) state._pendingBonus = true;
+  if (state.quarter === 3 && !state._pendingRecruit) state._pendingRecruit = true;
+  if (state.quarter === 4 && !state._pendingBonus) state._pendingBonus = true;
 }
 
 export function hasPendingContracts(state) {

@@ -88,16 +88,16 @@ describe('turn progression', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const state = initState('beijing', 'era3');
     state.ai = [];
-    state.quarter = 3;
+    state.quarter = 2;
 
     advanceTurnState(state);
-    expect(state.quarter).toBe(4);
+    expect(state.quarter).toBe(3);
     expect(state._pendingRecruit).toBe(true);
     expect(state._pendingBonus).toBe(false);
 
     state._pendingRecruit = false;
     advanceTurnState(state);
-    expect(state.quarter).toBe(1);
+    expect(state.quarter).toBe(4);
     expect(state._pendingBonus).toBe(true);
   });
 
