@@ -2,7 +2,17 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createFinanceController } from '../src/app/financeController.js';
 import { createNetworkController } from '../src/app/networkController.js';
+import { createSessionController } from '../src/app/sessionController.js';
+import { createSettingsController, loadAppSettings } from '../src/app/settingsController.js';
 import { createTurnController } from '../src/app/turnController.js';
+
+function createMemoryStorage(initialValue = null) {
+  const values = new Map(initialValue === null ? [] : [['doudou.appSettings', initialValue]]);
+  return {
+    getItem: vi.fn((key) => values.get(key) ?? null),
+    setItem: vi.fn((key, value) => values.set(key, value)),
+  };
+}
 
 describe('application controllers', () => {
   it('owns the complete finance and investment action surface', () => {
@@ -115,5 +125,99 @@ describe('application controllers', () => {
       'plane-purchase-quantity',
       'route-price-preview',
     ]);
+  });
+
+  it('owns setup, session, modal, and onboarding actions', () => {
+    const controller = createSessionController({
+      getState: () => null,
+      setState: vi.fn(),
+      uiState: {},
+      renderGame: vi.fn(),
+      renderMapOnly: vi.fn(),
+      setBottomHint: vi.fn(),
+      scrollPanelToTop: vi.fn(),
+      cancelBranchSelect: vi.fn(),
+    });
+
+    expect(Object.keys(controller.clickActions).sort()).toEqual([
+      'acknowledge-onboarding',
+      'cancel-hq-select',
+      'close-ftp-card',
+      'close-main-quest-overlay',
+      'close-modal',
+      'confirm-hq-start',
+      'confirm-trait',
+      'continue-victory-game',
+      'dismiss-onboarding',
+      'end-victory-game',
+      'load-game',
+      'modal-backdrop',
+      'noop',
+      'open-main-quest',
+      'open-milestones',
+      'open-trait-coins',
+      'reload-page',
+      'reset-onboarding',
+      'save-game',
+      'select-era',
+      'select-trait-coin',
+      'show-credits-menu',
+      'show-era-menu',
+      'show-main-menu',
+      'show-onboarding-help',
+      'show-save-menu',
+      'show-version-log',
+      'switch-help-tab',
+      'tutorial-next-step',
+    ]);
+    expect(Object.keys(controller.inputActions)).toEqual(['company-name-input']);
+  });
+
+  it('owns settings actions and normalizes persisted preferences', () => {
+    const storage = createMemoryStorage();
+    const controller = createSettingsController({
+      settings: { showBoundaries: true, mapStyle: 'classic' },
+      uiState: {},
+      renderMapOnly: vi.fn(),
+    }, storage);
+
+    expect(Object.keys(controller.clickActions).sort()).toEqual([
+      'set-map-style',
+      'show-settings',
+      'toggle-map-boundaries',
+    ]);
+    expect(loadAppSettings(createMemoryStorage('{bad json'))).toEqual({
+      showBoundaries: true,
+      mapStyle: 'classic',
+    });
+    expect(loadAppSettings(createMemoryStorage('{"showBoundaries":false,"mapStyle":"terrain"}'))).toEqual({
+      showBoundaries: false,
+      mapStyle: 'terrain',
+    });
+  });
+
+  it('does not register an action in more than one controller', () => {
+    const app = {
+      getState: () => null,
+      setState: vi.fn(),
+      uiState: {},
+      renderGame: vi.fn(),
+      renderMapOnly: vi.fn(),
+      setBottomHint: vi.fn(),
+      scrollPanelToTop: vi.fn(),
+      updateMilestones: vi.fn(),
+      closeModal: vi.fn(),
+      cancelBranchSelect: vi.fn(),
+    };
+    const controllers = [
+      createSessionController(app),
+      createSettingsController({ ...app, settings: {} }, createMemoryStorage()),
+      createFinanceController(app),
+      createTurnController(app),
+      createNetworkController(app),
+    ];
+    const actions = controllers.flatMap((controller) => Object.keys(controller.clickActions));
+
+    expect(new Set(actions).size).toBe(actions.length);
   });
 });
