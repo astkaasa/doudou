@@ -189,6 +189,7 @@ export function aggregateSimulationResults(results) {
   });
   return [...groups.values()].map((group) => {
     const first = group[0];
+    const victoryTurns = group.map((result) => result.victoryTurn).filter(Number.isFinite);
     return {
       eraId: first.eraId,
       era: first.era,
@@ -197,6 +198,7 @@ export function aggregateSimulationResults(results) {
       runs: group.length,
       survivalRate: mean(group.map((result) => Number(result.survived))),
       victoryRate: mean(group.map((result) => Number(Boolean(result.victoryTurn)))),
+      avgVictoryTurn: victoryTurns.length > 0 ? mean(victoryTurns) : null,
       rescueRate: mean(group.map((result) => Number(result.rescues > 0))),
       avgTurns: mean(group.map((result) => result.turnsPlayed)),
       avgEndCash: mean(group.map((result) => result.endCash)),
@@ -205,6 +207,10 @@ export function aggregateSimulationResults(results) {
       avgCompanyValue: mean(group.map((result) => result.companyValue)),
       avgRoutes: mean(group.map((result) => result.routes)),
       avgFleet: mean(group.map((result) => result.fleet)),
+      avgBaseRegions: mean(group.map((result) => result.baseRegions.length)),
+      avgSubsidiaries: mean(group.map((result) => result.subsidiaries)),
+      avgLoan: mean(group.map((result) => result.loan)),
+      avgLoadFactor: mean(group.map((result) => result.avgLoadFactor)),
       avgProfitMargin: mean(group.map((result) => result.profitMargin)),
       avgProfitableTurnRate: mean(group.map((result) => result.profitableTurnRate)),
       avgForcedLiquidations: mean(group.map((result) => result.forcedLiquidations)),
