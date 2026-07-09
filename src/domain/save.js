@@ -9,8 +9,9 @@ import { normalizeOperationsState } from './operations.js';
 import { normalizeStockState } from './stocks.js';
 import { normalizeSubsidiaryState } from './subsidiaries.js';
 import { PLAYER_TRAIT_SYMBOLS, normalizePlayerTrait } from '../data/playerTraits.js';
+import { legacyRandomSeed, normalizeRandomState } from './random.js';
 
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 export const PERSISTED_GAME_STATE_FIELDS = Object.freeze([
   'companyName',
@@ -81,6 +82,7 @@ export const PERSISTED_GAME_STATE_FIELDS = Object.freeze([
   'mapZoom',
   'mapPanX',
   'mapPanY',
+  'rng',
   'onboardStep',
   '_onboardReportShown',
   '_mainQuestOnboardShown',
@@ -91,7 +93,6 @@ export const PERSISTED_GAME_STATE_FIELDS = Object.freeze([
   'lastReportData',
   '_lastTraitFund',
   '_lastStockDividend',
-  'redPacketClaimed',
 ]);
 
 const SAVE_MIGRATIONS = Object.freeze({
@@ -107,6 +108,7 @@ const SAVE_MIGRATIONS = Object.freeze({
   9: preserveLegacyState,
   10: preserveLegacyState,
   11: migrateV11ToV12,
+  12: migrateV12ToV13,
 });
 
 export function saveGameState(state, storage = localStorage) {
@@ -217,6 +219,11 @@ function migrateV11ToV12(state) {
   return state;
 }
 
+function migrateV12ToV13(state) {
+  state.rng = normalizeRandomState(state.rng, legacyRandomSeed(state));
+  return state;
+}
+
 function saveSummary(result) {
   const state = result.state;
   return {
@@ -253,6 +260,7 @@ export function normalizeLoadedState(state) {
 function normalizeUpstreamStateFields(state) {
   if (state.loan === undefined) state.loan = 0;
   if (state.loanRate === undefined) state.loanRate = 0.02;
+  state.rng = normalizeRandomState(state.rng, legacyRandomSeed(state));
   if (!Array.isArray(state.routes)) state.routes = [];
   if (!Array.isArray(state.fleet)) state.fleet = [];
   if (!Array.isArray(state.ai)) state.ai = [];
@@ -270,7 +278,7 @@ function normalizeUpstreamStateFields(state) {
   if (state._mainQuestOnboardShown === undefined) state._mainQuestOnboardShown = false;
   if (!Array.isArray(state.activeMegaEvents)) state.activeMegaEvents = [];
   if (!Array.isArray(state.deliveredThisTurn)) state.deliveredThisTurn = [];
-  if (state.redPacketClaimed === undefined) state.redPacketClaimed = false;
+  delete state.redPacketClaimed;
   if (state.bankruptRescued === undefined) state.bankruptRescued = false;
   state.playerTrait = normalizePlayerTrait(state.playerTrait);
   if (!state.playerTrait) state.traitChosen = false;

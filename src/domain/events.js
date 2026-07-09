@@ -1,15 +1,16 @@
 import { NEWS_POOL } from '../data/news.js';
 import { PLANES } from '../data/planes.js';
-import { clamp, fmtPct, getCity, rand, randInt } from './helpers.js';
+import { clamp, fmtPct, getCity } from './helpers.js';
 import { megaEventNewsFor, syncMegaEventState } from './megaEvents.js';
 import { addCostModifier, addDemandModifier, addDisasterDemandModifier, addSuspensionModifier, advanceActiveModifiers, selectRouteKeys } from './modifiers.js';
+import { nextRandom, randomBetween, randomInt } from './random.js';
 import { updateStockPrices } from './stocks.js';
 
 export function generateEvents(state) {
   state.events = [];
   state.newsItems = [];
   state.prevOilPrice = state.oilPrice;
-  const oilChange = rand(-0.06, 0.06);
+  const oilChange = randomBetween(state, -0.06, 0.06);
   state.oilPrice = clamp(state.oilPrice * (1 + oilChange), 20, 180);
   if (Math.abs(oilChange) > 0.03) {
     state.events.push({
@@ -26,7 +27,7 @@ export function generateEvents(state) {
       state.newsItems.push(item);
       state.events.push({ type: 'mega_event', text: item.title, severity: item._isHeadline ? 'high' : 'medium' });
     });
-  const numNews = randInt(2, 4);
+  const numNews = randomInt(state, 2, 4);
   const categories = Object.keys(NEWS_POOL);
   const picked = new Set();
   for (let i = 0; i < numNews; i++) {
@@ -35,8 +36,8 @@ export function generateEvents(state) {
     let tries = 0;
     let rejected = false;
     do {
-      cat = categories[randInt(0, categories.length - 1)];
-      news = NEWS_POOL[cat][randInt(0, NEWS_POOL[cat].length - 1)];
+      cat = categories[randomInt(state, 0, categories.length - 1)];
+      news = NEWS_POOL[cat][randomInt(state, 0, NEWS_POOL[cat].length - 1)];
       tries++;
       rejected = picked.has(news.title) || isDisasterProtectedByMegaEvent(state, cat, news);
     } while (rejected && tries < 20);
@@ -54,6 +55,7 @@ export function generateEvents(state) {
         addDisasterDemandModifier,
         addSuspensionModifier,
         selectRouteKeys,
+        random: () => nextRandom(state),
       });
     } catch {
       // News effects should not break turn progression.

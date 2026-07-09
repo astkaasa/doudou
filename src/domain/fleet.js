@@ -1,6 +1,7 @@
 import { PLANES } from '../data/planes.js';
-import { clamp, randInt } from './helpers.js';
+import { clamp } from './helpers.js';
 import { syncStaffToNeeded } from './operations.js';
+import { randomInt } from './random.js';
 
 export function availablePlaneTemplates(state) {
   if (!state) return PLANES;
@@ -69,7 +70,7 @@ export function buyPlane(state, planeId, isLease, count = 1) {
       range: template.range,
       fuel: template.fuel,
       maint: template.maint,
-      age: isLease ? randInt(2, 8) : 0,
+      age: isLease ? randomInt(state, 2, 8) : 0,
       buyPrice: template.buyPrice,
       isLease,
       leasePrice: isLease ? template.leasePrice : 0,

@@ -99,6 +99,7 @@ export function validateGameState(state, options = {}) {
   requireFiniteRange(issues, 'state.brand', state.brand, 1, 10);
   requireNonNegativeInteger(issues, 'state.turnsPlayed', state.turnsPlayed);
   requirePositiveInteger(issues, 'state.planeIdCounter', state.planeIdCounter);
+  validateRandomState(issues, state.rng);
 
   const fleet = requireArray(issues, 'state.fleet', state.fleet);
   const routes = requireArray(issues, 'state.routes', state.routes);
@@ -118,7 +119,8 @@ export function validateGameState(state, options = {}) {
     else if (fleetUids.has(plane.uid)) issues.push(`${path}.uid duplicates ${String(plane.uid)}`);
     else fleetUids.add(plane.uid);
     if (Number.isInteger(plane.uid)) maxNumericUid = Math.max(maxNumericUid, plane.uid);
-    if (!PLANE_IDS.has(plane.id)) issues.push(`${path}.id references unknown plane ${String(plane.id)}`);
+    const templateId = plane.templateId || plane.id;
+    if (!PLANE_IDS.has(templateId)) issues.push(`${path}.templateId references unknown plane ${String(templateId)}`);
     requireNonNegative(issues, `${path}.age`, plane.age);
     if (plane.delivering) requirePositiveInteger(issues, `${path}.deliverIn`, plane.deliverIn);
   });
@@ -241,6 +243,20 @@ function validateAiState(issues, aiPlayers) {
       if (!fleetUids.has(route.assignedPlane)) issues.push(`${routePath}.assignedPlane references missing AI fleet uid ${String(route.assignedPlane)}`);
     });
   });
+}
+
+function validateRandomState(issues, rng) {
+  if (!rng || typeof rng !== 'object' || Array.isArray(rng)) {
+    issues.push('state.rng must be an object');
+    return;
+  }
+  ['seed', 'state'].forEach((field) => {
+    const value = rng[field];
+    if (!Number.isInteger(value) || value < 0 || value >= 0x100000000) {
+      issues.push(`state.rng.${field} must be an unsigned 32-bit integer`);
+    }
+  });
+  requireNonNegativeInteger(issues, 'state.rng.draws', rng.draws);
 }
 
 function isBaseCity(state, cityId) {

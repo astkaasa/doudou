@@ -32,6 +32,7 @@ import { isBase } from './bases.js';
 import { MEGA_EVENT_SPILLOVER } from './constants.js';
 import { clamp, getCity } from './helpers.js';
 import { syncStaffToNeeded } from './operations.js';
+import { randomSource } from './random.js';
 import { calcPortfolioValue, sellStock } from './stocks.js';
 
 const FORCE_PLANE_SELL_AGE_FACTOR = 0.04;
@@ -354,7 +355,7 @@ export function handleBankruptcy(state) {
   return { gameOver: true, action: 'gameOver' };
 }
 
-export function aiSubDecide(state, ai, random = Math.random) {
+export function aiSubDecide(state, ai, random = randomSource(state)) {
   normalizeAiSubsidiaries(ai);
   if (!state || !ai || (Number(state.turnsPlayed) || 0) % 4 !== 0) return false;
   if (!Array.isArray(ai.routes) || ai.routes.length === 0) return false;

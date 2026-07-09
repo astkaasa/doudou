@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { ERAS } from '../src/data/eras.js';
+import { availablePlaneTemplates, buyPlane } from '../src/domain/fleet.js';
 import { advanceTurnState } from '../src/domain/turn.js';
 import { assertGameState, validateGameState, validateStaticData } from '../src/domain/invariants.js';
+import { openRoute } from '../src/domain/routes.js';
 import { initState, seedInitialFleet } from '../src/domain/state.js';
 
 describe('static data invariants', () => {
@@ -28,6 +30,16 @@ describe('game state invariants', () => {
       advanceTurnState(state);
       expect(validateGameState(state)).toEqual([]);
     }
+  });
+
+  it('remains valid after normal fleet and route mutations', () => {
+    const state = initState('beijing', 'era3', { seed: 'invariant-actions' });
+    seedInitialFleet(state);
+    const template = availablePlaneTemplates(state)[0];
+
+    expect(buyPlane(state, template.id, false).ok).toBe(true);
+    expect(openRoute(state, 'beijing', 'shanghai', state.fleet[0].uid, 800).ok).toBe(true);
+    expect(validateGameState(state)).toEqual([]);
   });
 
   it('reports route, fleet, base, and numeric corruption together', () => {

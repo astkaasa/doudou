@@ -22,10 +22,10 @@ export function showAngelInvestment(state) {
   phaseTimer = window.setTimeout(showAngelIntroPhase, 1800);
 }
 
-export function showAngelSlotPhase() {
+export function showAngelSlotPhase(state) {
   clearAngelTimers();
   slotLocked = false;
-  finalAmount = pickAngelInvestmentAmount();
+  finalAmount = pickAngelInvestmentAmount(state);
   const amounts = angelInvestmentAmounts();
   const root = byId('modal-root');
   root.innerHTML = `

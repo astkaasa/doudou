@@ -3,27 +3,29 @@ import { initCityStates } from '../data/cityEraData.js';
 import { ERAS } from '../data/eras.js';
 import { DEFAULT_COMPANY_NAME } from './constants.js';
 import { availablePlaneTemplates } from './fleet.js';
-import { randInt } from './helpers.js';
 import { createMainQuestState } from './mainQuest.js';
 import { STAFF_HQ_BASE, calcStaffNeeded, syncStaffToNeeded } from './operations.js';
 import { initStockState } from './stocks.js';
 import { createSubsidiaryState } from './subsidiaries.js';
+import { createRandomState, randomInt } from './random.js';
 
-export function initState(hq, era) {
+export function initState(hq, era, options = {}) {
   const e = findEra(era);
   return createBaseState(e, {
     hq,
     era: e.id,
+    rng: createRandomState(options.seed),
     ai: AI_PROFILES.map((p, i) => ({ ...p, cash: e.cash + i * 10, routes: [], fleet: [], brand: 1 + i })),
   });
 }
 
-export function createSetupState(companyName, eraId) {
+export function createSetupState(companyName, eraId, options = {}) {
   const era = findEra(eraId);
   return createBaseState(era, {
     companyName: companyName || DEFAULT_COMPANY_NAME,
     hq: null,
     era: era.id,
+    rng: createRandomState(options.seed),
     ai: [],
   });
 }
@@ -97,6 +99,7 @@ function createBaseState(era, overrides = {}) {
     mapZoom: 1,
     mapPanX: 0,
     mapPanY: 0,
+    rng: overrides.rng || createRandomState(),
     onboardStep: 0,
     _onboardReportShown: false,
     _mainQuestOnboardShown: false,
@@ -123,7 +126,7 @@ export function seedInitialFleet(state) {
   state.ai.forEach((ai) => {
     for (let i = 0; i < 3; i++) {
       const template = availablePlanes[i < 2 ? 0 : Math.min(availablePlanes.length - 1, Math.floor(availablePlanes.length / 2))] || starterPlane;
-      ai.fleet.push({ uid: ai.name + '_' + i, ...template, age: randInt(1, 5), assigned: false });
+      ai.fleet.push({ uid: ai.name + '_' + i, ...template, age: randomInt(state, 1, 5), assigned: false });
     }
   });
 }

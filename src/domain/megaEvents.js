@@ -6,7 +6,7 @@ import {
   MEGA_EVENT_SPILLOVER,
 } from './constants.js';
 import { getCity } from './helpers.js';
-import { addMegaEventDemandModifier, removeMegaEventDemandModifiers } from './modifiers.js';
+import { addMegaEventDemandModifier, MODIFIER_MODES, removeMegaEventDemandModifiers } from './modifiers.js';
 
 export function megaEventBoostCurve(quartersFromEvent) {
   if (quartersFromEvent <= -5) return 0;
@@ -54,6 +54,9 @@ export function activeMegaEventsForPeriod(state) {
 
 export function syncMegaEventState(state) {
   const activeEvents = activeMegaEventsForPeriod(state);
+  const existingIds = new Map((state.activeModifiers || [])
+    .filter((modifier) => modifier.mode === MODIFIER_MODES.megaEvent && modifier.megaEvent?.id)
+    .map((modifier) => [modifier.megaEvent.id, modifier.id]));
   state.activeMegaEvents = activeEvents;
   removeMegaEventDemandModifiers(state);
   activeEvents.forEach((event) => {
@@ -64,7 +67,7 @@ export function syncMegaEventState(state) {
       boost: event.currentBoost,
       spillover: MEGA_EVENT_SPILLOVER,
       remoteSpillover: MEGA_EVENT_REMOTE_SPILLOVER,
-    });
+    }, 1, existingIds.get(event.id));
   });
   return activeEvents;
 }

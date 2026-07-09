@@ -1,4 +1,5 @@
 import { clamp } from './helpers.js';
+import { randomSource } from './random.js';
 
 export const STAFF_PER_ROUTE = 0.03;
 export const STAFF_PER_PLANE = 0.05;
@@ -127,7 +128,7 @@ export function resetOperationalTurnFields(state, options = {}) {
   return state;
 }
 
-export function prepareQuarterOperations(state, random = Math.random) {
+export function prepareQuarterOperations(state, random = randomSource(state)) {
   normalizeOperationsState(state);
   resetOperationalTurnFields(state);
   state.staffNeeded = calcStaffNeeded(state);

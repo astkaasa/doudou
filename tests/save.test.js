@@ -154,7 +154,7 @@ describe('save migration', () => {
     expect(result.state.lastNewspaperHtml).toBeUndefined();
     expect(result.state._lastReportData).toBeUndefined();
     expect(result.state.lastReportData).toEqual({ rev: 1 });
-    expect(result.state.redPacketClaimed).toBe(false);
+    expect(result.state.redPacketClaimed).toBeUndefined();
     expect(result.state.playerTrait).toBe('豆');
     expect(result.state.traitChosen).toBe(true);
     expect(result.state.pendingTraitChoices).toBeNull();

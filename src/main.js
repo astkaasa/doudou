@@ -841,7 +841,7 @@ function handleClick(event) {
       showVersionLog();
       break;
     case 'start-angel-slot':
-      showAngelSlotPhase();
+      if (G) showAngelSlotPhase(G);
       break;
     case 'lock-angel-slot':
       lockAngelSlot();

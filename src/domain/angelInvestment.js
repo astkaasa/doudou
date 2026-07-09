@@ -1,5 +1,5 @@
 import { ANGEL_INVEST_MAX, ANGEL_INVEST_MIN, ANGEL_INVEST_STEP } from './constants.js';
-import { randInt } from './helpers.js';
+import { randomInt } from './random.js';
 
 export function angelInvestmentAmounts() {
   const amounts = [];
@@ -9,9 +9,9 @@ export function angelInvestmentAmounts() {
   return amounts;
 }
 
-export function pickAngelInvestmentAmount() {
+export function pickAngelInvestmentAmount(state) {
   const amounts = angelInvestmentAmounts();
-  return amounts[randInt(0, amounts.length - 1)];
+  return amounts[randomInt(state, 0, amounts.length - 1)];
 }
 
 export function applyAngelInvestment(state, amount) {

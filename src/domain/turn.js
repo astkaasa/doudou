@@ -11,6 +11,7 @@ import { calcOpsBudgetCost, finishQuarterOperations, prepareQuarterOperations, s
 import { updateRouteMetrics } from './routes.js';
 import { calcStockDividend } from './stocks.js';
 import { handleBankruptcy, settleSubsidiaryQuarter } from './subsidiaries.js';
+import { randomSource } from './random.js';
 
 export function advanceTurnState(state) {
   if (!state || state.gameOver) return null;
@@ -18,7 +19,7 @@ export function advanceTurnState(state) {
 
   const branchCompleted = advanceBranchConstruction(state);
   advanceFleetAge(state);
-  growCityStates(state);
+  growCityStates(state, randomSource(state));
   prepareQuarterOperations(state);
   updateRouteMetrics(state);
   const faultLoss = settleOperationalFaultLosses(state);

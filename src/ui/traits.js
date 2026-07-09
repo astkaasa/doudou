@@ -1,11 +1,12 @@
 import { PLAYER_TRAITS, shufflePlayerTraits } from '../data/playerTraits.js';
 import { byId } from '../domain/helpers.js';
+import { randomSource } from '../domain/random.js';
 import { escapeAttr, escapeHtml } from './html.js';
 import { closeModalRoot, renderModalRoot } from './modal.js';
 
 export function showTraitEnvelope(state) {
   if (!state || state.playerTrait || state.traitChosen) return;
-  if (!Array.isArray(state.pendingTraitChoices)) state.pendingTraitChoices = shufflePlayerTraits();
+  if (!Array.isArray(state.pendingTraitChoices)) state.pendingTraitChoices = shufflePlayerTraits(randomSource(state));
   removeTraitOverlay();
   renderModalRoot(`<div id="trait-overlay" role="dialog" aria-modal="true" aria-label="选择航空公司特质" tabindex="-1">
     <div style="text-align:center">
@@ -23,7 +24,7 @@ export function showTraitEnvelope(state) {
 export function openTraitCoins(state) {
   const overlay = byId('trait-overlay');
   if (!overlay) return;
-  if (state && !Array.isArray(state.pendingTraitChoices)) state.pendingTraitChoices = shufflePlayerTraits();
+  if (state && !Array.isArray(state.pendingTraitChoices)) state.pendingTraitChoices = shufflePlayerTraits(randomSource(state));
   const traits = state?.pendingTraitChoices || shufflePlayerTraits();
   overlay.innerHTML = `
     <div style="text-align:center">

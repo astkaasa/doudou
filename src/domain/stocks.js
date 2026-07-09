@@ -1,6 +1,7 @@
 import { STOCKS, STOCK_MAP, STOCK_SECTORS } from '../data/stocks.js';
-import { clamp, rand } from './helpers.js';
+import { clamp } from './helpers.js';
 import { MODIFIER_MODES } from './modifiers.js';
+import { randomBetweenFrom, randomIntFrom, randomSource } from './random.js';
 
 export { STOCKS, STOCK_MAP, STOCK_SECTORS };
 
@@ -96,7 +97,7 @@ export function normalizeStockState(state) {
   else state._lastStockDividend = Number(state._lastStockDividend);
 }
 
-export function updateStockPrices(state) {
+export function updateStockPrices(state, random = randomSource(state)) {
   normalizeStockState(state);
   const sectorShock = Object.fromEntries(SECTOR_IDS.map((sector) => [sector, 0]));
 
@@ -128,12 +129,12 @@ export function updateStockPrices(state) {
     sectorShock.culture += 0.02;
   }
 
-  if (Math.random() < STOCK_RANDOM_CRASH_CHANCE) {
-    const crashSector = SECTOR_IDS[Math.floor(Math.random() * SECTOR_IDS.length)];
-    sectorShock[crashSector] -= rand(STOCK_RANDOM_CRASH_MIN, STOCK_RANDOM_CRASH_MAX);
+  if (random() < STOCK_RANDOM_CRASH_CHANCE) {
+    const crashSector = SECTOR_IDS[randomIntFrom(random, 0, SECTOR_IDS.length - 1)];
+    sectorShock[crashSector] -= randomBetweenFrom(random, STOCK_RANDOM_CRASH_MIN, STOCK_RANDOM_CRASH_MAX);
   }
 
-  const marketSentiment = rand(-STOCK_MARKET_SENTIMENT, STOCK_MARKET_SENTIMENT);
+  const marketSentiment = randomBetweenFrom(random, -STOCK_MARKET_SENTIMENT, STOCK_MARKET_SENTIMENT);
   const eraNum = eraNumber(state.era);
 
   getActiveStocks(state).forEach((stock) => {
@@ -141,7 +142,7 @@ export function updateStockPrices(state) {
     if (!stockState) return;
     stockState.prevPrice = stockState.price;
 
-    const noise = rand(-STOCK_NOISE_RANGE, STOCK_NOISE_RANGE) * stock.beta;
+    const noise = randomBetweenFrom(random, -STOCK_NOISE_RANGE, STOCK_NOISE_RANGE) * stock.beta;
     const revertTarget = stock.eraStart[eraNum] || stock.basePrice;
     const deviation = (stockState.price - revertTarget) / revertTarget;
     const meanRevert = Math.abs(deviation) > STOCK_MEAN_REVERT_THRESHOLD

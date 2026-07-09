@@ -114,7 +114,7 @@ export const NEWS_POOL = {
     {title:'F1新赛季开赛，巡回赛带动出行',desc:'全球20站赛事横跨五大洲，车迷跨国观赛需求旺盛。',effect:'洲际航线需求小幅上升',stockEffect:{culture:0.03,tourism:0.03,energy:0.01},effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'F1巡回赛',scopeCrossRegion(),1.08);}},
   ],
   health: [
-    {title:'新型流感变种引发区域性恐慌',desc:'WHO发布预警，某地区出现高传染性流感变种，多国加强入境检疫。',effect:'相关区域出行下降20%',stockEffect:{tourism:-0.08,culture:-0.04,finance:-0.02},effectFn:({state:G,addDemandModifier,selectRouteKeys})=>{addDemandModifier(G,'新型流感变种',randomRouteScope(G,()=>Math.random()<0.3,selectRouteKeys),0.8);}},
+    {title:'新型流感变种引发区域性恐慌',desc:'WHO发布预警，某地区出现高传染性流感变种，多国加强入境检疫。',effect:'相关区域出行下降20%',stockEffect:{tourism:-0.08,culture:-0.04,finance:-0.02},effectFn:({state:G,addDemandModifier,selectRouteKeys,random})=>{addDemandModifier(G,'新型流感变种',randomRouteScope(G,()=> (random?.() ?? 0.5)<0.3,selectRouteKeys),0.8);}},
     {title:'全球疫苗接种率创新高，出行信心恢复',desc:'主要经济体疫苗接种率突破85%，各国逐步撤销旅行限制。',effect:'整体需求回升15%',stockEffect:{tourism:0.06,culture:0.03,finance:0.02},effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'全球出行信心恢复',scopeAll(),1.15);}},
     {title:'某国爆发不明肺炎，航空管制升级',desc:'数个国际机场启动体温筛查，来自疫区航班需额外审批。',effect:'国际航线受阻',stockEffect:{tourism:-0.06,culture:-0.03,finance:-0.01},effectFn:({state:G,addSuspensionModifier})=>{addSuspensionModifier(G,'国际航线航空管制',scopeCrossRegion(),1);}},
   ]

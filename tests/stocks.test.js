@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { initState } from '../src/domain/state.js';
 import {
@@ -7,10 +7,6 @@ import {
   sellStock,
   updateStockPrices,
 } from '../src/domain/stocks.js';
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe('stock market domain', () => {
   it('initializes active stocks and the starter WAPC holding for a new game', () => {
@@ -23,11 +19,10 @@ describe('stock market domain', () => {
   });
 
   it('applies sector news shocks while intrinsic random noise is neutral', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const state = initState('beijing', 'era3');
     state.newsItems = [{ stockEffect: { finance: 0.10 } }];
 
-    updateStockPrices(state);
+    updateStockPrices(state, () => 0.5);
 
     expect(state.stocks.lan_royal_bank.price).toBe(134.4);
     expect(state.stocks.miow_insurance.price).toBe(99.23);

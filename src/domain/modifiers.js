@@ -58,8 +58,9 @@ export function addDisasterDemandModifier(state, source, scope, turnsRemaining =
   });
 }
 
-export function addMegaEventDemandModifier(state, source, megaEvent, turnsRemaining = 1) {
+export function addMegaEventDemandModifier(state, source, megaEvent, turnsRemaining = 1, id = null) {
   return addModifier(state, {
+    id,
     source,
     type: MODIFIER_TYPES.demand,
     mode: MODIFIER_MODES.megaEvent,

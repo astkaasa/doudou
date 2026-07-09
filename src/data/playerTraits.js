@@ -25,7 +25,7 @@ export function normalizePlayerTrait(trait) {
   return PLAYER_TRAITS[trait] ? trait : null;
 }
 
-export function shufflePlayerTraits(random = Math.random) {
+export function shufflePlayerTraits(random = () => 0.5) {
   const traits = [...PLAYER_TRAIT_SYMBOLS];
   for (let i = traits.length - 1; i > 0; i -= 1) {
     const j = Math.floor(random() * (i + 1));

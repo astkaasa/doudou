@@ -2158,7 +2158,7 @@ export function getCityMarketState(state, cityId) {
   return normalizeMarketRecord(market, fallbackCityState(city));
 }
 
-export function growCityStates(state, random = Math.random) {
+export function growCityStates(state, random = () => 0.5) {
   const current = normalizeCityStates(state);
   const next = {};
   for (const city of CITIES) {
