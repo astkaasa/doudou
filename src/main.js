@@ -2,10 +2,10 @@ import './styles/app.css';
 
 import { actionNames, createDelegatedActionHandler } from './app/actionDispatcher.js';
 import { createFinanceController } from './app/financeController.js';
+import { createTurnController } from './app/turnController.js';
 import { ERAS } from './data/eras.js';
 import { normalizePlayerTrait } from './data/playerTraits.js';
 import { closeBranch as closeBranchDomain, isBase, isBranchConstructing, openBranch } from './domain/bases.js';
-import { applyAngelInvestment } from './domain/angelInvestment.js';
 import { DEFAULT_COMPANY_NAME } from './domain/constants.js';
 import { buyPlane, returnLease, sellPlane } from './domain/fleet.js';
 import { byId, cityDist, fmt, getCity, routeKey } from './domain/helpers.js';
@@ -23,24 +23,11 @@ import {
   suspendRoute,
   updateRouteMetrics,
 } from './domain/routes.js';
-import { advanceTurnState } from './domain/turn.js';
-import { hasPendingContracts, setOpsTier, signBonusContract, signRecruitContract } from './domain/operations.js';
 import { updateHUD } from './ui/hud.js';
 import { closeModalRoot, showBanner, showModal } from './ui/modal.js';
-import { closeMainQuestOverlay, continueFromVictory, showMainQuestPanel, showMainQuestStageNotification, showMainQuestVictory, showVictoryEnding } from './ui/mainQuest.js';
+import { closeMainQuestOverlay, continueFromVictory, showMainQuestPanel, showVictoryEnding } from './ui/mainQuest.js';
 import { showMilestoneList, showMilestoneNotification } from './ui/milestones.js';
-import {
-  clearSignedContract,
-  focusContractFromPanel,
-  getContractSelection,
-  markContractSigned,
-  restoreContractState,
-  selectContractOption,
-  showAdvanceContractGuide,
-  showOperationsPanel,
-  spawnPendingContracts,
-  toggleContract,
-} from './ui/operations.js';
+import { restoreContractState, spawnPendingContracts } from './ui/operations.js';
 import { showVersionLog } from './ui/versionLog.js';
 import { describeRouteSelection, focusMapOnCity, initMapDrag, renderMap, setMapZoom } from './ui/map.js';
 import { showRouteCreateInfo as renderRouteCreateInfo, hideRouteCreateInfo, renderPanel, renderRouteCityPicker } from './ui/panel.js';
@@ -52,7 +39,6 @@ import {
   closeFirstTimePopup,
   completeOnboardingStep,
   dismissOnboarding,
-  resetBranchDismiss,
   resetOnboarding,
   showHelpPanel,
   updateOnboarding,
@@ -62,11 +48,7 @@ import {
   showBuyPlaneModal,
   showBranchModal,
   showCloseBranchConfirm,
-  showDeliveryPopup,
   showFleetPanel,
-  showGameOver,
-  showNewspaper,
-  showReportAlone,
   setAdjustPricePreset,
   setRoutePricePreset,
   showRouteChangePlaneModal,
@@ -79,7 +61,6 @@ import {
   toggleRouteListSort,
   updateAdjustedPriceDisplay,
   updatePlanePurchaseOptions,
-  showTurnSummary,
   updatePricePreview,
 } from './ui/modals.js';
 import {
@@ -98,7 +79,6 @@ import {
   showTutorial,
 } from './ui/tutorial.js';
 import { openTraitCoins, removeTraitOverlay, revealSelectedTrait, showTraitEnvelope } from './ui/traits.js';
-import { clearAngelTimers, lockAngelSlot, showAngelInvestment, showAngelSlotPhase } from './ui/angelInvestment.js';
 
 const APP_SETTINGS_KEY = 'doudou.appSettings';
 const appSettings = loadAppSettings();
@@ -612,121 +592,18 @@ function confirmTrait(target) {
   showBanner('欢迎经营 ' + G.companyName + '！(' + G.year + '-' + G.endYear + ') 试试开通第一条航线吧', '#2563eb');
 }
 
-function showBankruptcyAction(report) {
-  const action = report?.bankruptcyAction;
-  if (!action || action.angelRescue || action.gameOver) return;
-  const messages = {
-    emergencyLoan: `急救贷款已发放：${fmt(action.amount)}`,
-    forceSellStocks: `已强制出售证券资产：${fmt(action.amount)}`,
-    forceSellSubsidiaries: `已强制出售子公司：${fmt(action.amount)}`,
-    forceSellPlanes: `已变卖自有飞机：${fmt(action.amount)}`,
-  };
-  if (messages[action.action]) showBanner(messages[action.action], '#d97706');
-}
-
-function applyAngelRescue(target) {
-  if (!G) return;
-  const result = applyAngelInvestment(G, Number(target.dataset.amount));
-  if (!result.ok) {
-    showBanner(result.message, '#b91c1c');
-    return;
-  }
-  clearAngelTimers();
-  closeModalRoot();
-  renderGame();
-  showBanner(`辣豆基金注资 ${fmt(result.amount)}，重振旗鼓`, '#d97706');
-}
-
-function advanceTurn(force = false) {
-  if (!G || G.gameOver) return;
-  if (hasPendingContracts(G)) {
-    showAdvanceContractGuide(G);
-    return;
-  }
-  if (!force && G.turnsPlayed === 0 && G.routes.length === 0) {
-    const readyPlanes = G.fleet.filter((plane) => !plane.delivering).length;
-    showModal(`<h2>本季尚未准备好</h2>
-      <div class="advance-risk-card">
-        <strong>当前没有运营航线</strong>
-        <p>推进季度仍会产生机队、人员和运营固定成本。你有 ${readyPlanes} 架可用飞机，可以先开通一条短途航线。</p>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" type="button" data-action="open-route-from-warning">返回开航线</button>
-        <button class="btn btn-secondary" type="button" data-action="confirm-advance-without-routes">仍然推进</button>
-      </div>`);
-    return;
-  }
-  const report = advanceTurnState(G);
-  if (!report) return;
-  if (report.angelRescue) {
-    renderGame();
-    showAngelInvestment(G);
-    return;
-  }
-  if (report.gameOver) {
-    showGameOver(G);
-    return;
-  }
-  renderGame();
-  showBankruptcyAction(report);
-  resetBranchDismiss();
-  if (G.turnsPlayed === 1) {
-    completeOnboardingStep(G, 2);
-    updateOnboarding(G, uiState);
-  }
-  if (report.branchCompleted.length > 0) {
-    showBanner(`分部完工：${report.branchCompleted.map((cityId) => getCity(cityId)?.name || cityId).join('、')}`, '#7c3aed');
-  }
-  const showQuarterSummary = () => {
-    showTurnSummary(G, report);
-    checkFirstTimePopups(G);
-  };
-  const isReportOnboarding = G.turnsPlayed === 1 && !G._onboardReportShown && G.onboardStep <= 3 && G.onboardStep < 99;
-  if (isReportOnboarding) window.setTimeout(showQuarterSummary, 400);
-  else showQuarterSummary();
-  updateMilestones();
-  if (report.mainQuestUpdate?.type === 'stage_complete') {
-    showMainQuestStageNotification(report.mainQuestUpdate);
-  } else if (report.mainQuestUpdate?.type === 'victory') {
-    showMainQuestVictory(report.mainQuestUpdate);
-  }
-}
-
-function updateOpsTier(target) {
-  if (!G) return;
-  if (!setOpsTier(G, target.dataset.field, target.dataset.tier)) return;
-  updateRouteMetrics(G);
-  renderGame();
-  showOperationsPanel(G);
-}
-
-function signContract(target) {
-  if (!G) return;
-  const type = target.dataset.contractType;
-  const selected = getContractSelection(type);
-  const result = type === 'bonus'
-    ? signBonusContract(G, selected)
-    : signRecruitContract(G, selected);
-  markContractSigned(G, type, result);
-  renderGame();
-  showBanner(result.message, type === 'bonus' ? '#d97706' : '#2563eb');
-  window.setTimeout(() => {
-    clearSignedContract(G, type);
-    renderGame();
-  }, 2500);
-}
-
-function focusNextPendingContract() {
-  if (!G) return;
-  const type = G._pendingRecruit ? 'recruit' : G._pendingBonus ? 'bonus' : null;
-  if (type) focusContractFromPanel(G, type);
-}
-
 const financeController = createFinanceController({
   getState: state,
   uiState,
   renderGame,
   updateMilestones,
+});
+const turnController = createTurnController({
+  getState: state,
+  uiState,
+  renderGame,
+  updateMilestones,
+  closeModal,
 });
 
 const coreClickActions = {
@@ -742,11 +619,6 @@ const coreClickActions = {
   },
   'tutorial-next-step': tutorialNextStep,
   'show-version-log': showVersionLog,
-  'start-angel-slot': () => {
-    if (G) showAngelSlotPhase(G);
-  },
-  'lock-angel-slot': lockAngelSlot,
-  'apply-angel-rescue': ({ target }) => applyAngelRescue(target),
   'cancel-hq-select': cancelHQSelect,
   'confirm-hq-start': confirmHQAndStart,
   'map-empty': onMapEmptyClick,
@@ -759,25 +631,6 @@ const coreClickActions = {
   'open-buy-plane-modal': () => {
     if (G) showBuyPlaneModal(G);
   },
-  'open-operations-panel': () => {
-    if (!G) return;
-    showOperationsPanel(G);
-    G._opsPanelOpened = true;
-    checkFirstTimePopups(G);
-  },
-  'set-ops-tier': ({ target }) => updateOpsTier(target),
-  'toggle-contract': ({ target }) => {
-    if (G) toggleContract(G, target.dataset.contractType);
-  },
-  'select-contract-option': ({ target }) => {
-    if (G) selectContractOption(G, target.dataset.contractType, target.dataset.option);
-  },
-  'sign-contract': ({ target }) => signContract(target),
-  'open-contract-from-panel': ({ target }) => {
-    closeModalRoot();
-    if (G) focusContractFromPanel(G, target.dataset.contractType);
-  },
-  'advance-contract-guide': focusNextPendingContract,
   'open-main-quest': () => {
     if (!G) return;
     G._mainQuestOnboardShown = true;
@@ -845,11 +698,6 @@ const coreClickActions = {
   'focus-hq': () => {
     if (G?.hq && focusMapOnCity(G, G.hq)) renderMapOnly();
   },
-  'advance-turn': () => advanceTurn(),
-  'confirm-advance-without-routes': () => {
-    closeModal();
-    advanceTurn(true);
-  },
   'close-modal': closeModal,
   'modal-backdrop': closeModal,
   'close-main-quest-overlay': ({ target }) => closeMainQuestOverlay(target.closest('.main-quest-overlay')),
@@ -899,23 +747,13 @@ const coreClickActions = {
     if (G) confirmTrait(target);
   },
   noop: () => {},
-  'show-newspaper': () => {
-    if (G) showNewspaper(G);
-  },
-  'show-report': () => {
-    if (G) showReportAlone(G);
-  },
-  'show-delivery-popup': () => {
-    if (G) showDeliveryPopup(G);
-  },
-  'close-delivery-popup': closeDeliveryPopup,
-  'delivery-backdrop': closeDeliveryPopup,
   'reload-page': () => location.reload(),
 };
 
 const clickActions = {
   ...coreClickActions,
   ...financeController.clickActions,
+  ...turnController.clickActions,
 };
 
 const inputActions = {
