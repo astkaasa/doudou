@@ -32,9 +32,11 @@ http://127.0.0.1:5173/
 npm run test
 npm run build
 npm run check
+npm run balance -- --runs 20
 ```
 
 `npm run build` 会生成普通静态产物和单文件产物；`npm run check` 会先测试再构建。
+`npm run balance` 会用固定种子批量运行四时代和多种经营策略；可使用 `--era era3`、`--policy balanced`、`--turns 40` 或 `--json` 缩小范围或输出明细。
 
 ## 文件角色
 

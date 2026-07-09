@@ -9,6 +9,7 @@
     "build": "vite build && node scripts/build-standalone.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
+    "balance": "node scripts/simulate-balance.mjs",
     "check": "npm run test && npm run build"
   },
   "devDependencies": {
