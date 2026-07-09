@@ -8,6 +8,9 @@ function openStockModal() {
   const activeStocks = getActiveStocks();
   if (activeStocks.length === 0) return;
   _selectedStockId = activeStocks[0].id;
+  // 标记股票面板已打开（触发FTP发现卡）
+  G._stockPanelOpened = true;
+  checkFTPs();
   renderStockModal();
 }
 

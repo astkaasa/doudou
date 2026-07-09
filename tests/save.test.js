@@ -256,6 +256,32 @@ describe('save migration', () => {
     expect(result.state._mainQuestOnboardShown).toBe(false);
   });
 
+  it('normalizes subsidiary fields from old saves', () => {
+    const raw = JSON.stringify({
+      v: 10,
+      g: {
+        era: 'era3',
+        routes: [],
+        fleet: [],
+        subsidiaries: {
+          beijing: [{ type: 'shuttle', openCost: 60, currentValue: 80, source: 'open' }],
+          missing: [{ type: 'hotel' }],
+        },
+        ai: [{ subsidiaries: { shanghai: [{ type: 'hotel' }, { type: 'hotel' }] } }],
+      },
+    });
+
+    const result = loadGameState(memoryStorage(raw));
+
+    expect(result.ok).toBe(true);
+    expect(result.state.subsidiaries.beijing).toHaveLength(1);
+    expect(result.state.subsidiaries.beijing[0]).toMatchObject({ type: 'shuttle', currentValue: 80, isNew: false });
+    expect(result.state.subsidiaries.missing).toBeUndefined();
+    expect(result.state.ai[0].subsidiaries.shanghai).toHaveLength(1);
+    expect(result.state._subReturnThisTurn).toBe(0);
+    expect(result.state._subMaintThisTurn).toBe(0);
+  });
+
   it('migrates legacy pending operations modal into contract flags', () => {
     const raw = JSON.stringify({
       v: 9,

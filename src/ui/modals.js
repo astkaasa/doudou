@@ -29,3 +29,10 @@ export {
   sellStockFromModal,
   showStockMarket,
 } from './stockModals.js';
+export {
+  executeSubsidiaryOpen,
+  executeSubsidiarySell,
+  showCompanyValueModal,
+  showSubsidiaryConfirm,
+  showSubsidiaryOverview,
+} from './subsidiaryModals.js';

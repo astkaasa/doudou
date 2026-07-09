@@ -13,14 +13,15 @@
       <span id="hud-company-name" style="color:#fbbf24;font-weight:700;font-size:14px;white-space:nowrap">豆豆航空</span>
       <span id="hud-trait-badge" style="display:none"></span>
     </div>
+    <span id="hud-cv-badge" style="display:none" onclick="openCompanyValueModal()" title="公司市值详情"></span>
     <div class="hud-item"><span class="hud-label">资金</span><span class="hud-val" id="hud-cash">$0M</span></div>
     <div class="hud-item"><span class="hud-label">上季利润</span><span class="hud-val" id="hud-profit">$0M</span></div>
     <div class="hud-item"><span class="hud-label">航线</span><span class="hud-val" id="hud-routes">0</span></div>
-    <div class="hud-item"><span class="hud-label">机队</span><span class="hud-val" id="hud-fleet">购0/租0</span></div>
+    <div class="hud-item" style="display:none"><span class="hud-label">机队</span><span class="hud-val" id="hud-fleet">购0/租0</span></div>
     <div class="hud-item"><span class="hud-label">客座率</span><span class="hud-val" id="hud-load">0%</span></div>
     <div class="hud-item"><span class="hud-label">运营效能</span><span class="hud-val" id="hud-ops-eff">--</span></div>
     <div id="hud-brand"><span class="hud-label">品牌</span><span class="hud-val" id="hud-brand-val">★</span></div>
-    <div class="hud-item" style="cursor:pointer;padding:3px 12px;border-radius:12px;background:linear-gradient(90deg,#1e3a8a,#2563eb);font-size:13px;font-weight:700" onclick="openMainQuestPanel()" title="苍穹之路·主线任务"><span style="color:#fff">🛫 苍穹之路 🛬</span></div>
+    <div class="hud-item" style="cursor:pointer;padding:3px 12px;border-radius:12px;background:linear-gradient(90deg,#1e3a8a,#2563eb);font-size:13px;font-weight:700" id="hud-mainquest" onclick="openMainQuestPanel()" title="苍穹之路·主线任务"><span style="color:#fff">🛫 苍穹之路 🛬</span></div>
     <div class="hud-item" style="cursor:pointer" onclick="openMilestoneList()" title="查看里程碑"><span class="hud-label" style="color:#fbbf24">🏆里程碑</span></div>
     <div class="hud-item" id="hud-loan-wrap" style="display:none"><span class="hud-label">贷款</span><span class="hud-val negative" id="hud-loan">$0M</span></div>
     <div style="display:flex;gap:5px;margin-left:8px;align-items:center">
@@ -28,6 +29,7 @@
       <button class="btn btn-sm" style="background:#334155;color:#e0e8f0;border-radius:5px" onclick="loadGame()">📂 读档</button>
       <span style="width:1px;height:18px;background:#334155;margin:0 2px"></span>
       <button class="btn btn-sm" style="background:#1e293b;color:#94a3b8;border:1px solid #334155;border-radius:5px;font-weight:600" onclick="backToMenu()">🏠 主菜单</button>
+      <button class="btn btn-sm" style="background:#1e293b;color:#fbbf24;border:1px solid #334155;border-radius:5px;font-weight:600" onclick="openHelpPanel()" title="帮助与机制速查">❓</button>
     </div>
     <div id="hud-turn">2020 Q1</div>
   </div>
@@ -37,12 +39,13 @@
       <div class="panel-section">
         <div class="panel-title">快捷操作</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-          <button class="btn btn-primary btn-sm" onclick="openBuyPlaneModal()">购买飞机</button>
-          <button class="btn btn-warning btn-sm" onclick="openFleetPanel()">机队管理</button>
-          <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" onclick="openRouteList()">航线管理</button>
-          <button class="btn btn-sm" style="background:#0891b2;color:#fff" onclick="openOperationsPanel()">运营管理</button>
-          <button class="btn btn-sm" style="background:#7c3aed;color:#fff" onclick="openBranchModal()">分部管理</button>
-          <button class="btn btn-sm" style="background:#b45309;color:#fff" onclick="openLoanModal()">银行贷款</button>
+          <button class="btn btn-primary btn-sm" id="btn-buy-plane" onclick="openBuyPlaneModal()">购买飞机</button>
+          <button class="btn btn-warning btn-sm" id="btn-fleet" onclick="openFleetPanel()">机队管理</button>
+          <button class="btn btn-sm" id="btn-routes" style="background:#334155;color:#e0e8f0" onclick="openRouteList()">航线管理</button>
+          <button class="btn btn-sm" id="btn-ops" style="background:#0891b2;color:#fff" onclick="openOperationsPanel()">运营管理</button>
+          <button class="btn btn-sm" id="btn-branch" style="background:#7c3aed;color:#fff" onclick="openBranchModal()">分部管理</button>
+          <button class="btn btn-sm" id="btn-loan" style="background:#b45309;color:#fff" onclick="openLoanModal()">银行贷款</button>
+          <button class="btn btn-sm" id="btn-subsidiary" style="background:#90A4AE;color:#fff;font-weight:700" onclick="openSubsidiaryOverview()">投资管理</button>
         </div>
       </div>
       <div class="panel-section" id="panel-info">
@@ -81,7 +84,8 @@
 <!-- 合同卡片区域 — 底栏右下角推进按钮上方 -->
 <div id="contract-zone"></div>
 <div id="delivery-root"></div>
-<div id="onboard-hint"><div class="hint-title"></div><div class="hint-body"></div><div class="hint-step"></div></div>
+<div id="city-drawer" class="city-drawer"></div>
+<div id="onboard-hint"><button class="hint-close" onclick="dismissOnboardHint()">✕</button><div class="hint-title"></div><div class="hint-body"></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><div class="hint-step">新手引导</div><a href="javascript:void(0)" class="hint-skip" onclick="skipOnboarding()">跳过引导</a></div></div>
 <div id="tutorial">
   <!-- 地图背景 -->
   <div id="menu-map-bg"></div>
@@ -99,6 +103,7 @@
 <script src="data/icons.js"></script>
 <script src="data/version.js"></script>
 <script src="data/balance.js"></script>
+<script src="data/subsidiary-data.js"></script>
 <script src="data/mega-events.js"></script>
 <script src="data/cities.js"></script>
 <script src="data/planes.js"></script>
@@ -118,6 +123,7 @@
 <script src="core/ai.js"></script>
 <script src="core/events.js"></script>
 <script src="core/stock.js"></script>
+<script src="core/subsidiary.js"></script>
 <script src="core/engine.js"></script>
 <script src="core/milestone-engine.js"></script>
 <script src="core/main-quest-engine.js"></script>
@@ -131,6 +137,7 @@
 <script src="ui/route-panel.js"></script>
 <script src="ui/report.js"></script>
 <script src="ui/stock.js"></script>
+<script src="ui/subsidiary.js"></script>
 <script src="ui/branch.js"></script>
 <script src="ui/operations.js"></script>
 <script src="ui/contract-ui.js"></script>
@@ -155,15 +162,32 @@ on('fleet:changed', d => {
   else if(d.action==='lease') showBanner(`租赁 ${d.count}架 ${d.planeName}，手续费 ${fmt(d.fee)}`,'#d97706');
   else if(d.action==='sell') showBanner(`出售 ${d.planeName}，获得 ${fmt(d.sellPrice)}`,'#d97706');
   else if(d.action==='returnLease') showBanner(`退租 ${d.planeName}`,'#d97706');
+  if(d.action==='buy' || d.action==='lease') completeOnboardStep(0); // Step 1: 欢迎启航 完成
   updateMilestones();
 });
 
 on('turn:advanced', d => {
-  applySeasonTheme(); updateHUD(); renderMap(); renderPanel(); updateOnboarding();
-  showTurnSummary(d.revenue, d.cost, d.profit, d.year, d.quarter);
-  // 合同卡片浮现（由 closeTurnSummary 触发，此处为兜底）
-  spawnPendingContracts();
-  updateAdvanceBtn();
+  applySeasonTheme(); updateHUD(); renderMap(); renderPanel();
+  // v0.7.3: 每回合重置分支hint的关闭记忆，允许新回合再次提醒
+  if(typeof resetBranchDismiss === 'function') resetBranchDismiss();
+  // v0.7.3: "看懂财报"引导时，先更新hint让玩家看到提示文字，延迟400ms再弹财报
+  // 原因：onboard-hint z-index=80 < modal-overlay z-index=100，但hint在该步骤时提升为110
+  // 延迟让玩家有机会在财报弹出前读到hint提示"首季财报即将弹出"
+  const isReportOnboard = G && G.turnsPlayed === 1 && !G._onboardReportShown && G.onboardStep <= 3 && G.onboardStep < 99;
+  updateOnboarding();
+  const showReport = () => {
+    showTurnSummary(d.revenue, d.cost, d.profit, d.year, d.quarter);
+    // 合同卡片由 closeTurnSummary() 中 spawnPendingContracts() 统一浮出
+    updateAdvanceBtn();
+    checkFTPs(); // FTP机制发现卡
+    // 步骤追踪：首次推进完成Step 2
+    if(G && G.turnsPlayed === 1) completeOnboardStep(2);
+  };
+  if(isReportOnboard){
+    setTimeout(showReport, 400);
+  } else {
+    showReport();
+  }
 });
 
 on('stock:changed', d => {

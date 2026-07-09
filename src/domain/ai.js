@@ -2,6 +2,7 @@ import { CITIES } from '../data/cities.js';
 import { baseDemand, distanceServiceMultiplier, ROUTE_REVENUE_DIVISOR, seasonModifier, suggestedPrice } from './economy.js';
 import { availablePlaneTemplates } from './fleet.js';
 import { cityDist, clamp, getCity, randInt, routeKey } from './helpers.js';
+import { aiSubDecide } from './subsidiaries.js';
 
 export function aiTurn(state, ai) {
   if (ai.routes.length < 8 && Math.random() < 0.6) {
@@ -63,6 +64,7 @@ export function aiTurn(state, ai) {
     aiCost += plane.maint * (1 + 0.05 * plane.age);
   });
   ai.cash += aiRev - aiCost;
+  aiSubDecide(state, ai);
 }
 
 export function countCompetitorsAI(state, from, to, self) {

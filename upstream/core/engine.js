@@ -177,7 +177,47 @@ function advanceTurn(){
   // ── Q4 股票分红结算 ──
   let stockDividend=0;
   if(G.quarter===4){stockDividend=calcDividend();if(stockDividend>0){G.cash+=stockDividend;}}
-  G.turnRevenue=totalRev;G.turnCost=totalCost;G.turnProfit=profit+stockDividend;G.totalProfit+=profit+stockDividend;G.turnsPlayed++;
+
+  // ══════════════════════════════════════════
+  // v0.7.5: 子公司估值更新 + 回报结算
+  // ══════════════════════════════════════════
+
+  // 1. 子公司估值更新（先更新估值，再用新估值算回报）
+  updateSubsidiaryValues();
+
+  // 2. 子公司回报结算（新建子公司本季不产生回报）
+  let subReturn = 0, subMaint = 0;
+  if (G.subsidiaries) {
+    for (const cityId of Object.keys(G.subsidiaries)) {
+      for (const sub of G.subsidiaries[cityId]) {
+        if (sub.isNew) continue; // 新建子公司首季免结算
+        const ret = calcSubReturn(sub, cityId);
+        subReturn += ret.gross;
+        subMaint += ret.maint;
+      }
+    }
+  }
+  G._subReturnThisTurn = subReturn;
+  G._subMaintThisTurn = subMaint;
+  const subNet = subReturn - subMaint;
+  G.cash += subNet;
+
+  // 2.1 清除 isNew 标记（下季度起正常结算）
+  if (G.subsidiaries) {
+    for (const cityId of Object.keys(G.subsidiaries)) {
+      for (const sub of G.subsidiaries[cityId]) {
+        if (sub.isNew) sub.isNew = false;
+      }
+    }
+  }
+
+  // 3. 免税店品牌加成
+  applyDutyFreeBrandBonus();
+
+  // 4. 刷新收购价种子（下季度生效）
+  G._acquirePriceSeed = G.turnsPlayed + 1;
+
+  G.turnRevenue=totalRev;G.turnCost=totalCost;G.turnProfit=profit+stockDividend+subNet;G.totalProfit+=profit+stockDividend+subNet;G.turnsPlayed++;
   if(traitFund>0)G._lastTraitFund=traitFund; else G._lastTraitFund=0;
   G._lastStockDividend=stockDividend;
   G._lastBranchCompleted=branchCompleted.length>0?branchCompleted:[];
@@ -204,23 +244,17 @@ function advanceTurn(){
   G.history.push({year:settledYear,quarter:settledQuarter,cash:G.cash,profit,rev:totalRev,cost:totalCost,routes:G.routes.length,fleet:G.fleet.length});
   G.routes.forEach(r=>{/* frequency is always 1 now */});
   if(G.cash<BANKRUPTCY_THRESHOLD){
-    // 首次破产：触发辣豆基金天使投资救助
-    if(!G.bankruptRescued){
-      G.bankruptRescued=true;
-      emit('game:angel',{turnsPlayed:G.turnsPlayed,routes:G.routes.length,fleet:G.fleet.length});
-      return;
-    }
-    G.gameOver=true;
-    emit('game:over',{reason:'bankrupt',turnsPlayed:G.turnsPlayed,routes:G.routes.length,fleet:G.fleet.length});
-    return;
+    // v0.7.5: 5阶段渐进式破产清算（替代旧2步模式）
+    handleBankruptcy();
+    if(G.gameOver) return;
   }
-  emit('turn:advanced',{year:settledYear,quarter:settledQuarter,revenue:totalRev,cost:totalCost,profit,traitFund,branchCompleted});
-
   // ══════════════════════════════════════════
   // v0.6.3: 合同卡片取代弹窗
   // 季度变更时设置 pending 标志，UI 层浮现合同卡片
   // 时序：Q3招聘（秋季窗口）→ Q4奖金（年末发放）
   // 注意：此检查使用季度推进后的 G.quarter 值
+  // 必须在 emit('turn:advanced') 之前设置，确保事件处理器中的
+  // spawnPendingContracts() 能看到标志位
   // ══════════════════════════════════════════
   if(G.quarter === 3 && !G.gameOver && !G._pendingRecruit){
     G._pendingRecruit = true;
@@ -228,6 +262,8 @@ function advanceTurn(){
   if(G.quarter === 4 && !G.gameOver && !G._pendingBonus){
     G._pendingBonus = true;
   }
+
+  emit('turn:advanced',{year:settledYear,quarter:settledQuarter,revenue:totalRev,cost:totalCost,profit,traitFund,branchCompleted});
 
   // Check milestones after turn advance (profit, survival, etc.)
   updateMilestones();

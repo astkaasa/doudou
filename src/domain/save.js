@@ -7,10 +7,11 @@ import { normalizeMilestoneState } from './milestones.js';
 import { addCostModifier, addDemandModifier, addSuspensionModifier, normalizeModifierState } from './modifiers.js';
 import { normalizeOperationsState } from './operations.js';
 import { normalizeStockState } from './stocks.js';
+import { normalizeSubsidiaryState } from './subsidiaries.js';
 import { PLAYER_TRAIT_SYMBOLS, normalizePlayerTrait } from '../data/playerTraits.js';
 
 export function saveGameState(state, storage = localStorage) {
-  const saveData = JSON.stringify({ v: 10, ts: Date.now(), g: serializeGameState(state) });
+  const saveData = JSON.stringify({ v: 11, ts: Date.now(), g: serializeGameState(state) });
   storage.setItem(STORAGE_KEYS.save, saveData);
   const info = {
     ts: Date.now(),
@@ -60,6 +61,7 @@ function normalizeUpstreamStateFields(state) {
   normalizeMainQuestState(state);
   normalizeStockState(state);
   normalizeOperationsState(state);
+  normalizeSubsidiaryState(state);
   if (!state.ftpShown || typeof state.ftpShown !== 'object' || Array.isArray(state.ftpShown)) state.ftpShown = {};
   if (state.onboardStep === undefined) state.onboardStep = 0;
   if (state._onboardReportShown === undefined) state._onboardReportShown = (state.turnsPlayed || 0) > 0;

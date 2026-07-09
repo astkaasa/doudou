@@ -52,7 +52,7 @@ function getCurrentStageTargets() {
     subtitle: stageData.subtitle,
     icon: stageData.icon,
     dimensions: {
-      cash:   { current: Math.max(0, G.cash), target: cashTarget },
+      cash:   { current: Math.max(0, typeof calcCompanyValue === 'function' ? calcCompanyValue().totalNetWorth : G.cash), target: cashTarget },
       routes: { current: G.routes.length, target: routesTarget },
       branch: { current: branchCurrent, target: branchTarget, type: branchType },
       profit: { current: G.consecutiveProfit || 0, target: profitTarget }

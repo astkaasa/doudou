@@ -93,4 +93,16 @@ function updateHUD(){
   }
   // 合同状态联动：确保推进按钮反映最新 pending 状态
   if (typeof updateAdvanceBtn === 'function') updateAdvanceBtn();
+  // ── 公司净资产徽章（移至资金左侧，样式匹配现金） ──
+  const cvBadge=$('hud-cv-badge');
+  if(cvBadge){
+    if(typeof calcCompanyValue==='function'){
+      const cv=calcCompanyValue();
+      cvBadge.style.display='inline-flex';
+      cvBadge.className='hud-item';
+      cvBadge.innerHTML=`<span class="hud-label" style="color:#d4a017">市值</span><span class="hud-val" style="color:#fbbf24">${fmt(cv.totalNetWorth)}</span>`;
+    }else{
+      cvBadge.style.display='none';
+    }
+  }
 }

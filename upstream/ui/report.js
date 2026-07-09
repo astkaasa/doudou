@@ -46,6 +46,32 @@ function buildFinancialReportHtml(rev,cost,profit,settledYear,settledQuarter){
         ${dividend>0?`<div class="report-row"><span>本季分红(Q4)</span><span style="color:#fbbf24">+$${dividend.toFixed(1)}M</span></div>`:''}
       </div>`;
   }
+  // ── 子公司收益分区 ──
+  if(G.subsidiaries&&Object.keys(G.subsidiaries).length>0){
+    const subRet=G._subReturnThisTurn||0;
+    const subMaint=G._subMaintThisTurn||0;
+    const subNet=subRet-subMaint;
+    const subNetColor=subNet>=0?'#4ade80':'#f87171';
+    const allSubs=getAllSubsidiaries();
+    const totalSubValue=allSubs.reduce((s,sub)=>s+sub.currentValue,0);
+    html+=`<h3 style="font-size:13px;color:#7ba3cc;margin:8px 0 4px">🏢 子公司</h3>
+      <div class="report-section">
+        <div class="report-row"><span>子公司总值</span><span>${fmt(totalSubValue)}</span></div>
+        <div class="report-row"><span>子公司数量</span><span>${allSubs.length}</span></div>
+        <div class="report-row"><span>回报收入</span><span style="color:#4ade80">+${fmt(subRet)}</span></div>
+        <div class="report-row"><span>维护支出</span><span style="color:#f87171">-${fmt(subMaint)}</span></div>
+        <div class="report-total" style="color:${subNetColor}">子公司净收益: ${subNet>=0?'+':''}${fmt(subNet)}</div>
+      </div>`;
+  }
+  // ── 公司市值速览 ──
+  if(typeof calcCompanyValue==='function'){
+    const cv=calcCompanyValue();
+    const cvColor=cv.totalNetWorth>=0?'#4ade80':'#f87171';
+    html+=`<h3 style="font-size:13px;color:#7ba3cc;margin:8px 0 4px">💰 公司市值</h3>
+      <div class="report-section">
+        <div class="report-row"><span style="cursor:pointer" onclick="closeModal();openCompanyValueModal()">净资产 <span style="color:#556;font-size:11px">详情›</span></span><span style="color:${cvColor};font-weight:700">${fmt(cv.totalNetWorth)}</span></div>
+      </div>`;
+  }
   // Delivery notification: aggregate by plane model
   if(G.deliveredThisTurn&&G.deliveredThisTurn.length>0){
     const counts={};
@@ -103,6 +129,11 @@ function showTurnSummary(rev,cost,profit,settledYear,settledQuarter){
 
 function closeTurnSummary(){
   closeModal();
+  // v0.7.1: 首次关闭财报→完成"看懂财报"引导步骤
+  if(G && !G._onboardReportShown){
+    G._onboardReportShown = true;
+    completeOnboardStep(3); // Step 4: 看懂财报 完成
+  }
   // v0.6.3: 关闭财报后浮现合同卡片（取代旧弹窗弹出）
   if(G && !G.gameOver){
     spawnPendingContracts();

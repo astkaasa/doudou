@@ -111,6 +111,9 @@ function openOperationsPanel() {
   html += `<div style="margin-top:16px;text-align:center"><button class="btn btn-primary" onclick="closeModal()" style="padding:8px 32px">关闭</button></div>`;
 
   showModal(html);
+  // 标记运营面板已打开（触发FTP发现卡）
+  G._opsPanelOpened = true;
+  checkFTPs();
 }
 
 // ══════════════════════════════════════

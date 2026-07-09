@@ -74,6 +74,7 @@ function confirmOpenRoute(from,to){
   syncStaffToNeeded(0.85); // v0.6.2: 开航线自动补员85%，避免fillRate骤降
   updateRouteMetrics();updateHUD();renderMap();renderPanel();closeModal();hideRouteCreateInfo();
   showBanner('航线开通：'+getCity(from).name+' → '+getCity(to).name+'  开通费用 $'+openCost+'M','#16a34a');
+  completeOnboardStep(1); // Step 2: 开拓航路 完成
   updateOnboarding();
   updateMilestones();
 }

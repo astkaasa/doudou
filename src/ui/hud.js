@@ -3,6 +3,7 @@ import { byId, fmt, fmtPct, getCity } from '../domain/helpers.js';
 import { getMainQuestStats } from '../domain/mainQuest.js';
 import { getMilestoneStats } from '../domain/milestones.js';
 import { calcNasdouIndex } from '../domain/stocks.js';
+import { calcCompanyValue } from '../domain/subsidiaries.js';
 
 let megaEventRotateTimer = null;
 let megaEventBadgeIndex = 0;
@@ -31,6 +32,17 @@ export function updateHUD(state) {
   const cashEl = byId('hud-cash');
   cashEl.textContent = fmt(state.cash);
   cashEl.className = 'hud-val ' + (state.cash >= 0 ? 'positive' : 'negative');
+  const companyValueBadge = byId('hud-cv-badge');
+  if (companyValueBadge) {
+    const valueEl = companyValueBadge.querySelector('.hud-val');
+    const companyValue = calcCompanyValue(state);
+    companyValueBadge.hidden = false;
+    if (valueEl) {
+      valueEl.textContent = fmt(companyValue.totalNetWorth);
+      valueEl.className = 'hud-val ' + (companyValue.totalNetWorth >= 0 ? 'positive' : 'negative');
+    }
+    companyValueBadge.title = '查看公司市值详情';
+  }
   const profitEl = byId('hud-profit');
   profitEl.textContent = fmt(state.turnProfit);
   profitEl.className = 'hud-val ' + (state.turnProfit >= 0 ? 'positive' : 'negative');

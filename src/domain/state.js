@@ -7,6 +7,7 @@ import { randInt } from './helpers.js';
 import { createMainQuestState } from './mainQuest.js';
 import { STAFF_HQ_BASE, calcStaffNeeded, syncStaffToNeeded } from './operations.js';
 import { initStockState } from './stocks.js';
+import { createSubsidiaryState } from './subsidiaries.js';
 
 export function initState(hq, era) {
   const e = findEra(era);
@@ -29,6 +30,7 @@ export function createSetupState(companyName, eraId) {
 
 function createBaseState(era, overrides = {}) {
   const stockState = initStockState(era.id);
+  const subsidiaryState = createSubsidiaryState();
   const state = {
     companyName: DEFAULT_COMPANY_NAME,
     hq: null,
@@ -57,6 +59,7 @@ function createBaseState(era, overrides = {}) {
     stocks: stockState.stocks,
     portfolio: stockState.portfolio,
     stockEvents: stockState.stockEvents,
+    ...subsidiaryState,
     ftpShown: {},
     activeModifiers: [],
     activeMegaEvents: [],

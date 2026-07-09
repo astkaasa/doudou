@@ -110,6 +110,22 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
       <div class="report-row"><span>本季浮盈</span><span style="color:${pnlColor}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(1)}M</span></div>
     </div>`;
   }
+  if (snapshot.subsidiaries?.count > 0) {
+    const subNetColor = snapshot.subsidiaries.net >= 0 ? '#4ade80' : '#f87171';
+    html += `<h3>子公司</h3><div class="report-section">
+      <div class="report-row"><span>子公司数量</span><span>${snapshot.subsidiaries.count}</span></div>
+      <div class="report-row"><span>子公司总值</span><span>${fmt(snapshot.subsidiaries.totalValue)}</span></div>
+      <div class="report-row"><span>回报收入</span><span style="color:#4ade80">+${fmt(snapshot.subsidiaries.return)}</span></div>
+      <div class="report-row"><span>维护支出</span><span style="color:#f87171">-${fmt(snapshot.subsidiaries.maint)}</span></div>
+      <div class="report-total" style="color:${subNetColor}">子公司净收益: ${snapshot.subsidiaries.net >= 0 ? '+' : ''}${fmt(snapshot.subsidiaries.net)}</div>
+    </div>`;
+  }
+  if (snapshot.companyValue) {
+    const netWorthColor = snapshot.companyValue.totalNetWorth >= 0 ? '#4ade80' : '#f87171';
+    html += `<h3>公司市值</h3><div class="report-section">
+      <div class="report-row"><span>净资产 <button class="report-link-btn" type="button" data-action="open-company-value">详情</button></span><span style="color:${netWorthColor};font-weight:800">${fmt(snapshot.companyValue.totalNetWorth)}</span></div>
+    </div>`;
+  }
   if (snapshot.routes.length > 0) {
     html += '<h3>基地收益</h3><div class="report-section report-base-section">';
     getBaseRouteTotals(snapshot).forEach((base) => {

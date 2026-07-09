@@ -84,6 +84,24 @@ describe('turn progression', () => {
     expect(state.history[0].stockDividend).toBe(0.2);
   });
 
+  it('settles subsidiary returns as non-operating quarterly profit', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const state = initState('beijing', 'era3');
+    state.ai = [];
+    state.subsidiaries = {
+      beijing: [{ type: 'hotel', openCost: 150, currentValue: 150, source: 'open', quarterAcquired: 0, cityLevelAtAcquire: 3, isNew: false }],
+    };
+
+    const report = advanceTurnState(state);
+
+    expect(report.subReturn).toBeGreaterThan(0);
+    expect(report.subMaint).toBeGreaterThan(0);
+    expect(report.subNet).toBeCloseTo(state._subReturnThisTurn - state._subMaintThisTurn);
+    expect(report.rev).toBe(0);
+    expect(state.turnProfit).toBeCloseTo(report.profit);
+    expect(state.history[0].subNet).toBe(report.subNet);
+  });
+
   it('schedules contract cards after Q3 and Q4 settlements', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     const state = initState('beijing', 'era3');
@@ -164,6 +182,7 @@ describe('turn progression', () => {
     state.cash = -5;
     state.fleet = [];
     state.routes = [];
+    state.portfolio = {};
 
     const firstReport = advanceTurnState(state);
     expect(firstReport.angelRescue).toBe(true);
@@ -176,5 +195,22 @@ describe('turn progression', () => {
     expect(secondReport.angelRescue).toBe(false);
     expect(secondReport.gameOver).toBe(true);
     expect(state.gameOver).toBe(true);
+  });
+
+  it('tries emergency loan before angel rescue when net worth supports it', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const state = initState('beijing', 'era3');
+    state.ai = [];
+    state.cash = -4;
+    state.routes = [];
+    state.fleet = [{ uid: 1, buyPrice: 100, age: 0, isLease: false, delivering: false }];
+
+    const report = advanceTurnState(state);
+
+    expect(report.angelRescue).toBe(false);
+    expect(report.gameOver).toBe(false);
+    expect(report.bankruptcyAction).toMatchObject({ action: 'emergencyLoan' });
+    expect(state.loan).toBeGreaterThan(0);
+    expect(state.cash).toBeGreaterThanOrEqual(0);
   });
 });

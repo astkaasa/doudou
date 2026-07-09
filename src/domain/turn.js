@@ -10,6 +10,7 @@ import { updateMainQuest } from './mainQuest.js';
 import { calcOpsBudgetCost, finishQuarterOperations, prepareQuarterOperations, schedulePendingContracts, settleOperationalFaultLosses } from './operations.js';
 import { updateRouteMetrics } from './routes.js';
 import { calcStockDividend } from './stocks.js';
+import { handleBankruptcy, settleSubsidiaryQuarter } from './subsidiaries.js';
 
 export function advanceTurnState(state) {
   if (!state || state.gameOver) return null;
@@ -24,7 +25,8 @@ export function advanceTurnState(state) {
   const traitFund = rollTraitFund(state);
   const { totalRev, totalCost, profit, interest } = calculateTurnFinancials(state, traitFund);
   const stockDividend = calcStockDividend(state);
-  const netProfit = profit + stockDividend;
+  const subsidiarySettlement = settleSubsidiaryQuarter(state);
+  const netProfit = profit + stockDividend + subsidiarySettlement.subNet;
   finishQuarterOperations(state);
 
   state.cash += netProfit;
@@ -59,6 +61,10 @@ export function advanceTurnState(state) {
     interest,
     traitFund,
     stockDividend,
+    subReturn: subsidiarySettlement.subReturn,
+    subMaint: subsidiarySettlement.subMaint,
+    subNet: subsidiarySettlement.subNet,
+    subValueChange: subsidiarySettlement.subValueChange,
     opsCost: state._opsCostThisTurn || 0,
     faultLoss,
     routes: state.routes.length,
@@ -73,16 +79,13 @@ export function advanceTurnState(state) {
   });
 
   let angelRescue = false;
+  let bankruptcyAction = null;
   if (state.cash < BANKRUPTCY_THRESHOLD) {
-    if (!state.bankruptRescued) {
-      state.bankruptRescued = true;
-      angelRescue = true;
-    } else {
-      state.gameOver = true;
-    }
+    bankruptcyAction = handleBankruptcy(state);
+    angelRescue = Boolean(bankruptcyAction.angelRescue);
   }
   const mainQuestUpdate = state.gameOver || angelRescue ? null : updateMainQuest(state);
-  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, opsCost: state._opsCostThisTurn || 0, faultLoss, branchCompleted, gameOver: state.gameOver, angelRescue, mainQuestUpdate };
+  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, ...subsidiarySettlement, opsCost: state._opsCostThisTurn || 0, faultLoss, branchCompleted, gameOver: state.gameOver, angelRescue, bankruptcyAction, mainQuestUpdate };
 }
 
 export function calculateTurnFinancials(state, extraRevenue = 0) {

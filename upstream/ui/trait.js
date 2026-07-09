@@ -88,4 +88,6 @@ function confirmTrait(trait){
   if(overlay)overlay.remove();
   updateHUD();
   showBanner('欢迎经营 '+G.companyName+'！('+G.year+'-'+G.endYear+') 试试开通第一条航线吧','#2563eb');
+  // v0.7.2: 特质仪式完成后激活新手引导
+  updateOnboarding();
 }

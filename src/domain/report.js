@@ -1,6 +1,7 @@
 import { countBoughtPlanes, countLeasedPlanes } from './fleet.js';
 import { getCity } from './helpers.js';
 import { calcPortfolioValue } from './stocks.js';
+import { calcCompanyValue, getAllSubsidiaries, getTotalSubValue } from './subsidiaries.js';
 
 export function createFinancialReportSnapshot(state) {
   const routes = Array.isArray(state.routes) ? state.routes : [];
@@ -8,6 +9,8 @@ export function createFinancialReportSnapshot(state) {
   const deliveredThisTurn = Array.isArray(state.deliveredThisTurn) ? state.deliveredThisTurn : [];
   const safeState = { ...state, routes, fleet };
   const portfolio = calcPortfolioValue(state);
+  const subsidiaries = getAllSubsidiaries(state);
+  const companyValue = calcCompanyValue(state);
 
   return {
     cash: state.cash,
@@ -33,6 +36,15 @@ export function createFinancialReportSnapshot(state) {
     faultLoss: state._faultLossThisTurn || 0,
     faults: Array.isArray(state._faultsThisTurn) ? state._faultsThisTurn.map((fault) => ({ ...fault })) : [],
     portfolio,
+    subsidiaries: {
+      count: subsidiaries.length,
+      totalValue: getTotalSubValue(state),
+      return: state._subReturnThisTurn || 0,
+      maint: state._subMaintThisTurn || 0,
+      net: (state._subReturnThisTurn || 0) - (state._subMaintThisTurn || 0),
+      valueChange: state._subValueChangeThisTurn || 0,
+    },
+    companyValue,
     deliveredThisTurn: deliveredThisTurn.map((plane) => ({ ...plane })),
     routes: routes.map((route) => ({
       from: route.from,

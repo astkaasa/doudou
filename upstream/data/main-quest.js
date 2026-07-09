@@ -53,7 +53,7 @@ const VICTORY_GRADES = [
 
 // 维度显示配置
 const MAIN_QUEST_DIMS = [
-  { key: 'cash',   label: '资金',     icon: '💰', unit: '$', suffix: 'M' },
+  { key: 'cash',   label: '公司市值', icon: '💰', unit: '$', suffix: 'M' },
   { key: 'routes', label: '航线数',   icon: '✈',  unit: '',  suffix: '条' },
   { key: 'branch', label: '分部覆盖', icon: '🌍', unit: '',  suffix: '' },
   { key: 'profit', label: '持续盈利', icon: '📈', unit: '',  suffix: '季' }

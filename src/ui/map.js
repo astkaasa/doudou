@@ -103,6 +103,7 @@ export function renderMap(state, uiState) {
     const hasRoute = routedCities.has(c.id);
     const isRecommendedHQ = uiState.hqSelectMode && HQ_RECOMMENDED.has(c.id);
     const isMegaEventHost = (state.activeMegaEvents || []).some((event) => event.cityId === c.id && event.currentBoost > 0);
+    const hasSubsidiary = (state.subsidiaries?.[c.id] || []).length > 0;
     const r = cityRadius(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, isRecommendedHQ, zoom });
     const cy = cityY(c);
       const classes = cityClasses(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, isRecommendedHQ });
@@ -116,6 +117,7 @@ export function renderMap(state, uiState) {
       }
       if (isMegaEventHost) svg += renderMegaEventRing(cx, cy, r, zoom);
       svg += `<circle cx="${cx}" cy="${cy}" r="${r}" class="${classes}" data-action="city-click" data-city-id="${c.id}" />`;
+      if (hasSubsidiary) svg += `<circle cx="${cx + radiusAwareOffset(7, zoom)}" cy="${cy - radiusAwareOffset(4, zoom)}" r="${scaleRadiusForZoom(1.9, zoom)}" class="city-subsidiary-dot" />`;
       if (isRecommendedHQ) {
         svg += `<text x="${cx}" y="${cy - radiusAwareOffset(10, zoom)}" font-size="${labelSizeForZoom(9, zoom)}" text-anchor="middle" class="hq-recommended-marker">★</text>`;
       }

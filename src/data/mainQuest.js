@@ -38,7 +38,7 @@ export const MAIN_QUEST_STAGES = [
 ];
 
 export const MAIN_QUEST_DIMS = [
-  { key: 'cash', label: '资金', icon: '💰' },
+  { key: 'cash', label: '公司市值', icon: '💰' },
   { key: 'routes', label: '航线数', icon: '✈' },
   { key: 'branch', label: '分部覆盖', icon: '🌍' },
   { key: 'profit', label: '持续盈利', icon: '📈' },

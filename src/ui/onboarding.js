@@ -116,6 +116,12 @@ const FTP_CARDS = [
     body: '每季股价会受新闻、盛事和市场情绪影响。低买高卖之外，也要注意资金占用。',
     trigger: (state) => Boolean(state._stockPanelOpened),
   },
+  {
+    id: 'sub_first',
+    title: '子公司系统',
+    body: '投资管理可新设、收购子公司或共建机场。子公司提供季度回报，也会联动航线客座率、着陆费和品牌。',
+    trigger: (state) => Boolean(state._subPanelOpened),
+  },
 ];
 
 const HELP_MECHANICS = [
@@ -125,6 +131,8 @@ const HELP_MECHANICS = [
   { icon: '⭐', title: '品牌评级', formula: '盈利、广告和事件推动', range: '1 到 10', affects: '需求和票价容忍度', tip: '稳定盈利比短期扩张更能托住品牌。' },
   { icon: '📈', title: '证券市场', formula: '新闻和时代驱动涨跌', range: '板块差异明显', affects: '投资收益和现金占用', tip: '盛事和科技新闻常会影响相关板块。' },
   { icon: '🏦', title: '银行贷款', formula: '余额 × 季度利率', range: '最低借款 $10M', affects: '扩张速度和利息压力', tip: '季度利润能覆盖利息时借贷更稳。' },
+  { icon: '🏢', title: '子公司', formula: '估值 × 回报率 × 城市指数', range: '按季度结算', affects: '被动收入、客座率、着陆费和品牌', tip: '旅行社适合航线城市，机场只适合基地城市。' },
+  { icon: '💰', title: '公司市值', formula: '现金+飞机+子公司+股票-贷款', range: '可为负', affects: '主线目标和破产急救贷款', tip: '市值比现金更能反映扩张后的净资产。' },
 ];
 
 const HELP_GUIDES = [
@@ -132,6 +140,7 @@ const HELP_GUIDES = [
   { title: '建立分部', steps: ['打开分部管理', '选择目标城市', '确认建设费用', '等待施工完成', '从新分部开通更多航线'] },
   { title: '调整运营预算', steps: ['打开运营管理', '比较服务、维修、广告三档成本', '高档提升效果但费用更高', '低档省钱但会增加经营风险'] },
   { title: '股票交易', steps: ['点击底部 NASDOU', '选择目标股票', '使用快捷金额买卖', '结合新闻和盛事判断时机'] },
+  { title: '开设子公司', steps: ['打开投资管理', '选择城市', '比较新设、收购或机场投资', '确认手续费和现金余额', '推进季度后观察回报和估值'] },
 ];
 
 let onboardingDismissed = readFlag(ONBOARDING_DISMISSED_KEY);

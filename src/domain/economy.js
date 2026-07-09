@@ -3,6 +3,7 @@ import { cityDist, clamp, getCity } from './helpers.js';
 import { YIELD_CROSS_SUB_LONG, YIELD_INTERCONT_LONG, YIELD_INTERCONT_MID, YIELD_INTERCONT_SHORT } from './constants.js';
 import { routeCostMultiplier, routeDemandMultiplier, routeServiceMultiplier } from './modifiers.js';
 import { operationDemandMultiplier } from './operations.js';
+import { getSubLandingDiscount, getSubLFBonus } from './subsidiaries.js';
 
 export const ROUTE_REVENUE_DIVISOR = 28000;
 
@@ -54,9 +55,10 @@ export function calcLoadFactor(state, route, price, brand, competitors, assigned
   const priceEffect = Math.pow(priceRatio, -0.8);
   const brandEffect = 1 + (brand - 1) * 0.06;
   const compEffect = 1 / (1 + competitors * 0.3);
+  const subsidiaryEffect = 1 + getSubLFBonus(state, route.from) + getSubLFBonus(state, route.to);
   const totalSeats = routeSeatCapacity(state, route, assignedPlanes);
   if (totalSeats === 0) return 0;
-  const lf = (baseDemandVal * priceEffect * brandEffect * compEffect) / totalSeats;
+  const lf = (baseDemandVal * priceEffect * brandEffect * compEffect * subsidiaryEffect) / totalSeats;
   return clamp(lf, 0, 1);
 }
 
@@ -112,7 +114,8 @@ export function routeCost(state, route, assignedPlanes = getRouteAssignedPlanes(
   for (const plane of assignedPlanes) {
     const fuelRate = state.playerTrait === '豆' ? plane.fuel * 0.9 : plane.fuel;
     fuelCost += fuelRate * (state.oilPrice / 80) * (d / 5000);
-    landingFee += (LANDING_BASE + (cityA.level + cityB.level) * LANDING_PER_LEVEL * Math.sqrt(d / LANDING_DIST_REF)) * serviceCostScale;
+    const landingDiscount = (1 - getSubLandingDiscount(state, route.from)) * (1 - getSubLandingDiscount(state, route.to));
+    landingFee += (LANDING_BASE + (cityA.level + cityB.level) * LANDING_PER_LEVEL * Math.sqrt(d / LANDING_DIST_REF)) * landingDiscount * serviceCostScale;
     catering += CATERING_PER_FLIGHT * serviceCostScale;
   }
   const subtotal = fuelCost + landingFee + catering;

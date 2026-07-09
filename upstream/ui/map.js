@@ -113,15 +113,23 @@ function renderMap() {
     const hasRoute = routedCities.has(c.id);
     const alreadyBase = c.id === G.hq || (G.branches && G.branches.includes(c.id)) || (G.branchesConstructing && G.branchesConstructing.some(b => b.cityId === c.id));
     let r = 2.5, fill, stroke, strokeW = 1.2, labelOff = 12, dashArr = '';
+    const isRecommended = hqSelectMode && typeof HQ_RECOMMENDED !== 'undefined' && HQ_RECOMMENDED.includes(c.id);
     if (_isHQ) { r = 5; fill = '#ef4444'; stroke = '#ffffff'; strokeW = 2.5; labelOff = 14; }
+    else if (isRecommended) { r = 3.5; fill = '#fbbf24'; stroke = '#ffffff'; strokeW = 2; labelOff = 14; }
     else if (_isConstructing) { r = 3.75; fill = '#fbbf2440'; stroke = '#fbbf24'; strokeW = 2; dashArr = ' stroke-dasharray="3 2"'; labelOff = 12; }
     else if (_isBranch || _isBranchSel) { r = 3.75; fill = '#3b82f6'; stroke = '#ffffff'; strokeW = 2; labelOff = 12; }
     else if (isSelected) { fill = '#60a5fa'; stroke = '#ffffff'; }
     else if (hasRoute) { fill = '#f0a0a0'; stroke = '#ffffff'; }
     else if (branchSelectMode && !alreadyBase) { fill = '#ffffff'; stroke = '#a855f7'; strokeW = 1.5; }
     else { fill = '#ffffff'; stroke = '#f0a0a0'; }
+    // HQ选择模式下所有城市可hover查看信息
+    const hqHoverAttr = hqSelectMode ? ` onmouseenter="showHQInfoCard('${c.id}',event)" onmouseleave="hideHQInfoCard()"` : '';
     [-1000, 0, 1000].forEach(offset => {
-      cityHtml += `<circle cx="${_rx(c) * 1000 + offset}" cy="${c.y * 500}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}"${dashArr} class="city-node" onclick="onCityClick('${c.id}')" />`;
+      cityHtml += `<circle cx="${_rx(c) * 1000 + offset}" cy="${c.y * 500}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}"${dashArr} class="city-node" onclick="onCityClick('${c.id}')"${hqHoverAttr} />`;
+      // 推荐城市星标
+      if (hqSelectMode && isRecommended && offset === 0) {
+        cityHtml += `<text x="${_rx(c) * 1000 + offset}" y="${c.y * 500 - r - 4}" fill="#fbbf24" font-size="8" text-anchor="middle" class="hq-recommended-marker" pointer-events="none">★</text>`;
+      }
       // Mega event gold pulse ring
       if (G.activeMegaEvents) {
         const isHost = G.activeMegaEvents.some(e => e.cityId === c.id && e.currentBoost > 0);
@@ -130,6 +138,12 @@ function renderMap() {
           const cy = c.y * 500;
           cityHtml += `<circle cx="${cx}" cy="${cy}" r="8" fill="none" stroke="#d4a017" stroke-width="2" opacity="0.8"><animate attributeName="r" from="6" to="14" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.8" to="0" dur="1.5s" repeatCount="indefinite"/></circle>`;
         }
+      }
+      // Subsidiary indicator — gold dot for cities with player subsidiaries
+      if (G.subsidiaries && G.subsidiaries[c.id] && G.subsidiaries[c.id].length > 0) {
+        const cx = _rx(c) * 1000 + offset;
+        const cy = c.y * 500;
+        cityHtml += `<circle cx="${cx + r + 3}" cy="${cy - r * 0.3}" r="1.8" fill="#DAA520" stroke="none" pointer-events="none"/>`;
       }
       if (_isHQ || _isBranch || _isConstructing || isSelected || _isBranchSel) {
         labelHtml += `<text x="${_rx(c) * 1000 + offset}" y="${c.y * 500 + labelOff}" fill="${_isConstructing ? '#fbbf24' : '#c0d0e0'}" font-size="${labelSize}" text-anchor="middle" font-weight="500" pointer-events="none">${c.name}${_isConstructing ? ' 🏗' : ''}</text>`;
@@ -179,6 +193,8 @@ function onCityClick(cityId) {
     return;
   }
   if (G.gameOver) return;
+  // 点击城市时打开底部抽屉
+  openSubsidiaryDrawer(cityId);
   if (!G.selectedCity) {
     G.selectedCity = cityId;
     renderMap();
@@ -306,4 +322,46 @@ function initMapDrag() {
   mc.addEventListener('mousemove', () => {
     if (!uiState.mapDrag.dragging) mc.style.cursor = 'grab';
   });
+}
+
+// ===== HQ INFO CARD (hover during HQ selection) =====
+function showHQInfoCard(cityId, event) {
+  if (!hqSelectMode) return;
+  const c = getCity(cityId);
+  if (!c) return;
+  // 计算可达城市数
+  const range = 8000; // km, 粗略最大直飞距离
+  let reachableCount = 0;
+  CITIES.forEach(other => {
+    if (other.id === cityId) return;
+    const dist = cityDist(c, other);
+    if (dist <= range) reachableCount++;
+  });
+  const regionNames = {asia:'亚洲',europe:'欧洲',africa:'非洲',namerica:'北美',samerica:'南美',oceania:'大洋洲'};
+  const isRecommended = typeof HQ_RECOMMENDED !== 'undefined' && HQ_RECOMMENDED.includes(c.id);
+  let card = $('hq-info-card');
+  if (!card) {
+    card = document.createElement('div');
+    card.id = 'hq-info-card';
+    card.className = 'hq-info-card';
+    document.body.appendChild(card);
+  }
+  card.innerHTML = `
+    <div class="hq-info-name">${c.name}</div>
+    <div class="hq-info-row"><span>人口</span><span style="font-weight:600">${c.pop}M</span></div>
+    <div class="hq-info-row"><span>区域</span><span style="font-weight:600">${regionNames[c.region]||c.region}</span></div>
+    <div class="hq-info-row"><span>可直飞</span><span style="font-weight:600">${reachableCount}城</span></div>
+    ${isRecommended ? '<div class="hq-info-recommend">★ 推荐起点：可直飞城市多，区域枢纽位置</div>' : ''}
+  `;
+  // 定位在鼠标右下
+  const x = event.clientX + 12;
+  const y = event.clientY + 12;
+  card.style.left = Math.min(x, window.innerWidth - 240) + 'px';
+  card.style.top = Math.min(y, window.innerHeight - 160) + 'px';
+  card.style.display = 'block';
+}
+
+function hideHQInfoCard() {
+  const card = $('hq-info-card');
+  if (card) card.style.display = 'none';
 }

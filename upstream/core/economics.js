@@ -126,7 +126,11 @@ function calcLoadFactor(route,price,brand,competitors){
   const adEffect   = AD_MULTIPLIER[G.adTier] || 1.0;            // 广告档位
   // 事故后效
   const accidentEffect = 1 + (G.accidentPenalty || 0);
-  const effectiveDemand=demand*priceEffect*brandEffect*compEffect*opsEffect*svcEffect*adEffect*accidentEffect;
+  // ── v0.7.5: 子公司联动 — 旅行社客座率加成 ──
+  const subLFBonus = (typeof getSubLFBonus === 'function')
+    ? 1 + getSubLFBonus(route.from) + getSubLFBonus(route.to)
+    : 1;
+  const effectiveDemand=demand*priceEffect*brandEffect*compEffect*opsEffect*svcEffect*adEffect*accidentEffect*subLFBonus;
   const totalSeats=route.assignedPlanes.reduce((s,pid)=>{const plane=G.fleetMap[pid];return s+(plane?plane.seats:0);},0);
   if(totalSeats===0)return 0;
   return clamp(effectiveDemand/totalSeats,0,1);
@@ -184,8 +188,15 @@ function routeCost(route){
     let fuelRate=plane.fuel;
     if(G.playerTrait==='豆')fuelRate*=TRAIT_FUEL_DISCOUNT;
     fuelCost+=fuelRate*(G.oilPrice/80)*(d/5000);
-    // maint和crew移至运营预算系统(v0.6)，不再按航线逐架扣款
-    landingFee+=(LANDING_BASE+(cityA.level+cityB.level)*LANDING_PER_LEVEL*Math.sqrt(d/LANDING_DIST_REF))*freqScale;
+    //maint和crew移至运营预算系统(v0.6)，不再按航线逐架扣款
+    let landingBase=LANDING_BASE+(cityA.level+cityB.level)*LANDING_PER_LEVEL*Math.sqrt(d/LANDING_DIST_REF);
+    // ── v0.7.5: 子公司联动 — 机场着陆费减免 ──
+    if(typeof getSubLandingDiscount==='function'){
+      const discA=getSubLandingDiscount(route.from);
+      const discB=getSubLandingDiscount(route.to);
+      landingBase*=(1-discA)*(1-discB);
+    }
+    landingFee+=landingBase*freqScale;
     catering+=CATERING_PER_FLIGHT*freqScale;
   }
   // 保留旧字段名为0以兼容财报展示

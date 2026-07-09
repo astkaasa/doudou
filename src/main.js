@@ -78,6 +78,11 @@ import {
   showRouteResumeConfirm,
   showRouteSuspendConfirm,
   showStockMarket,
+  executeSubsidiaryOpen,
+  executeSubsidiarySell,
+  showCompanyValueModal,
+  showSubsidiaryConfirm,
+  showSubsidiaryOverview,
   toggleRouteListSort,
   updateAdjustedPriceDisplay,
   showTurnSummary,
@@ -651,6 +656,44 @@ function sellSelectedStock(target) {
   showBanner(`卖出 ${result.stock.code} ${target.dataset.shares}M，到账 ${fmt(result.netRevenue)}`, '#d97706');
 }
 
+function executeSubOpen(target) {
+  const result = executeSubsidiaryOpen(G, target.dataset.subMode, target.dataset.cityId, target.dataset.subType);
+  if (!result.ok) {
+    showBanner(result.message, '#b91c1c');
+    return;
+  }
+  renderGame();
+  const city = getCity(target.dataset.cityId);
+  const action = target.dataset.subMode === 'acquire' ? '收购' : target.dataset.subType === 'airport' ? '投资' : '新设';
+  showBanner(`${action}完成：${city?.name || target.dataset.cityId}，花费 ${fmt(result.totalCost)}`, '#16a34a');
+  checkFirstTimePopups(G);
+  updateMilestones();
+}
+
+function executeSubSell(target) {
+  const result = executeSubsidiarySell(G, target.dataset.cityId, target.dataset.subType);
+  if (!result.ok) {
+    showBanner(result.message, '#b91c1c');
+    return;
+  }
+  renderGame();
+  const city = getCity(target.dataset.cityId);
+  showBanner(`已出售：${city?.name || target.dataset.cityId}，到账 ${fmt(result.sellPrice)}`, '#d97706');
+  updateMilestones();
+}
+
+function showBankruptcyAction(report) {
+  const action = report?.bankruptcyAction;
+  if (!action || action.angelRescue || action.gameOver) return;
+  const messages = {
+    emergencyLoan: `急救贷款已发放：${fmt(action.amount)}`,
+    forceSellStocks: `已强制出售证券资产：${fmt(action.amount)}`,
+    forceSellSubsidiaries: `已强制出售子公司：${fmt(action.amount)}`,
+    forceSellPlanes: `已变卖自有飞机：${fmt(action.amount)}`,
+  };
+  if (messages[action.action]) showBanner(messages[action.action], '#d97706');
+}
+
 function applyAngelRescue(target) {
   if (!G) return;
   const result = applyAngelInvestment(G, Number(target.dataset.amount));
@@ -682,6 +725,7 @@ function advanceTurn() {
     return;
   }
   renderGame();
+  showBankruptcyAction(report);
   resetBranchDismiss();
   if (G.turnsPlayed === 1) {
     completeOnboardingStep(G, 2);
@@ -832,6 +876,28 @@ function handleClick(event) {
         showStockMarket(G);
         checkFirstTimePopups(G);
       }
+      break;
+    case 'open-subsidiary-overview':
+      if (G) {
+        G._subPanelOpened = true;
+        showSubsidiaryOverview(G, target.dataset.cityId);
+        checkFirstTimePopups(G);
+      }
+      break;
+    case 'open-company-value':
+      if (G) showCompanyValueModal(G);
+      break;
+    case 'confirm-sub-open':
+      if (G) showSubsidiaryConfirm(G, target.dataset.subMode, target.dataset.cityId, target.dataset.subType);
+      break;
+    case 'confirm-sub-sell':
+      if (G) showSubsidiaryConfirm(G, 'sell', target.dataset.cityId, target.dataset.subType);
+      break;
+    case 'execute-sub-open':
+      if (G) executeSubOpen(target);
+      break;
+    case 'execute-sub-sell':
+      if (G) executeSubSell(target);
       break;
     case 'open-main-quest':
       if (G) {

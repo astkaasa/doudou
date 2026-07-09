@@ -1,5 +1,6 @@
 import { MAIN_QUEST_STAGES, VICTORY_GRADES } from '../data/mainQuest.js';
 import { getCity } from './helpers.js';
+import { calcCompanyValue } from './subsidiaries.js';
 
 export function createMainQuestState() {
   return {
@@ -40,7 +41,7 @@ export function getCurrentStageTargets(state) {
     subtitle: stageData.subtitle,
     icon: stageData.icon,
     dimensions: {
-      cash: { current: Math.max(0, Number(state.cash) || 0), target: stageData.targets.cash[eraKey] || stageData.targets.cash.era2 },
+      cash: { current: Math.max(0, calcCompanyValue(state).totalNetWorth), target: stageData.targets.cash[eraKey] || stageData.targets.cash.era2 },
       routes: { current: Array.isArray(state.routes) ? state.routes.length : 0, target: stageData.targets.routes[eraKey] || stageData.targets.routes.era2 },
       branch: { current: branchType === 'subRegion' ? countBaseSubRegions(state) : countBaseRegions(state), target: stageData.targets.branch.min, type: branchType },
       profit: { current: Math.max(0, Number(state.consecutiveProfit) || 0), target: stageData.targets.profit.consecutive },

@@ -29,6 +29,21 @@ describe('main quest progression', () => {
     expect(progress.dimensions.branch).toMatchObject({ current: 2, target: 2, type: 'region', met: true });
   });
 
+  it('uses company value instead of cash for the wealth dimension', () => {
+    const state = initState('beijing', 'era2');
+    state.cash = 100;
+    state.portfolio = {};
+    state.fleet = [{ uid: 1, buyPrice: 300, age: 0, isLease: false, delivering: false }];
+    state.subsidiaries = {
+      beijing: [{ type: 'shuttle', openCost: 60, currentValue: 120, source: 'open', quarterAcquired: 0, cityLevelAtAcquire: 3, isNew: false }],
+    };
+
+    const progress = checkMainQuestProgress(state);
+
+    expect(progress.dimensions.cash.current).toBeCloseTo(520);
+    expect(progress.dimensions.cash.met).toBe(true);
+  });
+
   it('advances to the next stage once all dimensions are met', () => {
     const state = initState('beijing', 'era2');
     addRoutePlaceholders(state, 10);

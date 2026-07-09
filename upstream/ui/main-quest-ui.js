@@ -60,6 +60,8 @@
 // ===== 主线进度 Modal =====
 function openMainQuestPanel() {
   if (!G || !G.mainQuest) return;
+  G._mainQuestOnboardShown = true;
+  completeOnboardStep(4); // Step 5: 苍穹之路 完成
   const stats = getMainQuestStats();
   if (!stats) return;
   const progress = stats.progress;

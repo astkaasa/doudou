@@ -27,7 +27,7 @@ describe('economy model', () => {
     const route = {
       from: 'beijing',
       to: 'shanghai',
-      price: suggestedPrice('beijing', 'shanghai'),
+      price: suggestedPrice('beijing', 'shanghai') * 5,
       suggestedPrice: suggestedPrice('beijing', 'shanghai'),
       serviceMultiplier: 1,
       assignedPlanes: [1],
@@ -179,5 +179,38 @@ describe('economy model', () => {
     expect(baseCost.maint).toBe(0);
     expect(maintCost.maint).toBe(0);
     expect(calcOpsBudgetCost(maintState).maintCost).toBeCloseTo(calcOpsBudgetCost(baseState).maintCost * 0.9);
+  });
+
+  it('applies subsidiary load-factor and airport landing-fee bonuses', () => {
+    const baseState = initState('beijing', 'era3');
+    const subState = initState('beijing', 'era3');
+    const plane = { ...PLANES[0], seats: 10000, uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 };
+    [baseState, subState].forEach((state) => {
+      state.fleet.push({ ...plane });
+    });
+    subState.subsidiaries = {
+      beijing: [
+        { type: 'travel', openCost: 210, currentValue: 210, source: 'open', quarterAcquired: 0, cityLevelAtAcquire: 3, isNew: false },
+        { type: 'airport', openCost: 2250, currentValue: 2250, source: 'invest', quarterAcquired: 0, cityLevelAtAcquire: 3, isNew: false },
+      ],
+    };
+    const route = {
+      from: 'beijing',
+      to: 'shanghai',
+      price: suggestedPrice('beijing', 'shanghai'),
+      suggestedPrice: suggestedPrice('beijing', 'shanghai'),
+      serviceMultiplier: 1,
+      assignedPlanes: [1],
+      loadFactor: 0,
+    };
+
+    const baseLf = calcLoadFactor(baseState, route, route.price, baseState.brand, 0);
+    const subLf = calcLoadFactor(subState, route, route.price, subState.brand, 0);
+    const baseCost = routeCost(baseState, route);
+    const subCost = routeCost(subState, route);
+
+    expect(subLf).toBeGreaterThan(baseLf);
+    expect(subCost.landing).toBeCloseTo(baseCost.landing * 0.85);
+    expect(subCost.total).toBeLessThan(baseCost.total);
   });
 });

@@ -18,5 +18,7 @@ function aiTurn(ai){
   let aiRev=0,aiCost=0;
   ai.routes.forEach(r=>{const cityA=getCity(r.from),cityB=getCity(r.to);const d=cityDist(cityA,cityB);const demand=baseDemand(cityA,cityB)*seasonModifier(G.quarter);const plane=ai.fleet.find(p=>p.uid===r.assignedPlane);if(!plane)return;const freq=routeFreqFactor(d);const lf=clamp(demand/(plane.seats)*Math.pow(r.price/r.suggestedPrice,-0.8),0,1);r.loadFactor=lf;aiRev+=plane.seats*lf*r.price*freq/ROUTE_REVENUE_DIVISOR;aiCost+=plane.fuel*(G.oilPrice/80)*(d/5000);aiCost+=plane.maint*(1+0.05*plane.age);});
   ai.cash+=aiRev-aiCost;
+  // v0.7.5: AI子公司决策
+  aiSubDecide(ai);
 }
 function countCompetitorsAI(from,to,self){const key=routeKey(from,to);let c=0;if(G.routes.find(r=>routeKey(r.from,r.to)===key))c++;G.ai.forEach(ai=>{if(ai!==self&&ai.routes.find(r=>routeKey(r.from,r.to)===key))c++;});return c}

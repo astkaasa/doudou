@@ -106,6 +106,7 @@ function initState(hq, era) {
     gameOver:false, selectedCity:null, planeIdCounter:1, history:[], mapZoom:1, mapPanX:0, mapPanY:0,
     onboardStep:0, deliveredThisTurn:[], leaseExpiredThisTurn:[], redPacketClaimed:false,
     playerTrait:null, traitChosen:false, milestones:{},
+    ftpShown:{},
     activeMegaEvents:[], bankruptRescued:false,
     mainQuest:{ currentStage:1, stageCompleted:[], victoryGrade:null, victoryTurn:null },
     // ── Operations Management (v0.6) ──
@@ -114,7 +115,15 @@ function initState(hq, era) {
     opsEfficiency:0, // 开局为0，首回合后才计算，HUD显示"--"
     accidentPenalty:0, accidentPenaltyTurns:0,
     _retiredThisTurn:0, _recruitCostThisTurn:0, _bonusCostThisTurn:0,
-    _opsCostThisTurn:0, _faultLossThisTurn:0, _faultsThisTurn:[]
+    _opsCostThisTurn:0, _faultLossThisTurn:0, _faultsThisTurn:[],
+    _pendingRecruit:false, _pendingBonus:false,
+    _onboardReportShown:false, // v0.7.1: 看懂财报引导步骤标记
+    // ── Subsidiary System (v0.7.5) ──
+    subsidiaries:{},
+    _subReturnThisTurn:0,
+    _subMaintThisTurn:0,
+    _subValueChangeThisTurn:0,
+    _acquirePriceSeed:0
   };
   // 计算运营需求（开局仅总部基础员工）
   state.staffNeeded = calcStaffNeeded(state);
@@ -155,9 +164,27 @@ function migrateGameState() {
   if (G._opsCostThisTurn === undefined) G._opsCostThisTurn = 0;
   if (G._faultLossThisTurn === undefined) G._faultLossThisTurn = 0;
   if (!G._faultsThisTurn) G._faultsThisTurn = [];
+  if (!G.ftpShown) G.ftpShown = {};
   if (G._pendingOpsModal !== undefined) { G._pendingRecruit = G._pendingOpsModal === 'recruit'; G._pendingBonus = G._pendingOpsModal === 'bonus'; delete G._pendingOpsModal; }
   if (G._pendingRecruit === undefined) G._pendingRecruit = false;
   if (G._pendingBonus === undefined) G._pendingBonus = false;
+  if (G._onboardReportShown === undefined) G._onboardReportShown = G.turnsPlayed > 0; // 旧存档已看过财报
+  // ── Subsidiary System migration (v0.7.5) ──
+  if (!G.subsidiaries) G.subsidiaries = {};
+  if (G._subReturnThisTurn === undefined) G._subReturnThisTurn = 0;
+  if (G._subMaintThisTurn === undefined) G._subMaintThisTurn = 0;
+  if (G._subValueChangeThisTurn === undefined) G._subValueChangeThisTurn = 0;
+  if (G._acquirePriceSeed === undefined) G._acquirePriceSeed = 0;
+  // AI subsidiaries migration
+  if (G.ai) G.ai.forEach(ai => { if (!ai.subsidiaries) ai.subsidiaries = {}; });
+  // isNew migration: existing subs default to false
+  if (G.subsidiaries) {
+    for (const cityId of Object.keys(G.subsidiaries)) {
+      for (const sub of G.subsidiaries[cityId]) {
+        if (sub.isNew === undefined) sub.isNew = false;
+      }
+    }
+  }
   // Rebuild activeMegaEvents from current game date (handles mid-cycle loads)
   if (G.year && G.quarter && typeof MEGA_EVENTS !== 'undefined') {
     MEGA_EVENTS.forEach(evt => {
