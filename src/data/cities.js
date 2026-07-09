@@ -1200,6 +1200,17 @@ export const CITIES = [
   }
 ];
 
+export const HQ_RECOMMENDED_CITY_IDS = [
+  'beijing',
+  'tokyo',
+  'london',
+  'newyork',
+  'dubai',
+  'shanghai',
+  'losangeles',
+  'paris',
+];
+
 export function projectLonLat(lat, lon) {
   return {
     x: (lon + 180) / 360,

@@ -203,7 +203,7 @@ export function showTurnSummary(state, report) {
   state.lastReportData = { ...report, newsPeriod, snapshot };
   const newsHtml = buildNewspaperHtml(state, false, newsPeriod);
   const reportHtml = buildFinancialReportHtml(state, report.rev, report.cost, report.profit, report.period, report.interest, snapshot);
-  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" data-action="close-modal" style="padding:10px 40px;border-radius:8px">知道了，继续经营</button></div></div></div></div>`;
+  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop" data-turn-summary="true"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" data-action="close-modal" style="padding:10px 40px;border-radius:8px">知道了，继续经营</button></div></div></div></div>`;
   const newsBtn = byId('reread-news-btn');
   const reportBtn = byId('reread-report-btn');
   if (newsBtn) newsBtn.style.display = '';

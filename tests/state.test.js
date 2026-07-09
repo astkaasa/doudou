@@ -42,4 +42,13 @@ describe('state initialization', () => {
     expect(game.stockEvents).toEqual([]);
     expect(game._lastStockDividend).toBe(0);
   });
+
+  it('initializes onboarding discovery state for new games', () => {
+    const game = initState('beijing', 'era3');
+
+    expect(game.ftpShown).toEqual({});
+    expect(game.onboardStep).toBe(0);
+    expect(game._onboardReportShown).toBe(false);
+    expect(game._mainQuestOnboardShown).toBe(false);
+  });
 });

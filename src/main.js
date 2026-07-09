@@ -45,7 +45,17 @@ import { describeRouteSelection, initMapDrag, renderMap, setMapZoom } from './ui
 import { showRouteCreateInfo as renderRouteCreateInfo, hideRouteCreateInfo, renderPanel, renderRouteCityPicker } from './ui/panel.js';
 import { applySeasonTheme } from './ui/season.js';
 import { removeBranchBanner, showBranchBanner, showSelectedBranch } from './ui/branches.js';
-import { acknowledgeOnboarding, dismissOnboarding, resetOnboarding, updateOnboarding } from './ui/onboarding.js';
+import {
+  acknowledgeOnboarding,
+  checkFirstTimePopups,
+  closeFirstTimePopup,
+  completeOnboardingStep,
+  dismissOnboarding,
+  resetBranchDismiss,
+  resetOnboarding,
+  showHelpPanel,
+  updateOnboarding,
+} from './ui/onboarding.js';
 import {
   closeDeliveryPopup,
   showBuyPlaneModal,
@@ -103,6 +113,7 @@ const uiState = {
   selectedHQ: null,
   branchSelectMode: false,
   selectedBranch: null,
+  skipOnboarding: false,
   showBoundaries: appSettings.showBoundaries,
   mapStyle: appSettings.mapStyle,
 };
@@ -203,8 +214,13 @@ function setMapStyle(style) {
 }
 
 function closeModal() {
+  const wasTurnSummary = Boolean(document.querySelector('[data-turn-summary="true"]'));
   closeModalRoot();
   closeDeliveryPopup();
+  if (wasTurnSummary && G && !G._onboardReportShown) {
+    G._onboardReportShown = true;
+    completeOnboardingStep(G, 3);
+  }
   if (uiState.branchSelectMode) cancelBranchSelect();
   if (G && !G.gameOver) {
     if (G.selectedCity) {
@@ -213,23 +229,9 @@ function closeModal() {
     }
     hideRouteCreateInfo();
     setBottomHint();
+    if (wasTurnSummary) spawnPendingContracts(G);
+    updateOnboarding(G, uiState);
   }
-}
-
-function showOnboardingHelp() {
-  showModal(`<h2>新手帮助</h2>
-    <div class="loan-info">
-      <div class="loan-row"><span>1. 选择总部</span><span>总部/分部决定起飞城市</span></div>
-      <div class="loan-row"><span>2. 购买飞机</span><span>看航程、座位和交付时间</span></div>
-      <div class="loan-row"><span>3. 开通航线</span><span>从基地出发，预留开航费用并设置票价</span></div>
-      <div class="loan-row"><span>4. 推进季度</span><span>看报纸、财报和市场变化</span></div>
-      <div class="loan-row"><span>5. 扩张网络</span><span>用分部、租赁和贷款加速成长</span></div>
-    </div>
-    <p style="color:#7ba3cc;font-size:13px;line-height:1.5;margin-top:10px">移动端可以拖动地图，双指捏合缩放。点击城市可选择总部、分部或航线目的地。</p>
-    <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
-      <button class="btn" style="background:#334155;color:#e0e8f0" data-action="reset-onboarding">重新开启新手提示</button>
-      <button class="btn btn-primary" data-action="close-modal">知道了</button>
-    </div>`);
 }
 
 function saveGame() {
@@ -278,6 +280,8 @@ function tutorialNextStep() {
     return;
   }
   const name = getTutorialCompanyName();
+  const offRadio = document.querySelector('input[name="onboard-mode"][value="off"]');
+  uiState.skipOnboarding = Boolean(offRadio?.checked);
   G = createSetupState(name, uiState.selectedEra);
   uiState.hqSelectMode = true;
   uiState.selectedHQ = null;
@@ -312,6 +316,7 @@ function startGame() {
   const era = uiState.selectedEra || 'era1';
   G = initState(hq, era);
   G.companyName = name;
+  if (uiState.skipOnboarding) G.onboardStep = 99;
   seedInitialFleet(G);
   uiState.hqSelectMode = false;
   uiState.selectedHQ = null;
@@ -322,6 +327,10 @@ function startGame() {
   renderGame();
   restoreContractState(G);
   showTraitEnvelope(G);
+  if (byId('trait-overlay')) {
+    const hint = byId('onboard-hint');
+    if (hint) hint.style.display = 'none';
+  }
   setBottomHint();
 }
 
@@ -363,6 +372,7 @@ function confirmOpenRoute(from, to) {
   closeModal();
   hideRouteCreateInfo();
   showBanner(`航线开通：${getCity(from).name} → ${getCity(to).name}  开通费用 ${fmt(result.cost)}`, '#16a34a');
+  completeOnboardingStep(G, 1);
   updateOnboarding(G, uiState);
   updateMilestones();
 }
@@ -496,6 +506,7 @@ function buySelectedPlane(target) {
   updateHUD(G);
   renderPanel(G, uiState);
   showBanner(`${target.dataset.lease === 'true' ? '租赁' : '购买'} ${result.planes.length}架 ${result.plane.name}`, target.dataset.lease === 'true' ? '#d97706' : '#2563eb');
+  completeOnboardingStep(G, 0);
   updateOnboarding(G);
   updateMilestones();
 }
@@ -671,10 +682,21 @@ function advanceTurn() {
     return;
   }
   renderGame();
+  resetBranchDismiss();
+  if (G.turnsPlayed === 1) {
+    completeOnboardingStep(G, 2);
+    updateOnboarding(G, uiState);
+  }
   if (report.branchCompleted.length > 0) {
     showBanner(`分部完工：${report.branchCompleted.map((cityId) => getCity(cityId)?.name || cityId).join('、')}`, '#7c3aed');
   }
-  showTurnSummary(G, report);
+  const showQuarterSummary = () => {
+    showTurnSummary(G, report);
+    checkFirstTimePopups(G);
+  };
+  const isReportOnboarding = G.turnsPlayed === 1 && !G._onboardReportShown && G.onboardStep <= 3 && G.onboardStep < 99;
+  if (isReportOnboarding) window.setTimeout(showQuarterSummary, 400);
+  else showQuarterSummary();
   updateMilestones();
   if (report.mainQuestUpdate?.type === 'stage_complete') {
     showMainQuestStageNotification(report.mainQuestUpdate);
@@ -779,7 +801,11 @@ function handleClick(event) {
       if (G) showLoanModal(G);
       break;
     case 'open-operations-panel':
-      if (G) showOperationsPanel(G);
+      if (G) {
+        showOperationsPanel(G);
+        G._opsPanelOpened = true;
+        checkFirstTimePopups(G);
+      }
       break;
     case 'set-ops-tier':
       updateOpsTier(target);
@@ -801,10 +827,19 @@ function handleClick(event) {
       focusNextPendingContract();
       break;
     case 'open-stock-market':
-      if (G) showStockMarket(G);
+      if (G) {
+        G._stockPanelOpened = true;
+        showStockMarket(G);
+        checkFirstTimePopups(G);
+      }
       break;
     case 'open-main-quest':
-      if (G) showMainQuestPanel(G);
+      if (G) {
+        G._mainQuestOnboardShown = true;
+        completeOnboardingStep(G, 4);
+        showMainQuestPanel(G);
+        updateOnboarding(G, uiState);
+      }
       break;
     case 'select-stock':
       if (G) showStockMarket(G, target.dataset.stockId);
@@ -859,13 +894,20 @@ function handleClick(event) {
       if (G) showRouteList(G, { pageSize: target.dataset.pageSize });
       break;
     case 'dismiss-onboarding':
-      dismissOnboarding();
+      dismissOnboarding(G);
+      updateOnboarding(G, uiState);
       break;
     case 'acknowledge-onboarding':
       acknowledgeOnboarding();
       break;
     case 'show-onboarding-help':
-      showOnboardingHelp();
+      showHelpPanel(G);
+      break;
+    case 'switch-help-tab':
+      showHelpPanel(G, target.dataset.helpTab);
+      break;
+    case 'close-ftp-card':
+      closeFirstTimePopup();
       break;
     case 'show-settings':
       showSettings();
@@ -877,7 +919,7 @@ function handleClick(event) {
       toggleMapBoundaries(target.checked);
       break;
     case 'reset-onboarding':
-      resetOnboarding();
+      resetOnboarding(G);
       closeModalRoot();
       if (G) renderGame();
       showBanner('新手提示已重新开启', '#16a34a');

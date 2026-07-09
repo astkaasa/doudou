@@ -1,4 +1,4 @@
-import { CITIES } from '../data/cities.js';
+import { CITIES, HQ_RECOMMENDED_CITY_IDS } from '../data/cities.js';
 import { isBase } from '../domain/bases.js';
 import { availablePlanes } from '../domain/routes.js';
 import { byId, cityDist, fmt, fmtPct, getCity, routeKey } from '../domain/helpers.js';
@@ -41,6 +41,7 @@ const REGION_ORDER = [
   'samerica',
   'oceania',
 ];
+const HQ_RECOMMENDED = new Set(HQ_RECOMMENDED_CITY_IDS);
 
 export function renderPanel(state, uiState) {
   const rs = byId('route-summary');
@@ -142,7 +143,7 @@ function formatModifierEffect(modifier) {
 }
 
 function renderHQCityPicker(state, selectedCityId) {
-  const recommended = CITIES.filter((city) => city.level >= 3 || ['dubai', 'singapore', 'sydney'].includes(city.id));
+  const recommended = CITIES.filter((city) => HQ_RECOMMENDED.has(city.id));
   return `<div class="city-picker">
     <div class="city-picker-hint">在地图上点击城市，或从列表选择总部</div>
     ${renderCollapsibleCityGroup(
@@ -249,8 +250,9 @@ function renderRouteCityButton(state, city, selectedCity, maxRange, existingRout
 
 function renderCityButton(state, city, selectedCityId) {
   const selectedClass = city.id === selectedCityId ? ' selected' : '';
+  const recommended = HQ_RECOMMENDED.has(city.id) ? ' ★' : '';
   return `<button class="city-picker-btn${selectedClass}" type="button" data-action="city-click" data-city-id="${city.id}">
-    <span>${city.name}</span>
+    <span>${city.name}${recommended}</span>
     <small>${REGION_NAMES[city.subRegion] || REGION_NAMES[city.region] || city.region} · ${formatMarketLine(state, city.id)}</small>
   </button>`;
 }

@@ -231,6 +231,29 @@ describe('save migration', () => {
     expect(result.state.adTier).toBe('mid');
     expect(result.state._pendingRecruit).toBe(false);
     expect(result.state._pendingBonus).toBe(false);
+    expect(result.state.ftpShown).toEqual({});
+    expect(result.state._onboardReportShown).toBe(false);
+    expect(result.state._mainQuestOnboardShown).toBe(false);
+  });
+
+  it('normalizes onboarding discovery fields from old saves', () => {
+    const raw = JSON.stringify({
+      v: 10,
+      g: {
+        routes: [],
+        fleet: [],
+        turnsPlayed: 2,
+        ftpShown: null,
+      },
+    });
+
+    const result = loadGameState(memoryStorage(raw));
+
+    expect(result.ok).toBe(true);
+    expect(result.state.ftpShown).toEqual({});
+    expect(result.state.onboardStep).toBe(0);
+    expect(result.state._onboardReportShown).toBe(true);
+    expect(result.state._mainQuestOnboardShown).toBe(false);
   });
 
   it('migrates legacy pending operations modal into contract flags', () => {

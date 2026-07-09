@@ -6,6 +6,7 @@ import { GAME_VERSION, VERSION_LOG } from '../data/version.js';
 import { DEFAULT_COMPANY_NAME } from '../domain/constants.js';
 import { byId, fmt, STORAGE_KEYS } from '../domain/helpers.js';
 import { escapeAttr, escapeHtml } from './html.js';
+import { hasCompletedOnboarding } from './onboarding.js';
 
 let companyNameDraft = DEFAULT_COMPANY_NAME;
 let creditsScrollTimer = null;
@@ -47,6 +48,7 @@ export function showEraMenu(selectedEra) {
   stopCreditsScroll();
   const box = byId('menu-box');
   if (!box) return;
+  const onboardDone = hasCompletedOnboarding();
   box.innerHTML = `
     <button class="menu-back-btn" type="button" data-action="show-main-menu">← 主菜单</button>
     <div class="menu-section-title">选择时代</div>
@@ -57,6 +59,10 @@ export function showEraMenu(selectedEra) {
       <span>航空公司名称</span>
       <input type="text" id="company-name" value="${escapeAttr(companyNameDraft)}" placeholder="输入公司名称" maxlength="20" data-action="company-name-input">
     </label>
+    <div class="onboard-mode-row" role="radiogroup" aria-label="新手引导设置">
+      <label><input type="radio" name="onboard-mode" value="on" ${onboardDone ? '' : 'checked'}> 新手引导</label>
+      <label><input type="radio" name="onboard-mode" value="off" ${onboardDone ? 'checked' : ''}> 关闭引导</label>
+    </div>
     <button class="btn btn-success menu-confirm-btn" type="button" data-action="tutorial-next-step" id="era-next-btn">选择总部</button>
     ${renderVersionBadge()}
   `;
@@ -183,6 +189,7 @@ function renderEraCard(era, selected) {
     <span class="era-name">${escapeHtml(era.name)}</span>
     <span class="era-desc">${escapeHtml(era.desc)}</span>
     <span class="era-detail">${escapeHtml(era.detail)}</span>
+    ${era.difficulty ? `<span class="era-difficulty" style="--era-difficulty-color:${escapeAttr(era.diffColor || '#7ba3cc')}">${escapeHtml(era.difficulty)}</span>` : ''}
   </button>`;
 }
 

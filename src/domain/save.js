@@ -60,6 +60,10 @@ function normalizeUpstreamStateFields(state) {
   normalizeMainQuestState(state);
   normalizeStockState(state);
   normalizeOperationsState(state);
+  if (!state.ftpShown || typeof state.ftpShown !== 'object' || Array.isArray(state.ftpShown)) state.ftpShown = {};
+  if (state.onboardStep === undefined) state.onboardStep = 0;
+  if (state._onboardReportShown === undefined) state._onboardReportShown = (state.turnsPlayed || 0) > 0;
+  if (state._mainQuestOnboardShown === undefined) state._mainQuestOnboardShown = false;
   if (!Array.isArray(state.activeMegaEvents)) state.activeMegaEvents = [];
   if (!Array.isArray(state.deliveredThisTurn)) state.deliveredThisTurn = [];
   if (state.redPacketClaimed === undefined) state.redPacketClaimed = false;

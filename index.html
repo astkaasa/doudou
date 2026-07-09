@@ -38,13 +38,13 @@
       <div class="panel-section">
         <div class="panel-title">快捷操作</div>
         <div class="quick-action-grid">
-          <button class="btn btn-primary btn-sm" data-action="open-route-modal">开通航线</button>
-          <button class="btn btn-primary btn-sm" data-action="open-buy-plane-modal">购买飞机</button>
-          <button class="btn btn-warning btn-sm" data-action="open-fleet-panel">机队管理</button>
-          <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="open-route-list">航线管理</button>
-          <button class="btn btn-sm" style="background:#0891b2;color:#fff" data-action="open-operations-panel">运营管理</button>
-          <button class="btn btn-sm" style="background:#b45309;color:#fff" data-action="open-loan-modal">银行贷款</button>
-          <button class="btn btn-sm" style="background:#7c3aed;color:#fff" data-action="open-branch-modal">分部管理</button>
+          <button class="btn btn-primary btn-sm" id="btn-open-route" data-action="open-route-modal">开通航线</button>
+          <button class="btn btn-primary btn-sm" id="btn-buy-plane" data-action="open-buy-plane-modal">购买飞机</button>
+          <button class="btn btn-warning btn-sm" id="btn-fleet" data-action="open-fleet-panel">机队管理</button>
+          <button class="btn btn-sm" id="btn-routes" style="background:#334155;color:#e0e8f0" data-action="open-route-list">航线管理</button>
+          <button class="btn btn-sm" id="btn-ops" style="background:#0891b2;color:#fff" data-action="open-operations-panel">运营管理</button>
+          <button class="btn btn-sm" id="btn-loan" style="background:#b45309;color:#fff" data-action="open-loan-modal">银行贷款</button>
+          <button class="btn btn-sm" id="btn-branch" style="background:#7c3aed;color:#fff" data-action="open-branch-modal">分部管理</button>
         </div>
       </div>
       <div class="panel-section" id="panel-info">
@@ -77,7 +77,7 @@
     <button id="advance-btn" data-action="advance-turn" style="margin-left:10px">推进回合 ▶</button>
     <div id="bottom-tools">
       <button id="settings-btn" type="button" data-action="show-settings" title="设置">⚙</button>
-      <button id="help-btn" type="button" data-action="show-onboarding-help" title="新手帮助">?</button>
+      <button id="help-btn" type="button" data-action="show-onboarding-help" title="帮助与机制速查">?</button>
     </div>
   </div>
 </div>
@@ -86,10 +86,12 @@
 <div id="contract-zone"></div>
 <div id="delivery-root"></div>
 <div id="onboard-hint">
-  <div class="hint-title"></div><div class="hint-body"></div><div class="hint-step"></div>
-  <div class="hint-actions">
-    <button type="button" data-action="acknowledge-onboarding">知道了</button>
-    <button type="button" data-action="dismiss-onboarding">不再提示</button>
+  <button class="hint-close" type="button" data-action="acknowledge-onboarding" title="暂时关闭">×</button>
+  <div class="hint-title"></div>
+  <div class="hint-body"></div>
+  <div class="hint-footer">
+    <div class="hint-step"></div>
+    <button class="hint-skip" type="button" data-action="dismiss-onboarding">跳过引导</button>
   </div>
 </div>
 <div id="tutorial">

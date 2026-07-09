@@ -1,4 +1,4 @@
-import { CITIES, projectCity, projectLonLat } from '../data/cities.js';
+import { CITIES, HQ_RECOMMENDED_CITY_IDS, projectCity, projectLonLat } from '../data/cities.js';
 import { WORLD_BOUNDARY_PATH, WORLD_LAND_PATH } from '../data/worldMapPaths.js';
 import { byId, cityDist, clamp, fmt, getCity } from '../domain/helpers.js';
 import terrainMapUrl from '../assets/natural-earth-2-50m.jpg';
@@ -20,6 +20,15 @@ const DEG_TO_RAD = Math.PI / 180;
 const RAD_TO_DEG = 180 / Math.PI;
 const GRID_LONGITUDES = [-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150];
 const GRID_LATITUDES = [-60, -30, 0, 30, 60];
+const REGION_NAMES = {
+  asia: '亚洲',
+  europe: '欧洲',
+  africa: '非洲',
+  namerica: '北美',
+  samerica: '南美',
+  oceania: '大洋洲',
+};
+const HQ_RECOMMENDED = new Set(HQ_RECOMMENDED_CITY_IDS);
 
 const ZOOM_BUTTONS = {
   1: 'zoom1',
@@ -92,10 +101,11 @@ export function renderMap(state, uiState) {
     const isBranchSelected = uiState.branchSelectMode && uiState.selectedBranch === c.id;
     const isSelected = !uiState.hqSelectMode && !uiState.branchSelectMode && state.selectedCity === c.id;
     const hasRoute = routedCities.has(c.id);
+    const isRecommendedHQ = uiState.hqSelectMode && HQ_RECOMMENDED.has(c.id);
     const isMegaEventHost = (state.activeMegaEvents || []).some((event) => event.cityId === c.id && event.currentBoost > 0);
-    const r = cityRadius(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom });
+    const r = cityRadius(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, isRecommendedHQ, zoom });
     const cy = cityY(c);
-    const classes = cityClasses(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute });
+      const classes = cityClasses(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, isRecommendedHQ });
     worldOffsets.forEach((offset) => {
       const cx = cityX(c) + offset;
       if (!isPointNearViewport(cx, cy, ox, oy, vw, vh)) return;
@@ -106,7 +116,10 @@ export function renderMap(state, uiState) {
       }
       if (isMegaEventHost) svg += renderMegaEventRing(cx, cy, r, zoom);
       svg += `<circle cx="${cx}" cy="${cy}" r="${r}" class="${classes}" data-action="city-click" data-city-id="${c.id}" />`;
-      cityTouchTargets += `<button class="city-touch-target" type="button" style="left:${xPct}%;top:${yPct}%" data-action="city-click" data-city-id="${c.id}" data-city-touch-target="true" aria-label="选择${c.name}" title="${c.name}"></button>`;
+      if (isRecommendedHQ) {
+        svg += `<text x="${cx}" y="${cy - radiusAwareOffset(10, zoom)}" font-size="${labelSizeForZoom(9, zoom)}" text-anchor="middle" class="hq-recommended-marker">★</text>`;
+      }
+      cityTouchTargets += `<button class="city-touch-target" type="button" style="left:${xPct}%;top:${yPct}%" data-action="city-click" data-city-id="${c.id}" data-city-touch-target="true" aria-label="选择${c.name}" title="${c.name}" data-hq-recommended="${isRecommendedHQ ? 'true' : 'false'}"></button>`;
       if (shouldShowCityLabel(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom })) {
         cityLabels += renderCityLabel(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, labelSize, offset, zoom });
       }
@@ -186,9 +199,10 @@ function cityY(city) {
   return projectCity(city).y * MAP_HEIGHT;
 }
 
-function cityRadius(city, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom }) {
+function cityRadius(city, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, isRecommendedHQ, zoom }) {
   let baseRadius = 2.3;
   if (isHQ) baseRadius = 6;
+  else if (isRecommendedHQ) baseRadius = 4.2;
   else if (isBranch || isBranchBuilding || isBranchSelected) baseRadius = 4.8;
   else if (isSelected) baseRadius = 4.6;
   else if (hasRoute) baseRadius = 4;
@@ -214,11 +228,12 @@ function radiusAwareOffset(offset, zoom) {
   return Number((offset / Math.pow(Math.max(MIN_ZOOM, zoom || MIN_ZOOM), 0.55)).toFixed(2));
 }
 
-function cityClasses(city, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute }) {
+function cityClasses(city, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, isRecommendedHQ }) {
   return [
     'city-node',
     city.level >= 3 ? 'city-node-major' : '',
     isHQ ? 'city-node-hq' : '',
+    isRecommendedHQ ? 'city-node-hq-recommended' : '',
     isBranch ? 'city-node-branch' : '',
     isBranchBuilding ? 'city-node-branch-building' : '',
     isBranchSelected ? 'city-node-branch-selected' : '',
@@ -653,7 +668,15 @@ function updateCityTooltip(event) {
   const tooltip = target.closest('.map-stage')?.querySelector('.map-tooltip');
   if (!city || !tooltip) return;
   const stageRect = target.closest('.map-stage').getBoundingClientRect();
-  tooltip.textContent = city.name;
+  if (byId('app')?.classList.contains('hq-selecting')) {
+    const reachable = reachableCityCount(city);
+    const recommended = target.dataset.hqRecommended === 'true';
+    tooltip.classList.add('map-tooltip-hq');
+    tooltip.innerHTML = `<strong>${city.name}</strong><span>人口 ${(Number(city.pop) / 1000).toFixed(1)}M · ${REGION_NAMES[city.region] || city.region}</span><span>约可直飞 ${reachable} 城</span>${recommended ? '<em>★ 推荐起点</em>' : ''}`;
+  } else {
+    tooltip.classList.remove('map-tooltip-hq');
+    tooltip.textContent = city.name;
+  }
   tooltip.hidden = false;
   const left = clamp(event.clientX - stageRect.left + 12, 8, stageRect.width - 96);
   const top = clamp(event.clientY - stageRect.top - 34, 8, stageRect.height - 32);
@@ -663,7 +686,14 @@ function updateCityTooltip(event) {
 
 function hideCityTooltip() {
   const tooltip = byId('map-container')?.querySelector('.map-tooltip');
-  if (tooltip) tooltip.hidden = true;
+  if (tooltip) {
+    tooltip.hidden = true;
+    tooltip.classList.remove('map-tooltip-hq');
+  }
+}
+
+function reachableCityCount(city) {
+  return CITIES.filter((other) => other.id !== city.id && cityDist(city, other) <= 8000).length;
 }
 
 function updateEdgeScroll(event, state, getState, render) {

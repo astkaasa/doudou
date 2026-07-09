@@ -36,4 +36,21 @@ describe('map rendering', () => {
     expect(container.innerHTML).toContain('route-line-player');
     expect(container.innerHTML).toContain('<path');
   });
+
+  it('marks recommended headquarters during HQ selection', () => {
+    const container = {
+      innerHTML: '',
+      getBoundingClientRect: () => ({ width: 1000, height: 500 }),
+    };
+    globalThis.document = {
+      getElementById: (id) => (id === 'map-container' ? container : null),
+    };
+    const state = initState('beijing', 'era1');
+    state.hq = null;
+
+    renderMap(state, { hqSelectMode: true, selectedHQ: null, showBoundaries: true, mapStyle: 'classic' });
+
+    expect(container.innerHTML).toContain('city-node-hq-recommended');
+    expect(container.innerHTML).toContain('hq-recommended-marker');
+  });
 });
