@@ -70,6 +70,7 @@
     <span id="reread-news-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#1e3a5f80;color:#93c5fd;cursor:pointer" data-action="show-newspaper">📰 上季报纸</span>
     <span id="reread-report-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#16a34a20;color:#4ade80;cursor:pointer" data-action="show-report">📊 上季财报</span>
     <span style="font-size:13px;color:#7ba3cc" id="bottom-hint" hidden></span>
+    <span id="turn-forecast" hidden></span>
     <div id="zoom-controls" style="display:flex;gap:2px;margin-left:auto;align-items:center">
       <span style="font-size:12px;color:#556;margin-right:4px">缩放</span>
       <button class="btn btn-sm" style="background:#2563eb;color:#fff;padding:2px 8px" data-action="set-map-zoom" data-zoom="1" id="zoom1">1x</button>
@@ -78,6 +79,7 @@
     </div>
     <button id="advance-btn" data-action="advance-turn" style="margin-left:10px">推进回合 ▶</button>
     <div id="bottom-tools">
+      <button id="focus-hq-btn" type="button" data-action="focus-hq" title="定位总部" aria-label="定位总部">⌖</button>
       <button id="settings-btn" type="button" data-action="show-settings" title="设置">⚙</button>
       <button id="help-btn" type="button" data-action="show-onboarding-help" title="帮助与机制速查">?</button>
     </div>

@@ -89,15 +89,31 @@ export function advanceTurnState(state) {
 }
 
 export function calculateTurnFinancials(state, extraRevenue = 0) {
+  return buildTurnFinancials(state, extraRevenue, {
+    opsCost: state._opsCostThisTurn || calcOpsBudgetCost(state).total,
+    faultLoss: state._faultLossThisTurn || 0,
+  });
+}
+
+export function estimateTurnFinancials(state) {
+  const traitFund = state.playerTrait === '辣'
+    ? Math.max(0, Math.floor(state.cash * SPICY_TRAIT_FUND_RATIO))
+    : 0;
+  return buildTurnFinancials(state, traitFund, {
+    opsCost: calcOpsBudgetCost(state).total,
+    faultLoss: 0,
+  });
+}
+
+function buildTurnFinancials(state, extraRevenue, options) {
   const routeTotals = state.routes.reduce((totals, route) => {
     totals.totalRev += route.revenue;
     totals.totalCost += route.cost;
     return totals;
   }, { totalRev: 0, totalCost: 0 });
   const overhead = state.fleet.length * 0.20 + 1.2;
-  const opsBudget = calcOpsBudgetCost(state);
-  const opsCost = state._opsCostThisTurn || opsBudget.total;
-  const faultLoss = state._faultLossThisTurn || 0;
+  const opsCost = options.opsCost;
+  const faultLoss = options.faultLoss;
   const leaseCost = state.fleet
     .filter((plane) => plane.isLease)
     .reduce((sum, plane) => sum + plane.leasePrice, 0);

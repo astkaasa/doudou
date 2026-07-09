@@ -4,7 +4,7 @@ import { byId, cityDist, clamp, fmt, fmtPct, getCity } from '../domain/helpers.j
 import { availablePlanes, findRoute, routeOpenCost } from '../domain/routes.js';
 import { escapeAttr, escapeHtml } from './html.js';
 import { renderMarketCard } from './market.js';
-import { showModal, showRouteModal } from './modal.js';
+import { renderModalRoot, showModal, showRouteModal } from './modal.js';
 
 let routeListSort = { key: 'profit', dir: 'desc' };
 let routeListPage = 0;
@@ -35,13 +35,18 @@ export function showRouteCreateModal(state, from, to, competitors) {
     <div class="r-field"><span class="r-label">基础需求</span><span class="r-val">${demand} 人/季</span></div>
     <div class="r-field"><span class="r-label">竞争航线</span><span class="r-val">${competitors} 条</span></div>
     <div class="r-field"><span class="r-label">建议票价</span><span class="r-val">$${sp}</span></div>
-    <div class="r-field" style="background:${canAfford ? '#dc262610' : '#dc262620'};border-radius:6px;padding:6px 10px;margin:0 -10px"><span class="r-label" style="color:#f87171">开通费用</span><span class="r-val" style="color:#f87171;font-weight:700">${fmt(openCost)}</span></div>
-    ${canAfford ? '' : '<div style="color:#f87171;font-size:12px;margin-top:4px">资金不足，无法开通此航线</div>'}
+    <div class="r-field route-open-cost${canAfford ? '' : ' unaffordable'}"><span class="r-label">开通费用</span><span class="r-val">${fmt(openCost)}</span></div>
+    ${canAfford ? '' : '<div class="route-cost-warning">资金不足，无法开通此航线</div>'}
   </div><h3>分配飞机</h3><select id="route-plane" data-action="route-price-preview" style="width:100%;padding:8px;background:#0a1628;color:#e0e8f0;border:1px solid #1e3a5f;border-radius:4px;font-size:13px"${canAfford ? '' : ' disabled'}>`;
   avail.forEach((p) => {
     html += `<option value="${p.uid}">${escapeHtml(p.name)}${p.isLease ? ' [R]' : ''} (${p.seats}座, 航程${p.range}km)</option>`;
   });
-  html += `</select><h3>票价设置</h3><input type="range" id="route-price" min="${Math.round(sp * 0.5)}" max="${Math.round(sp * 1.5)}" value="${sp}" class="price-slider" data-action="route-price-preview" data-from="${from}" data-to="${to}" data-competitors="${competitors}"><div class="price-display"><span id="price-val">$${sp}</span><span id="price-est">预估客座率: --</span></div>
+  html += `</select><h3>票价设置</h3><input type="range" id="route-price" min="${Math.round(sp * 0.5)}" max="${Math.round(sp * 1.5)}" value="${sp}" class="price-slider" data-action="route-price-preview" data-from="${from}" data-to="${to}" data-competitors="${competitors}"><div class="route-forecast-grid">
+      <span><small>当前票价</small><strong id="price-val">$${sp}</strong></span>
+      <span><small>预估客座率</small><strong id="price-est-load">--</strong></span>
+      <span><small>预估季度利润</small><strong id="price-est-profit">--</strong></span>
+      <span><small>开通后现金</small><strong class="${state.cash - openCost >= 0 ? 'positive' : 'negative'}">${fmt(state.cash - openCost)}</strong></span>
+    </div>
     <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap"><span style="font-size:11px;color:#7ba3cc;line-height:26px;margin-right:2px">快捷:</span>${[-50, -25, 0, 25, 50].map((pct) => `<button class="btn btn-sm" style="background:#334155;color:#e0e8f0;padding:2px 8px;font-size:11px" data-action="set-route-price-preset" data-base-price="${sp}" data-pct="${pct}">${pct > 0 ? '+' : ''}${pct}%</button>`).join('')}</div>
     <div style="margin-top:16px;text-align:right"><button class="btn" style="background:#334155;color:#e0e8f0;margin-right:8px" data-action="close-modal">取消</button><button class="btn btn-success" data-action="confirm-open-route" data-from="${from}" data-to="${to}"${canAfford ? '' : ' disabled'}>确认开通</button></div>`;
   showRouteModal(html);
@@ -55,7 +60,8 @@ export function updatePricePreview(state) {
   if (!slider || !select) return;
   const price = Number(slider.value);
   if (!Number.isFinite(price) || price <= 0) return;
-  byId('price-val').textContent = '$' + price;
+  const priceLabel = byId('price-val');
+  if (priceLabel) priceLabel.textContent = '$' + price;
   const planeUid = parseInt(select.value, 10);
   if (!state.fleet.some((f) => f.uid === planeUid)) return;
   const from = slider.dataset.from;
@@ -74,7 +80,17 @@ export function updatePricePreview(state) {
   route.loadFactor = calcLoadFactor(state, route, price, state.brand, competitors);
   const revenue = routeRevenue(state, route);
   const cost = routeCost(state, route);
-  byId('price-est').textContent = `预估客座率: ${fmtPct(route.loadFactor * 100)} | 利润: ${fmt(revenue.total - cost.total)}`;
+  const profit = revenue.total - cost.total;
+  const loadLabel = byId('price-est-load');
+  const profitLabel = byId('price-est-profit');
+  if (loadLabel) {
+    loadLabel.textContent = fmtPct(route.loadFactor * 100);
+    loadLabel.className = route.loadFactor >= 0.7 ? 'positive' : route.loadFactor >= 0.5 ? 'warning' : 'negative';
+  }
+  if (profitLabel) {
+    profitLabel.textContent = `${profit >= 0 ? '+' : ''}${fmt(profit)}`;
+    profitLabel.className = profit >= 0 ? 'positive' : 'negative';
+  }
 }
 
 export function setRoutePricePreset(basePrice, pct) {
@@ -125,7 +141,7 @@ export function showRouteList(state, options = {}) {
     html += renderRouteRow(row);
   });
   html += `</tbody></table></div><div class="route-card-list">${pageRows.map(renderRouteCard).join('')}</div>${renderPagination(totalPages)}<div style="margin-top:8px;text-align:right"><button class="btn" style="background:#334155;color:#e0e8f0" data-action="close-modal">关闭</button></div>`;
-  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop"><div class="modal route-list-modal" style="position:relative">${html}</div></div>`;
+  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop"><div class="modal route-list-modal" style="position:relative">${html}</div></div>`);
 }
 
 export function toggleRouteListSort(key) {

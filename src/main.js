@@ -41,7 +41,7 @@ import {
   toggleContract,
 } from './ui/operations.js';
 import { showVersionLog } from './ui/versionLog.js';
-import { describeRouteSelection, initMapDrag, renderMap, setMapZoom } from './ui/map.js';
+import { describeRouteSelection, focusMapOnCity, initMapDrag, renderMap, setMapZoom } from './ui/map.js';
 import { showRouteCreateInfo as renderRouteCreateInfo, hideRouteCreateInfo, renderPanel, renderRouteCityPicker } from './ui/panel.js';
 import { applySeasonTheme } from './ui/season.js';
 import { removeBranchBanner, showBranchBanner, showSelectedBranch } from './ui/branches.js';
@@ -85,6 +85,7 @@ import {
   showSubsidiaryOverview,
   toggleRouteListSort,
   updateAdjustedPriceDisplay,
+  updatePlanePurchaseOptions,
   showTurnSummary,
   updatePricePreview,
   buyStockFromModal,
@@ -154,6 +155,11 @@ function setBottomHint(message = '') {
   const text = message.trim();
   hint.textContent = text;
   hint.hidden = !text;
+}
+
+function scrollPanelToTop() {
+  const panel = byId('panel');
+  if (panel) panel.scrollTop = 0;
 }
 
 function loadAppSettings() {
@@ -236,6 +242,7 @@ function closeModal() {
     setBottomHint();
     if (wasTurnSummary) spawnPendingContracts(G);
     updateOnboarding(G, uiState);
+    checkFirstTimePopups(G);
   }
 }
 
@@ -271,6 +278,7 @@ function loadGame() {
     removeTraitOverlay();
     byId('app').hidden = false;
     renderGame();
+    scrollPanelToTop();
     restoreContractState(G);
     showTraitEnvelope(G);
     showBanner('存档已载入！' + G.companyName + ' - ' + G.year + ' Q' + G.quarter, '#16a34a');
@@ -323,6 +331,7 @@ function startGame() {
   G.companyName = name;
   if (uiState.skipOnboarding) G.onboardStep = 99;
   seedInitialFleet(G);
+  focusMapOnCity(G, hq);
   uiState.hqSelectMode = false;
   uiState.selectedHQ = null;
   byId('app').classList.remove('hq-selecting');
@@ -330,6 +339,7 @@ function startGame() {
   hideTutorial();
   byId('app').hidden = false;
   renderGame();
+  scrollPanelToTop();
   restoreContractState(G);
   showTraitEnvelope(G);
   if (byId('trait-overlay')) {
@@ -345,6 +355,7 @@ function openRouteModal() {
   setBottomHint('选择起飞基地：可点地图，也可用下方面板列表');
   renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
   renderMapOnly();
+  scrollPanelToTop();
 }
 
 function openRouteCreateModal(from, to) {
@@ -377,7 +388,7 @@ function confirmOpenRoute(from, to) {
   closeModal();
   hideRouteCreateInfo();
   showBanner(`航线开通：${getCity(from).name} → ${getCity(to).name}  开通费用 ${fmt(result.cost)}`, '#16a34a');
-  completeOnboardingStep(G, 1);
+  completeOnboardingStep(G, G.routes.length > 1 ? 1 : 0);
   updateOnboarding(G, uiState);
   updateMilestones();
 }
@@ -511,7 +522,6 @@ function buySelectedPlane(target) {
   updateHUD(G);
   renderPanel(G, uiState);
   showBanner(`${target.dataset.lease === 'true' ? '租赁' : '购买'} ${result.planes.length}架 ${result.plane.name}`, target.dataset.lease === 'true' ? '#d97706' : '#2563eb');
-  completeOnboardingStep(G, 0);
   updateOnboarding(G);
   updateMilestones();
 }
@@ -707,10 +717,23 @@ function applyAngelRescue(target) {
   showBanner(`辣豆基金注资 ${fmt(result.amount)}，重振旗鼓`, '#d97706');
 }
 
-function advanceTurn() {
+function advanceTurn(force = false) {
   if (!G || G.gameOver) return;
   if (hasPendingContracts(G)) {
     showAdvanceContractGuide(G);
+    return;
+  }
+  if (!force && G.turnsPlayed === 0 && G.routes.length === 0) {
+    const readyPlanes = G.fleet.filter((plane) => !plane.delivering).length;
+    showModal(`<h2>本季尚未准备好</h2>
+      <div class="advance-risk-card">
+        <strong>当前没有运营航线</strong>
+        <p>推进季度仍会产生机队、人员和运营固定成本。你有 ${readyPlanes} 架可用飞机，可以先开通一条短途航线。</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" type="button" data-action="open-route-from-warning">返回开航线</button>
+        <button class="btn btn-secondary" type="button" data-action="confirm-advance-without-routes">仍然推进</button>
+      </div>`);
     return;
   }
   const report = advanceTurnState(G);
@@ -836,6 +859,10 @@ function handleClick(event) {
       onCityClick(target.dataset.cityId);
       break;
     case 'open-route-modal':
+      openRouteModal();
+      break;
+    case 'open-route-from-warning':
+      closeModal();
       openRouteModal();
       break;
     case 'open-buy-plane-modal':
@@ -994,8 +1021,15 @@ function handleClick(event) {
       setMapZoom(G, parseFloat(target.dataset.zoom));
       renderMapOnly();
       break;
+    case 'focus-hq':
+      if (G?.hq && focusMapOnCity(G, G.hq)) renderMapOnly();
+      break;
     case 'advance-turn':
       advanceTurn();
+      break;
+    case 'confirm-advance-without-routes':
+      closeModal();
+      advanceTurn(true);
       break;
     case 'close-modal':
     case 'modal-backdrop':
@@ -1113,6 +1147,9 @@ function handleInput(event) {
     case 'route-price-preview':
       updatePricePreview(G);
       break;
+    case 'plane-purchase-quantity':
+      if (G) updatePlanePurchaseOptions(G, target.dataset.planeId);
+      break;
     case 'adjust-price-preview':
       updateAdjustedPriceDisplay();
       break;
@@ -1121,11 +1158,20 @@ function handleInput(event) {
   }
 }
 
+function handleKeydown(event) {
+  if (event.key !== 'Escape') return;
+  const root = byId('modal-root');
+  if (!root?.querySelector('[data-action="modal-backdrop"]')) return;
+  event.preventDefault();
+  closeModal();
+}
+
 initTutorial(uiState.selectedEra);
 initMapDrag(state, () => renderMap(G, uiState));
 document.addEventListener('click', handleClick);
 document.addEventListener('input', handleInput);
 document.addEventListener('change', handleInput);
+document.addEventListener('keydown', handleKeydown);
 window.addEventListener('resize', () => {
   if (G) renderMap(G, uiState);
 });

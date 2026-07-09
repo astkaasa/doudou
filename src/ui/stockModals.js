@@ -9,8 +9,9 @@ import {
   getActiveStocks,
   sellStock,
 } from '../domain/stocks.js';
-import { byId, fmt } from '../domain/helpers.js';
+import { fmt } from '../domain/helpers.js';
 import { escapeAttr, escapeHtml } from './html.js';
+import { renderModalRoot } from './modal.js';
 
 let selectedStockId = null;
 
@@ -19,7 +20,7 @@ export function showStockMarket(state, stockId = selectedStockId) {
   const activeStocks = getActiveStocks(state);
   if (activeStocks.length === 0) return;
   selectedStockId = activeStocks.some((stock) => stock.id === stockId) ? stockId : activeStocks[0].id;
-  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop">${buildStockMarketHtml(state, activeStocks)}</div>`;
+  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop">${buildStockMarketHtml(state, activeStocks)}</div>`);
 }
 
 export function buyStockFromModal(state, stockId, shares) {

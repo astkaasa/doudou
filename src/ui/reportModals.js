@@ -3,7 +3,7 @@ import { loanInterest } from '../domain/loans.js';
 import { createFinancialReportSnapshot } from '../domain/report.js';
 import { calcNasdouIndex } from '../domain/stocks.js';
 import { escapeHtml } from './html.js';
-import { showModal } from './modal.js';
+import { renderModalRoot, showModal } from './modal.js';
 
 function buildNewspaperHtml(state, includeFooter = true, period = null) {
   const reportPeriod = period || { year: state.year, quarter: state.quarter };
@@ -89,7 +89,7 @@ function pickNewspaperHeadline(state, newsItems) {
 
 export function showNewspaper(state) {
   const html = buildNewspaperHtml(state, true, state?.lastReportData?.newsPeriod || state?.lastReportData?.nextPeriod || state?.lastReportData?.period || null);
-  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop" style="align-items:flex-start;padding-top:40px">${html}</div>`;
+  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop" style="align-items:flex-start;padding-top:40px">${html}</div>`);
   const reread = byId('reread-news-btn');
   if (reread) reread.style.display = '';
 }
@@ -219,7 +219,7 @@ export function showTurnSummary(state, report) {
   state.lastReportData = { ...report, newsPeriod, snapshot };
   const newsHtml = buildNewspaperHtml(state, false, newsPeriod);
   const reportHtml = buildFinancialReportHtml(state, report.rev, report.cost, report.profit, report.period, report.interest, snapshot);
-  byId('modal-root').innerHTML = `<div class="modal-overlay" data-action="modal-backdrop" data-turn-summary="true"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" data-action="close-modal" style="padding:10px 40px;border-radius:8px">知道了，继续经营</button></div></div></div></div>`;
+  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop" data-turn-summary="true"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" data-action="close-modal" style="padding:10px 40px;border-radius:8px">知道了，继续经营</button></div></div></div></div>`);
   const newsBtn = byId('reread-news-btn');
   const reportBtn = byId('reread-report-btn');
   if (newsBtn) newsBtn.style.display = '';
@@ -253,5 +253,5 @@ export function closeDeliveryPopup() {
 }
 
 export function showGameOver(state) {
-  byId('modal-root').innerHTML = `<div class="modal-overlay"><div class="modal gameover"><h1>破产了</h1><p>你的航空公司因资金耗尽而倒闭。</p><p>存活了 ${state.turnsPlayed} 个季度</p><p>最高曾拥有 ${state.routes.length} 条航线、${state.fleet.length} 架飞机</p><button class="btn btn-primary" data-action="reload-page" style="margin-top:16px;padding:10px 32px">重新开始</button></div></div>`;
+  renderModalRoot(`<div class="modal-overlay"><div class="modal gameover"><h1>破产了</h1><p>你的航空公司因资金耗尽而倒闭。</p><p>存活了 ${state.turnsPlayed} 个季度</p><p>最高曾拥有 ${state.routes.length} 条航线、${state.fleet.length} 架飞机</p><button class="btn btn-primary" data-action="reload-page" style="margin-top:16px;padding:10px 32px">重新开始</button></div></div>`);
 }

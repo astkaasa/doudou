@@ -1,6 +1,7 @@
-import { byId } from '../domain/helpers.js';
+import { byId, fmt } from '../domain/helpers.js';
+import { estimateTurnFinancials } from '../domain/turn.js';
 import { escapeHtml } from './html.js';
-import { showModal } from './modal.js';
+import { closeModalRoot, renderModalRoot, showModal } from './modal.js';
 
 const ONBOARDING_DISMISSED_KEY = 'doudou.onboardingDismissed';
 const ONBOARDING_DONE_KEY = 'skyline_onboard_done';
@@ -10,10 +11,10 @@ const NORMAL_DISMISS_MS = 5000;
 
 const ONBOARD_STEPS = [
   {
-    id: 'welcome',
+    id: 'first-route',
     stepIdx: 0,
-    title: '欢迎启航',
-    target: '#btn-buy-plane',
+    title: '开通第一条航线',
+    target: '#btn-open-route',
     spotlight: true,
     body: (state) => {
       const eraTip = {
@@ -21,18 +22,24 @@ const ONBOARD_STEPS = [
         era3: ' 资金充裕，可尝试窄体加宽体机队组合。',
         era4: ' 注意油价波动和时代变迁。',
       }[state.era] || '';
-      return '点击「购买飞机」扩充机队，然后从总部或分部城市开通第一条航线。' + eraTip;
+      return `你已有 ${readyFleetCount(state)} 架起步飞机。点击「开通航线」，先选总部，再选一个目的地。` + eraTip;
     },
-    trigger: (state) => state.turnsPlayed === 0 && state.routes.length === 0,
+    trigger: (state) => state.turnsPlayed === 0 && state.routes.length === 0 && readyFleetCount(state) > 0,
   },
   {
-    id: 'first-route',
+    id: 'quarter-plan',
     stepIdx: 1,
-    title: '开拓航路',
-    target: '#map-container',
+    title: '完善首季计划',
+    target: '#btn-open-route',
     spotlight: true,
-    body: '已拥有飞机。现在先点击总部，再点击另一个城市来开通航线。',
-    trigger: (state) => readyFleetCount(state) > 0 && state.routes.length === 0,
+    body: (state) => {
+      const estimate = estimateTurnFinancials(state);
+      return `当前公司季度预估为 ${fmt(estimate.profit)}。你还有 ${readyFleetCount(state)} 架空闲飞机，建议再开一条短途航线；如果预估仍为负，可在航线管理中适当调价。`;
+    },
+    trigger: (state) => state.turnsPlayed === 0
+      && state.routes.length === 1
+      && readyFleetCount(state) > 0
+      && estimateTurnFinancials(state).profit < 0,
   },
   {
     id: 'advance-turn',
@@ -40,7 +47,7 @@ const ONBOARD_STEPS = [
     title: '推进时间',
     target: '#advance-btn',
     spotlight: true,
-    body: '航线已就绪。点击右下角「推进回合」开始运营，查看首季财报。',
+    body: '航线已就绪。留意右下角的季度预估，然后推进回合查看首季财报。',
     trigger: (state) => state.routes.length > 0 && state.turnsPlayed === 0,
   },
   {
@@ -59,7 +66,7 @@ const ONBOARD_STEPS = [
     target: '#hud-main-quest-btn',
     spotlight: true,
     body: '点击顶部「苍穹之路」查看主线目标。四个维度全部达标后会进入下一阶段。',
-    trigger: (state) => state.turnsPlayed >= 2 && !state._mainQuestOnboardShown && !state.mainQuest?.victoryGrade,
+    trigger: (state) => state.turnsPlayed >= 1 && !state._mainQuestOnboardShown && !state.mainQuest?.victoryGrade,
   },
   {
     id: 'branches',
@@ -136,7 +143,7 @@ const HELP_MECHANICS = [
 ];
 
 const HELP_GUIDES = [
-  { title: '开通航线', steps: ['购买或租赁可用飞机', '点击总部或分部作为起飞城市', '点击目的地城市', '选择执飞机型和票价', '确认开通并推进季度观察表现'] },
+  { title: '开通航线', steps: ['确认有空闲飞机（新公司自带 2 架）', '点击总部或分部作为起飞城市', '点击目的地城市', '选择执飞机型和票价', '确认开通并推进季度观察表现'] },
   { title: '建立分部', steps: ['打开分部管理', '选择目标城市', '确认建设费用', '等待施工完成', '从新分部开通更多航线'] },
   { title: '调整运营预算', steps: ['打开运营管理', '比较服务、维修、广告三档成本', '高档提升效果但费用更高', '低档省钱但会增加经营风险'] },
   { title: '股票交易', steps: ['点击底部 NASDOU', '选择目标股票', '使用快捷金额买卖', '结合新闻和盛事判断时机'] },
@@ -283,7 +290,7 @@ export function checkFirstTimePopups(state, options = {}) {
 
 export function closeFirstTimePopup() {
   const overlay = byId('ftp-card-overlay');
-  if (overlay) overlay.remove();
+  if (overlay) closeModalRoot();
   showNextFirstTimePopup();
 }
 
@@ -305,24 +312,24 @@ export function showHelpPanel(state, tab = 'mechanics') {
 
 function showNextFirstTimePopup() {
   if (typeof document === 'undefined') return;
+  if (byId('modal-root')?.hasChildNodes() && !byId('ftp-card-overlay')) {
+    ftpShowing = false;
+    return;
+  }
   const existing = byId('ftp-card-overlay');
-  if (existing) existing.remove();
+  if (existing) closeModalRoot();
   if (ftpQueue.length === 0) {
     ftpShowing = false;
     return;
   }
   ftpShowing = true;
   const card = ftpQueue.shift();
-  const overlay = document.createElement('div');
-  overlay.id = 'ftp-card-overlay';
-  overlay.className = 'ftp-card-overlay';
-  overlay.innerHTML = `<div class="ftp-card">
+  renderModalRoot(`<div id="ftp-card-overlay" class="ftp-card-overlay"><div class="ftp-card" role="dialog" aria-modal="true" aria-label="机制提示" tabindex="-1">
     <div class="ftp-card-icon">💡</div>
     <div class="ftp-card-title">${escapeHtml(card.title)}</div>
     <div class="ftp-card-body">${escapeHtml(card.body)}</div>
     <button class="btn btn-primary" type="button" data-action="close-ftp-card">知道了</button>
-  </div>`;
-  document.body.appendChild(overlay);
+  </div></div>`);
 }
 
 function renderHelpTab(id, label, activeTab) {

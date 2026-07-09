@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
 import { suggestedPrice } from '../src/domain/economy.js';
-import { advanceTurnState, calculateTurnFinancials } from '../src/domain/turn.js';
+import { advanceTurnState, calculateTurnFinancials, estimateTurnFinancials } from '../src/domain/turn.js';
 import { initState } from '../src/domain/state.js';
 import { openBranch } from '../src/domain/bases.js';
 
@@ -49,6 +49,21 @@ describe('turn progression', () => {
     expect(result.interest).toBeCloseTo(2);
     expect(result.totalCost).toBeCloseTo(4.45);
     expect(result.profit).toBeCloseTo(0.55);
+  });
+
+  it('keeps the next-quarter estimate free of last-quarter random fault losses', () => {
+    const state = initState('beijing', 'era3');
+    state.routes.push({ revenue: 8, cost: 2 });
+    state._faultLossThisTurn = 5;
+    state._opsCostThisTurn = 9;
+
+    const settled = calculateTurnFinancials(state);
+    const estimate = estimateTurnFinancials(state);
+
+    expect(settled.faultLoss).toBe(5);
+    expect(estimate.faultLoss).toBe(0);
+    expect(estimate.opsCost).not.toBe(9);
+    expect(estimate.profit).toBeGreaterThan(settled.profit);
   });
 
   it('adds spicy bean trait fund to quarterly revenue', () => {

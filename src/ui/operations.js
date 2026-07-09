@@ -9,6 +9,7 @@ import {
   pendingContractLabels,
 } from '../domain/operations.js';
 import { byId, fmt } from '../domain/helpers.js';
+import { estimateTurnFinancials } from '../domain/turn.js';
 import { escapeHtml } from './html.js';
 import { showModal } from './modal.js';
 
@@ -105,15 +106,39 @@ export function renderContractZone(state) {
 
 export function updateAdvanceButton(state) {
   const btn = byId('advance-btn');
+  const forecast = byId('turn-forecast');
   if (!btn) return;
+  if (!state) {
+    if (forecast) forecast.hidden = true;
+    return;
+  }
   if (hasPendingContracts(state)) {
     btn.textContent = '⚠ 有待签署';
     btn.classList.add('advance-warned');
+    if (forecast) forecast.hidden = true;
   } else {
     btn.textContent = '推进回合 ▶';
     btn.classList.remove('advance-warned');
     guideVisible = false;
+    updateTurnForecast(state, forecast, btn);
   }
+}
+
+function updateTurnForecast(state, forecast, button) {
+  if (!forecast) return;
+  const activeRoutes = (state.routes || []).filter((route) => !route.suspended && (route.assignedPlanes || []).length > 0);
+  forecast.hidden = false;
+  forecast.className = 'turn-forecast';
+  if (activeRoutes.length === 0) {
+    forecast.textContent = state.routes?.length ? '全部航线停飞' : '无运营航线';
+    forecast.classList.add('negative');
+    button.title = '本季仍会产生机队和运营固定成本';
+    return;
+  }
+  const estimate = estimateTurnFinancials(state);
+  forecast.textContent = `季度预估 ${estimate.profit >= 0 ? '+' : ''}${fmt(estimate.profit)}`;
+  forecast.classList.add(estimate.profit >= 0 ? 'positive' : 'negative');
+  button.title = `不含随机事件和故障，预计收入 ${fmt(estimate.totalRev)}，成本 ${fmt(estimate.totalCost)}`;
 }
 
 export function showAdvanceContractGuide(state) {

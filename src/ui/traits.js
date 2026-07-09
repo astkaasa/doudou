@@ -1,14 +1,13 @@
 import { PLAYER_TRAITS, shufflePlayerTraits } from '../data/playerTraits.js';
 import { byId } from '../domain/helpers.js';
 import { escapeAttr, escapeHtml } from './html.js';
+import { closeModalRoot, renderModalRoot } from './modal.js';
 
 export function showTraitEnvelope(state) {
   if (!state || state.playerTrait || state.traitChosen) return;
   if (!Array.isArray(state.pendingTraitChoices)) state.pendingTraitChoices = shufflePlayerTraits();
   removeTraitOverlay();
-  const overlay = document.createElement('div');
-  overlay.id = 'trait-overlay';
-  overlay.innerHTML = `
+  renderModalRoot(`<div id="trait-overlay" role="dialog" aria-modal="true" aria-label="选择航空公司特质" tabindex="-1">
     <div style="text-align:center">
       <button class="envelope-wrap" type="button" data-action="open-trait-coins" aria-label="打开神秘信件">
         <span class="envelope-body">
@@ -17,8 +16,8 @@ export function showTraitEnvelope(state) {
         </span>
       </button>
       <div class="envelope-text">一封神秘信件送达，点击信封打开</div>
-    </div>`;
-  document.body.appendChild(overlay);
+    </div>
+  </div>`);
 }
 
 export function openTraitCoins(state) {
@@ -70,5 +69,7 @@ export function revealSelectedTrait(trait, coinIndex) {
 
 export function removeTraitOverlay() {
   const overlay = byId('trait-overlay');
-  if (overlay) overlay.remove();
+  if (!overlay) return;
+  if (overlay.closest('#modal-root')) closeModalRoot();
+  else overlay.remove();
 }

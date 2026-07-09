@@ -325,6 +325,21 @@ export function setMapZoom(state, z) {
   updateZoomButtons(state.mapZoom);
 }
 
+export function focusMapOnCity(state, cityId, options = {}) {
+  const city = getCity(cityId);
+  if (!state || !city) return false;
+  const zoom = clampZoom(options.zoom || state.mapZoom || MIN_ZOOM);
+  const projected = projectCity(city);
+  const rect = options.rect || byId('map-container')?.getBoundingClientRect();
+  state.mapZoom = zoom;
+  state.mapPanX = wrapPanX((MAP_WIDTH / 2 - projected.x * MAP_WIDTH) * zoom, zoom);
+  state.mapPanY = rect
+    ? clampPanY((MAP_HEIGHT / 2 - projected.y * MAP_HEIGHT) * zoom, zoom, rect)
+    : 0;
+  updateZoomButtons(zoom);
+  return true;
+}
+
 export function updateZoomButtons(zoom) {
   Object.values(ZOOM_BUTTONS).forEach((id) => {
     const el = byId(id);

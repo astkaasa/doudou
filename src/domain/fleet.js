@@ -23,23 +23,41 @@ export function maxLeasedPlanes(state) {
   return Math.floor(countBoughtPlanes(state) * 0.5);
 }
 
-export function buyPlane(state, planeId, isLease, count = 1) {
+export function quotePlaneAcquisition(state, planeId, isLease = false, count = 1) {
   const template = PLANES.find((p) => p.id === planeId);
-  if (!template) return { ok: false, message: '机型不存在' };
+  if (!template) return { ok: false, code: 'not-found', message: '机型不存在' };
   if (!availablePlaneTemplates(state).some((p) => p.id === planeId)) {
-    return { ok: false, message: `${template.name} 在当前年份不可用（服役期：${template.serviceStart}-${template.serviceEnd}）` };
+    return { ok: false, code: 'unavailable', template, message: `${template.name} 在当前年份不可用（服役期：${template.serviceStart}-${template.serviceEnd}）` };
   }
   const safeCount = clamp(parseInt(count, 10) || 1, 1, 10);
+  const leaseFeePerPlane = isLease ? template.buyPrice * 0.1 : 0;
+  const unitCost = isLease ? template.leasePrice + leaseFeePerPlane : template.buyPrice;
+  const totalCost = unitCost * safeCount;
+  const quote = {
+    template,
+    isLease: Boolean(isLease),
+    count: safeCount,
+    unitCost,
+    totalCost,
+    leaseFee: leaseFeePerPlane * safeCount,
+    recurringCost: isLease ? template.leasePrice * safeCount : 0,
+    deliveryTurns: isLease ? 0 : 2,
+    cashAfter: state.cash - totalCost,
+  };
   if (isLease) {
-    if (countBoughtPlanes(state) < 1) return { ok: false, message: '需先购买至少1架飞机才能租赁' };
+    if (countBoughtPlanes(state) < 1) return { ...quote, ok: false, code: 'lease-locked', message: '需先购买至少1架飞机才能租赁' };
     if (countLeasedPlanes(state) + safeCount > maxLeasedPlanes(state)) {
-      return { ok: false, message: `租赁飞机数量不能超过购买飞机的50%，当前上限 ${maxLeasedPlanes(state)} 架` };
+      return { ...quote, ok: false, code: 'lease-limit', message: `租赁飞机数量不能超过购买飞机的50%，当前上限 ${maxLeasedPlanes(state)} 架` };
     }
   }
-  const leaseFee = isLease ? template.buyPrice * 0.1 : 0;
-  const unitCost = isLease ? template.leasePrice + leaseFee : template.buyPrice;
-  const totalCost = unitCost * safeCount;
-  if (state.cash < totalCost) return { ok: false, message: `资金不足，需要 ${totalCost.toFixed(1)}M` };
+  if (state.cash < totalCost) return { ...quote, ok: false, code: 'insufficient-cash', message: `资金不足，需要 ${totalCost.toFixed(1)}M` };
+  return { ...quote, ok: true, code: 'ok' };
+}
+
+export function buyPlane(state, planeId, isLease, count = 1) {
+  const quote = quotePlaneAcquisition(state, planeId, isLease, count);
+  if (!quote.ok) return quote;
+  const { template, count: safeCount, totalCost } = quote;
   state.cash -= totalCost;
   const planes = [];
   for (let i = 0; i < safeCount; i += 1) {
@@ -64,7 +82,7 @@ export function buyPlane(state, planeId, isLease, count = 1) {
     state.fleet.push(plane);
   }
   syncStaffToNeeded(state, 0.8);
-  return { ok: true, plane: planes[0], planes, totalCost, leaseFee: leaseFee * safeCount };
+  return { ...quote, plane: planes[0], planes };
 }
 
 export function sellPlane(state, uid) {

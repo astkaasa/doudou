@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { initState } from '../src/domain/state.js';
-import { renderMap } from '../src/ui/map.js';
+import { focusMapOnCity, renderMap } from '../src/ui/map.js';
 
 const originalDocument = globalThis.document;
 
@@ -52,5 +52,23 @@ describe('map rendering', () => {
 
     expect(container.innerHTML).toContain('city-node-hq-recommended');
     expect(container.innerHTML).toContain('hq-recommended-marker');
+  });
+
+  it('can center a narrow viewport on the active headquarters', () => {
+    const rect = { width: 390, height: 500 };
+    const container = {
+      innerHTML: '',
+      getBoundingClientRect: () => rect,
+    };
+    globalThis.document = {
+      getElementById: (id) => (id === 'map-container' ? container : null),
+    };
+    const state = initState('beijing', 'era1');
+
+    expect(focusMapOnCity(state, 'beijing', { rect })).toBe(true);
+    renderMap(state, { showBoundaries: true, mapStyle: 'classic' });
+
+    expect(state.mapPanX).toBeLessThan(0);
+    expect(container.innerHTML).toContain('aria-label="选择北京"');
   });
 });

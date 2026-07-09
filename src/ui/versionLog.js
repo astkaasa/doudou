@@ -1,6 +1,6 @@
 import { VERSION_LOG } from '../data/version.js';
-import { byId } from '../domain/helpers.js';
 import { escapeHtml } from './html.js';
+import { renderModalRoot } from './modal.js';
 
 const VERSION_SECTIONS = [
   ['new', '新功能', '#fbbf24'],
@@ -14,7 +14,7 @@ export function showVersionLog() {
   if (!current) return;
 
   const body = VERSION_LOG.map(renderVersionEntry).join('');
-  byId('modal-root').innerHTML = `<div class="modal-overlay version-log-overlay" data-action="modal-backdrop">
+  renderModalRoot(`<div class="modal-overlay version-log-overlay" data-action="modal-backdrop">
     <div class="modal version-log-modal" style="position:relative">
       <button class="version-log-close" type="button" data-action="close-modal" title="关闭">✕</button>
       <div class="version-log-head">
@@ -26,7 +26,7 @@ export function showVersionLog() {
         <button class="btn" type="button" data-action="close-modal">关闭</button>
       </div>
     </div>
-  </div>`;
+  </div>`);
 }
 
 function renderVersionEntry(entry) {

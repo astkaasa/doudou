@@ -40,7 +40,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .season-q3 #hud-turn{background:#a16207}
 .season-q4 #hud-turn{background:#1d4ed8}
 /* Main */
-#main{display:grid;grid-template-columns:1fr 280px;overflow:hidden}
+#main{display:grid;grid-template-columns:minmax(0,1fr) clamp(300px,22vw,340px);overflow:hidden}
 #map-container{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 48%,#102d3e 0,#081525 52%,#050b16 100%);touch-action:none;user-select:none;-webkit-user-select:none}
 .map-stage{position:absolute;inset:0;margin:auto;overflow:hidden;touch-action:none}
 #map-container svg{width:100%;height:100%;display:block;touch-action:none}
@@ -169,14 +169,21 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .btn-danger:hover{background:#b91c1c}
 .btn-warning{background:#d97706;color:#fff}
 .btn-sm{padding:4px 10px;font-size:12px}
+.btn-secondary{background:#334155;color:#e0e8f0}
+.btn-secondary:hover{background:#475569}
 .btn:disabled{opacity:0.4;cursor:not-allowed}
 /* Bottom bar */
 #bottom{background:#0d1f3c;border-top:1px solid #1e3a5f;display:flex;align-items:center;padding:0 16px;gap:12px}
 #bottom-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}
 #bottom-hint[hidden]{display:none}
+#turn-forecast{flex:0 0 auto;border:1px solid #334155;border-radius:999px;background:#0a1628;padding:3px 9px;font-size:11px;font-weight:800;white-space:nowrap}
+#turn-forecast[hidden]{display:none}
+#turn-forecast.positive{border-color:#16a34a66;color:#4ade80}
+#turn-forecast.negative{border-color:#dc262666;color:#f87171}
 #bottom-tools{display:flex;align-items:center;gap:8px;flex:0 0 auto}
-#settings-btn,#help-btn{width:26px;height:26px;border:1px solid #1e3a5f;border-radius:50%;background:#0a1628;color:#93c5fd;font-size:13px;font-weight:800;cursor:pointer;flex:0 0 auto}
-#settings-btn:hover,#settings-btn:focus-visible,#help-btn:hover,#help-btn:focus-visible{border-color:#60a5fa;color:#e0e8f0;outline:none}
+#focus-hq-btn,#settings-btn,#help-btn{width:26px;height:26px;border:1px solid #1e3a5f;border-radius:50%;background:#0a1628;color:#93c5fd;font-size:13px;font-weight:800;cursor:pointer;flex:0 0 auto}
+#focus-hq-btn:hover,#focus-hq-btn:focus-visible,#settings-btn:hover,#settings-btn:focus-visible,#help-btn:hover,#help-btn:focus-visible{border-color:#60a5fa;color:#e0e8f0;outline:none}
+.hq-selecting #focus-hq-btn{display:none}
 #season-badge{padding:2px 10px;border-radius:10px;font-size:13px;font-weight:700;letter-spacing:1px}
 .season-q1 #season-badge{background:#15803d60;color:#4ade80}
 .season-q2 #season-badge{background:#c2410c60;color:#fb923c}
@@ -193,6 +200,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 /* Modals */
 .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:100;display:flex;align-items:center;justify-content:center}
 .modal{background:#111d33;border:1px solid #1e3a5f;border-radius:12px;padding:24px;min-width:400px;max-width:600px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.modal:focus,.turn-summary:focus,.newspaper:focus,#trait-overlay:focus,.ftp-card:focus{outline:none}
 .modal h2{font-size:22px;margin-bottom:16px;color:#4ade80}
 .modal h3{font-size:14px;margin:12px 0 8px;color:#7ba3cc}
 .modal-close{position:absolute;top:12px;right:16px;background:none;border:none;color:#7ba3cc;font-size:20px;cursor:pointer}
@@ -263,10 +271,25 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .route-preview{background:#0a1628;border-radius:8px;padding:14px;margin:8px 0}
 .r-field{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a2d48}
 .r-field:last-child{border:none}
-.r-field .r-label{color:#7ba3cc;font-size:17px}
-.r-field .r-val{color:#e0e8f0;font-weight:700;font-size:20px}
+.r-field .r-label{color:#7ba3cc;font-size:13px}
+.r-field .r-val{color:#e0e8f0;font-weight:700;font-size:15px}
+.route-open-cost{margin:4px -8px 0;padding:7px 8px;border:1px solid #fbbf2440;border-radius:6px;background:#fbbf240d}
+.route-open-cost .r-label,.route-open-cost .r-val{color:#fbbf24}
+.route-open-cost.unaffordable{border-color:#dc262660;background:#dc262614}
+.route-open-cost.unaffordable .r-label,.route-open-cost.unaffordable .r-val,.route-cost-warning{color:#f87171}
+.route-cost-warning{font-size:12px;margin-top:5px}
 .price-slider{width:100%;margin:8px 0}
-.price-display{display:flex;justify-content:space-between;font-size:13px;margin-top:4px}
+.route-forecast-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:7px}
+.route-forecast-grid>span{border:1px solid #1e3a5f;border-radius:6px;background:#0a1628;padding:7px;min-width:0}
+.route-forecast-grid small{display:block;color:#7ba3cc;font-size:10px;margin-bottom:3px;white-space:nowrap}
+.route-forecast-grid strong{display:block;color:#e0e8f0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.positive{color:#4ade80!important}
+.warning{color:#fbbf24!important}
+.negative{color:#f87171!important}
+.advance-risk-card{border:1px solid #fbbf2450;border-radius:8px;background:#fbbf2410;padding:12px;margin:8px 0 16px}
+.advance-risk-card strong{display:block;color:#fbbf24;font-size:15px;margin-bottom:5px}
+.advance-risk-card p{color:#c0d0e0;font-size:13px;line-height:1.5}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
 /* Financial report */
 .report-section{margin:12px 0;padding:12px;background:#0a1628;border-radius:8px}
 .report-link-btn{margin-left:5px;border:0;background:transparent;color:#60a5fa;font-size:12px;font-weight:800;cursor:pointer}
@@ -554,12 +577,36 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .fleet-item .name{font-weight:600}
 .fleet-item .status{color:#7ba3cc;font-size:12px}
 .lease-badge{display:inline-block;background:#d9770630;color:#fbbf24;font-size:9px;font-weight:700;padding:0 4px;border-radius:2px;margin-left:4px;vertical-align:middle}
+.plane-market-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:10px}
+.plane-market-head h2{margin-bottom:4px}
+.plane-market-head p{color:#7ba3cc;font-size:12px;line-height:1.45}
+.plane-market-cash{flex:0 0 auto;border:1px solid #16a34a55;border-radius:8px;background:#16a34a12;padding:7px 10px;text-align:right}
+.plane-market-cash span{display:block;color:#7ba3cc;font-size:10px}
+.plane-market-cash strong{color:#4ade80;font-size:15px}
+.plane-market-summary{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.plane-market-summary span{border:1px solid #1e3a5f;border-radius:999px;background:#0a1628;color:#7ba3cc;padding:4px 9px;font-size:11px}
+.plane-market-summary strong{color:#e0e8f0}
+.plane-market-empty{color:#556;padding:14px;text-align:center}
 .plane-maker-group{border:1px solid #1e3a5f;border-radius:8px;background:#0a1628;margin-bottom:8px;overflow:hidden}
 .plane-maker-group summary{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;color:#cfe3f6;font-size:13px;font-weight:700;cursor:pointer;list-style:none}
 .plane-maker-group summary::-webkit-details-marker{display:none}
 .plane-maker-group summary:hover{background:#10284a}
 .plane-maker-group small{color:#7ba3cc;font-size:10px}
-.plane-maker-group .fleet-item{margin:6px 8px}
+.plane-purchase-card{margin:7px;border:1px solid #1a2d48;border-radius:8px;background:#0f1f35;padding:10px}
+.plane-purchase-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.plane-purchase-head>div{display:flex;align-items:baseline;gap:7px;min-width:0}
+.plane-purchase-head strong{color:#f8fafc;font-size:14px;white-space:nowrap}
+.plane-purchase-head span,.plane-purchase-head>small{color:#7ba3cc;font-size:11px;white-space:nowrap}
+.plane-spec-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:8px 0}
+.plane-spec-grid>span{border:1px solid #1a2d48;border-radius:6px;background:#0a1628;padding:6px}
+.plane-spec-grid small{display:block;color:#556;font-size:9px;margin-bottom:2px}
+.plane-spec-grid strong{display:block;color:#cfe3f6;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plane-acquisition-notes{display:flex;gap:12px;color:#7ba3cc;font-size:10px;line-height:1.35;flex-wrap:wrap}
+.plane-acquisition-notes b{color:#fbbf24}
+.plane-purchase-actions{display:grid;grid-template-columns:auto minmax(150px,1fr) minmax(180px,1.2fr);gap:6px;align-items:center;margin-top:9px}
+.plane-purchase-actions label{display:flex;align-items:center;gap:5px;color:#7ba3cc;font-size:11px}
+.plane-purchase-actions input{width:48px;padding:5px;border:1px solid #1e3a5f;border-radius:4px;background:#071120;color:#e0e8f0;text-align:center}
+.plane-purchase-actions .btn{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* Route list */
 .route-item{background:#0a1628;border-radius:6px;padding:8px;margin:4px 0;font-size:13px;cursor:pointer;transition:background 0.15s}
 .route-item:hover{background:#162d50}
@@ -839,10 +886,11 @@ body.spotlight-active #hud>button:not(.spotlight-target-pulse):not(:has(.spotlig
   .btn-sm{padding:6px 10px}
   #bottom{min-height:56px;height:auto;padding:6px 10px;gap:6px;flex-wrap:wrap}
   #bottom-hint{flex:1 1 100%;width:100%;font-size:12px;line-height:1.35;white-space:normal;order:3}
+  #turn-forecast{display:none!important}
   #bottom-tools{order:2;margin-left:0}
   .hq-selecting #bottom-tools,
   .branch-selecting #bottom-tools{margin-left:auto}
-  #settings-btn,#help-btn{width:32px;height:32px}
+  #focus-hq-btn,#settings-btn,#help-btn{width:32px;height:32px}
   #zoom-controls{display:none!important}
   #advance-btn{display:block;order:1;margin-left:auto!important;min-height:36px;padding:6px 14px;font-size:12px;border-radius:6px;flex:0 0 auto}
   #contract-zone{right:10px;bottom:64px;width:calc(100vw - 20px)}
@@ -865,6 +913,7 @@ body.spotlight-active #hud>button:not(.spotlight-target-pulse):not(:has(.spotlig
   .r-field .r-label{font-size:13px}
   .r-field .r-val{font-size:15px}
   .price-display{flex-direction:column;gap:4px}
+  .route-forecast-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .route-market-strip{grid-template-columns:1fr}
   .market-card{padding:7px}
   .market-bar{grid-template-columns:34px minmax(0,1fr) 32px}
@@ -906,6 +955,12 @@ body.spotlight-active #hud>button:not(.spotlight-target-pulse):not(:has(.spotlig
   .credits-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .credits-traits{grid-template-columns:1fr}
   .version-log-modal{width:calc(100vw - 24px);max-height:86dvh}
+  .plane-market-head{flex-direction:column;gap:8px}
+  .plane-market-cash{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left}
+  .plane-spec-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .plane-purchase-head{flex-direction:column;gap:3px}
+  .plane-purchase-actions{grid-template-columns:1fr}
+  .plane-purchase-actions label{justify-content:space-between}
   #hq-banner{top:8px;min-width:0;width:calc(100vw - 20px);padding:12px 14px;border-radius:10px}
   #hq-banner .hq-title{font-size:16px}
   #branch-banner{top:8px;min-width:0;width:calc(100vw - 20px);padding:12px 14px;border-radius:10px}

@@ -1,38 +1,100 @@
-import { availablePlaneTemplates, countBoughtPlanes, countLeasedPlanes, maxLeasedPlanes } from '../domain/fleet.js';
+import { availablePlaneTemplates, countBoughtPlanes, countLeasedPlanes, maxLeasedPlanes, quotePlaneAcquisition } from '../domain/fleet.js';
 import { fmt, getCity } from '../domain/helpers.js';
+import { escapeAttr, escapeHtml } from './html.js';
 import { showModal } from './modal.js';
 
 export function showBuyPlaneModal(state) {
   const boughtCount = countBoughtPlanes(state);
   const leasedCount = countLeasedPlanes(state);
   const leaseMax = maxLeasedPlanes(state);
-  const canLease = boughtCount >= 1 && leasedCount < leaseMax;
-  const leaseTip = boughtCount < 1
-    ? '<div style="background:#dc262620;border:1px solid #dc262660;border-radius:6px;padding:8px;margin-bottom:10px;font-size:12px;color:#f87171">租赁限制：需先购买至少1架飞机后才能租赁</div>'
-    : `<div style="background:#16a34a20;border:1px solid #16a34a60;border-radius:6px;padding:8px;margin-bottom:10px;font-size:12px;color:#4ade80">租赁信息：已购${boughtCount}架 · 已租${leasedCount}架 · 剩余可租${Math.max(0, leaseMax - leasedCount)}架 · 租期最长10年</div>`;
   const planes = availablePlaneTemplates(state);
   const groups = groupPlanesByMaker(planes);
-  let html = `<h2>购买飞机</h2>${leaseTip}<div id="plane-list">`;
+  let html = `<div class="plane-market-head">
+    <div><h2>飞机市场</h2><p>购买机型需 2 季交付；租赁立即可用，但首期包含机价 10% 手续费。</p></div>
+    <div class="plane-market-cash"><span>可用资金</span><strong>${fmt(state.cash)}</strong></div>
+  </div>
+  <div class="plane-market-summary">
+    <span>自有 <strong>${boughtCount}</strong> 架</span>
+    <span>租赁 <strong>${leasedCount}/${leaseMax}</strong> 架</span>
+    <span>租期上限 <strong>40 季</strong></span>
+  </div>
+  <div id="plane-list">`;
   if (groups.length === 0) {
-    html += '<p style="color:#556">当前年份没有可购买机型。</p>';
+    html += '<p class="plane-market-empty">当前年份没有可购买机型。</p>';
   }
   groups.forEach(({ maker, planes: makerPlanes }, index) => {
-    const shouldOpen = groupHasAffordablePlane(makerPlanes, state, canLease) || (index === 0 && !groups.some((group) => groupHasAffordablePlane(group.planes, state, canLease)));
-    html += `<details class="plane-maker-group"${shouldOpen ? ' open' : ''}><summary><span>${maker}</span><small>${makerPlanes.length}</small></summary>`;
+    const shouldOpen = groupHasAffordablePlane(makerPlanes, state) || (index === 0 && !groups.some((group) => groupHasAffordablePlane(group.planes, state)));
+    html += `<details class="plane-maker-group"${shouldOpen ? ' open' : ''}><summary><span>${escapeHtml(maker)}</span><small>${makerPlanes.length}</small></summary>`;
     makerPlanes.forEach((p) => {
-      html += `<div class="fleet-item" style="flex-direction:column;align-items:flex-start;gap:4px"><div style="display:flex;justify-content:space-between;width:100%"><span class="name">${p.name}</span><span style="color:#7ba3cc;font-size:12px">${planeTypeLabel(p.type)} · ${maker}</span></div><div style="display:flex;gap:12px;font-size:12px;color:#556;width:100%;flex-wrap:wrap"><span>${p.seats}座</span><span>航程${p.range}km</span><span>油耗${p.fuel}</span><span>服役${p.serviceStart}-${p.serviceEnd}</span></div><div style="display:flex;gap:6px;margin-top:4px;width:100%;justify-content:space-between;align-items:center;flex-wrap:wrap"><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"><span style="font-size:11px;color:#7ba3cc">数量</span><input type="number" min="1" max="10" value="1" id="buy-qty-${p.id}" style="width:46px;padding:2px 4px;background:#0a1628;color:#e0e8f0;border:1px solid #1e3a5f;border-radius:3px;font-size:12px;text-align:center"><button class="btn btn-primary btn-sm" data-action="buy-plane" data-plane-id="${p.id}" data-lease="false">购买 ${fmt(p.buyPrice)}/架</button><button class="btn btn-warning btn-sm" data-action="buy-plane" data-plane-id="${p.id}" data-lease="true"${canLease ? '' : ' disabled'}>租赁 ${fmt(p.leasePrice)}/季 +10%手续费</button></div><span style="font-size:12px;color:#556">资金: ${fmt(state.cash)}</span></div></div>`;
+      html += renderPlanePurchaseCard(state, p, maker);
     });
     html += '</details>';
   });
-  html += '</div><div style="margin-top:12px;text-align:right"><button class="btn" style="background:#334155;color:#e0e8f0" data-action="close-modal">关闭</button></div>';
-  showModal(html);
+  html += '</div><div class="modal-actions"><button class="btn btn-secondary" data-action="close-modal">关闭</button></div>';
+  showModal(html, { wide: true });
 }
 
-function groupHasAffordablePlane(planes, state, canLease) {
-  return planes.some((plane) => {
-    const leaseCost = plane.leasePrice + plane.buyPrice * 0.1;
-    return state.cash >= plane.buyPrice || (canLease && state.cash >= leaseCost);
+export function updatePlanePurchaseOptions(state, planeId) {
+  const input = document.getElementById(`buy-qty-${planeId}`);
+  const count = input ? Number(input.value) : 1;
+  [false, true].forEach((isLease) => {
+    const quote = quotePlaneAcquisition(state, planeId, isLease, count);
+    const button = document.querySelector(`[data-action="buy-plane"][data-plane-id="${planeId}"][data-lease="${isLease}"]`);
+    if (!button || !quote.template) return;
+    button.disabled = !quote.ok;
+    button.title = quote.ok ? acquisitionTitle(quote) : quote.message;
+    button.textContent = acquisitionButtonLabel(quote);
   });
+}
+
+function renderPlanePurchaseCard(state, plane, maker) {
+  const buyQuote = quotePlaneAcquisition(state, plane.id, false, 1);
+  const leaseQuote = quotePlaneAcquisition(state, plane.id, true, 1);
+  return `<article class="plane-purchase-card">
+    <div class="plane-purchase-head">
+      <div><strong>${escapeHtml(plane.name)}</strong><span>${escapeHtml(planeTypeLabel(plane.type))} · ${escapeHtml(maker)}</span></div>
+      <small>服役 ${plane.serviceStart}-${plane.serviceEnd}</small>
+    </div>
+    <div class="plane-spec-grid">
+      <span><small>座位</small><strong>${plane.seats}</strong></span>
+      <span><small>航程</small><strong>${plane.range} km</strong></span>
+      <span><small>油耗</small><strong>${plane.fuel}</strong></span>
+      <span><small>购价</small><strong>${fmt(plane.buyPrice)}</strong></span>
+    </div>
+    <div class="plane-acquisition-notes">
+      <span><b>购买</b> 2 季后交付</span>
+      <span><b>租赁</b> 立即可用，之后 ${fmt(plane.leasePrice)}/季</span>
+    </div>
+    <div class="plane-purchase-actions">
+      <label for="buy-qty-${escapeAttr(plane.id)}">数量
+        <input type="number" min="1" max="10" value="1" id="buy-qty-${escapeAttr(plane.id)}" data-action="plane-purchase-quantity" data-plane-id="${escapeAttr(plane.id)}">
+      </label>
+      ${renderAcquisitionButton(plane.id, buyQuote)}
+      ${renderAcquisitionButton(plane.id, leaseQuote)}
+    </div>
+  </article>`;
+}
+
+function renderAcquisitionButton(planeId, quote) {
+  const disabled = quote.ok ? '' : ' disabled';
+  const title = quote.ok ? acquisitionTitle(quote) : quote.message;
+  const className = quote.isLease ? 'btn-warning' : 'btn-primary';
+  return `<button class="btn ${className} btn-sm" type="button" data-action="buy-plane" data-plane-id="${escapeAttr(planeId)}" data-lease="${quote.isLease}" title="${escapeAttr(title)}"${disabled}>${escapeHtml(acquisitionButtonLabel(quote))}</button>`;
+}
+
+function acquisitionButtonLabel(quote) {
+  const count = quote.count || 1;
+  if (quote.isLease) return `租赁 ${count} 架 · 首期 ${fmt(quote.totalCost || 0)}`;
+  return `购买 ${count} 架 · ${fmt(quote.totalCost || 0)}`;
+}
+
+function acquisitionTitle(quote) {
+  if (quote.isLease) return `首期含 ${fmt(quote.leaseFee)} 手续费，之后每季 ${fmt(quote.recurringCost)}`;
+  return `预计 ${quote.deliveryTurns} 季后交付，操作后现金 ${fmt(quote.cashAfter)}`;
+}
+
+function groupHasAffordablePlane(planes, state) {
+  return planes.some((plane) => quotePlaneAcquisition(state, plane.id, false, 1).ok || quotePlaneAcquisition(state, plane.id, true, 1).ok);
 }
 
 function groupPlanesByMaker(planes) {
@@ -67,7 +129,7 @@ export function showFleetPanel(state) {
     html += '<p style="color:#556">尚未拥有飞机，请先购买。</p>';
   } else {
     state.fleet.forEach((p) => {
-      const assignedRoute = state.routes.find((r) => r.assignedPlanes.includes(p.uid));
+      const assignedRoute = state.routes.find((r) => (r.assignedPlanes || []).includes(p.uid));
       const status = p.delivering ? `交付中 (${p.deliverIn}回合)` : assignedRoute ? `${getCity(assignedRoute.from).name}→${getCity(assignedRoute.to).name}` : '空闲';
       const statusColor = p.delivering ? '#fbbf24' : assignedRoute ? '#4ade80' : '#556';
       const leaseTag = p.isLease ? `<span class="lease-badge">R</span><span style="color:#d97706;font-size:10px;margin-left:4px">租${p.leaseTurns || 0}/${p.maxLeaseTurns || 40}季</span>` : '';
