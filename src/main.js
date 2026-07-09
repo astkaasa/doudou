@@ -2,37 +2,25 @@ import './styles/app.css';
 
 import { actionNames, createDelegatedActionHandler } from './app/actionDispatcher.js';
 import { createFinanceController } from './app/financeController.js';
+import { createNetworkController } from './app/networkController.js';
 import { createTurnController } from './app/turnController.js';
 import { ERAS } from './data/eras.js';
 import { normalizePlayerTrait } from './data/playerTraits.js';
-import { closeBranch as closeBranchDomain, isBase, isBranchConstructing, openBranch } from './domain/bases.js';
 import { DEFAULT_COMPANY_NAME } from './domain/constants.js';
-import { buyPlane, returnLease, sellPlane } from './domain/fleet.js';
-import { byId, cityDist, fmt, getCity, routeKey } from './domain/helpers.js';
+import { byId } from './domain/helpers.js';
 import { checkMilestones } from './domain/milestones.js';
 import { loadGameState, saveGameState } from './domain/save.js';
 import { createSetupState, initState, seedInitialFleet } from './domain/state.js';
-import {
-  adjustRoutePrice,
-  changeRoutePlane,
-  closeRoute as closeRouteDomain,
-  countCompetitors,
-  findRoute,
-  openRoute,
-  resumeRoute,
-  suspendRoute,
-  updateRouteMetrics,
-} from './domain/routes.js';
 import { updateHUD } from './ui/hud.js';
 import { closeModalRoot, showBanner, showModal } from './ui/modal.js';
 import { closeMainQuestOverlay, continueFromVictory, showMainQuestPanel, showVictoryEnding } from './ui/mainQuest.js';
 import { showMilestoneList, showMilestoneNotification } from './ui/milestones.js';
 import { restoreContractState, spawnPendingContracts } from './ui/operations.js';
 import { showVersionLog } from './ui/versionLog.js';
-import { describeRouteSelection, focusMapOnCity, initMapDrag, renderMap, setMapZoom } from './ui/map.js';
-import { showRouteCreateInfo as renderRouteCreateInfo, hideRouteCreateInfo, renderPanel, renderRouteCityPicker } from './ui/panel.js';
+import { focusMapOnCity, initMapDrag, renderMap } from './ui/map.js';
+import { hideRouteCreateInfo, renderPanel } from './ui/panel.js';
 import { applySeasonTheme } from './ui/season.js';
-import { removeBranchBanner, showBranchBanner, showSelectedBranch } from './ui/branches.js';
+import { removeBranchBanner } from './ui/branches.js';
 import {
   acknowledgeOnboarding,
   checkFirstTimePopups,
@@ -43,26 +31,7 @@ import {
   showHelpPanel,
   updateOnboarding,
 } from './ui/onboarding.js';
-import {
-  closeDeliveryPopup,
-  showBuyPlaneModal,
-  showBranchModal,
-  showCloseBranchConfirm,
-  showFleetPanel,
-  setAdjustPricePreset,
-  setRoutePricePreset,
-  showRouteChangePlaneModal,
-  showRouteCloseConfirm,
-  showRouteCreateModal,
-  showRouteList,
-  showRoutePriceAdjust,
-  showRouteResumeConfirm,
-  showRouteSuspendConfirm,
-  toggleRouteListSort,
-  updateAdjustedPriceDisplay,
-  updatePlanePurchaseOptions,
-  updatePricePreview,
-} from './ui/modals.js';
+import { closeDeliveryPopup } from './ui/modals.js';
 import {
   getTutorialCompanyName,
   hideTutorial,
@@ -75,7 +44,6 @@ import {
   showHQBanner,
   showMainMenu,
   showSaveMenu,
-  showSelectedHQ,
   showTutorial,
 } from './ui/tutorial.js';
 import { openTraitCoins, removeTraitOverlay, revealSelectedTrait, showTraitEnvelope } from './ui/traits.js';
@@ -203,7 +171,7 @@ function closeModal() {
     G._onboardReportShown = true;
     completeOnboardingStep(G, 3);
   }
-  if (uiState.branchSelectMode) cancelBranchSelect();
+  if (uiState.branchSelectMode) networkController.cancelBranchSelect();
   if (G && !G.gameOver) {
     if (G.selectedCity) {
       G.selectedCity = null;
@@ -323,259 +291,6 @@ function startGame() {
   setBottomHint();
 }
 
-function openRouteModal() {
-  if (!G) return;
-  G.selectedCity = null;
-  setBottomHint('选择起飞基地：可点地图，也可用下方面板列表');
-  renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
-  renderMapOnly();
-  scrollPanelToTop();
-}
-
-function openRouteCreateModal(from, to) {
-  const a = getCity(from);
-  const b = getCity(to);
-  if (!isBase(G, from)) {
-    showModal(`<h2>无法开通航线</h2><p style="color:#f87171">起飞城市必须是总部或分部。${a.name}不是你的基地。</p><p style="color:#7ba3cc;font-size:13px">可以在快捷操作中点击「开设分部」扩展基地网络。</p><button class="btn btn-primary" data-action="close-modal">确定</button>`);
-    return;
-  }
-  const existing = G.routes.find((r) => routeKey(r.from, r.to) === routeKey(from, to));
-  if (existing) {
-    showModal(`<h2>航线已开通</h2><p>${a.name} → ${b.name} 已在运营中。</p><button class="btn btn-primary" data-action="close-modal">确定</button>`);
-    return;
-  }
-  showRouteCreateModal(G, from, to, countCompetitors(G, from, to));
-}
-
-function confirmOpenRoute(from, to) {
-  const select = byId('route-plane');
-  const slider = byId('route-price');
-  if (!select || !slider) return;
-  const planeUid = parseInt(select.value, 10);
-  const price = parseInt(slider.value, 10);
-  const result = openRoute(G, from, to, planeUid, price);
-  if (!result.ok) {
-    showBanner(result.message, '#dc2626');
-    return;
-  }
-  renderGame();
-  closeModal();
-  hideRouteCreateInfo();
-  showBanner(`航线开通：${getCity(from).name} → ${getCity(to).name}  开通费用 ${fmt(result.cost)}`, '#16a34a');
-  completeOnboardingStep(G, G.routes.length > 1 ? 1 : 0);
-  updateOnboarding(G, uiState);
-  updateMilestones();
-}
-
-function startBranchSelect() {
-  if (!G) return;
-  closeModalRoot();
-  uiState.branchSelectMode = true;
-  uiState.selectedBranch = null;
-  G.selectedCity = null;
-  byId('app').classList.add('branch-selecting');
-  showBranchBanner(G);
-  renderMapOnly();
-  updateOnboarding(G, uiState);
-  setBottomHint('点击地图上的城市选择分部');
-}
-
-function cancelBranchSelect() {
-  uiState.branchSelectMode = false;
-  uiState.selectedBranch = null;
-  byId('app').classList.remove('branch-selecting');
-  removeBranchBanner();
-  renderMapOnly();
-  updateOnboarding(G, uiState);
-  if (G) setBottomHint();
-}
-
-function confirmBranchFromMap() {
-  if (!G || !uiState.selectedBranch) {
-    showBanner('请先选择分部城市', '#d97706');
-    return;
-  }
-  const cityId = uiState.selectedBranch;
-  const result = openBranch(G, cityId);
-  if (!result.ok) {
-    showBanner(result.message, '#dc2626');
-    return;
-  }
-  cancelBranchSelect();
-  renderGame();
-  showBanner(`分部建设：${getCity(cityId).name}（花费 ${fmt(result.cost)}，${result.constructIn}季度后完工）`, '#fbbf24');
-  updateMilestones();
-}
-
-function closeBranch(cityId) {
-  const result = closeBranchDomain(G, cityId);
-  if (!result.ok) {
-    showBanner(result.message, '#dc2626');
-    return;
-  }
-  renderGame();
-  closeModalRoot();
-  showBanner(`已关闭分部：${getCity(cityId).name}`, '#dc2626');
-}
-
-function onMapEmptyClick() {
-  if (!G || G.gameOver) return;
-  if (uiState.branchSelectMode) return;
-  if (G.selectedCity) {
-    G.selectedCity = null;
-    renderMapOnly();
-    setBottomHint('选择起飞基地：可点地图，也可用下方面板列表');
-    renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
-  }
-}
-
-function onCityClick(cityId) {
-  if (!G) return;
-  if (uiState.hqSelectMode) {
-    uiState.selectedHQ = cityId;
-    renderMapOnly();
-    renderPanel(G, uiState);
-    const cityName = getCity(cityId).name;
-    showSelectedHQ(cityName);
-    setBottomHint(`已选择 ${cityName}，点击确认开始`);
-    return;
-  }
-  if (uiState.branchSelectMode) {
-    const city = getCity(cityId);
-    if (isBase(G, cityId)) {
-      showBanner(city.name + ' 已是基地，无法重复开设', '#d97706');
-      return;
-    }
-    if (isBranchConstructing(G, cityId)) {
-      showBanner(city.name + ' 分部正在建设中', '#d97706');
-      return;
-    }
-    uiState.selectedBranch = cityId;
-    renderMapOnly();
-    showSelectedBranch(city.name);
-    return;
-  }
-  if (G.gameOver) return;
-  if (!G.selectedCity) {
-    G.selectedCity = cityId;
-    renderMapOnly();
-    const fromIsBase = isBase(G, cityId);
-    setBottomHint(fromIsBase
-      ? '已选择 ' + getCity(cityId).name + '，继续选择到达城市'
-      : getCity(cityId).name + ' 非基地，选择到达城市可查看距离');
-    renderRouteCreateInfo(getCity(cityId), null, `${describeRouteSelection(getCity(cityId), null, { fromIsBase })}${renderRouteCityPicker(G, cityId)}`);
-  } else if (G.selectedCity === cityId) {
-    G.selectedCity = null;
-    renderMapOnly();
-    setBottomHint('选择起飞基地：可点地图，也可用下方面板列表');
-    renderRouteCreateInfo(null, null, renderRouteCityPicker(G));
-  } else {
-    const from = G.selectedCity;
-    const fromIsBase = isBase(G, from);
-    G.selectedCity = null;
-    renderRouteCreateInfo(getCity(from), getCity(cityId), describeRouteSelection(getCity(from), getCity(cityId), { fromIsBase }));
-    if (!fromIsBase) {
-      const d = Math.round(cityDist(getCity(from), getCity(cityId)));
-      setBottomHint(`${getCity(from).name} → ${getCity(cityId).name} 距离 ${d}km（需从总部或分部起飞才能开通航线）`);
-      renderMapOnly();
-      return;
-    }
-    openRouteCreateModal(from, cityId);
-  }
-}
-
-function buySelectedPlane(target) {
-  const qtyInput = byId('buy-qty-' + target.dataset.planeId);
-  const count = qtyInput ? parseInt(qtyInput.value, 10) : 1;
-  const result = buyPlane(G, target.dataset.planeId, target.dataset.lease === 'true', count);
-  if (!result.ok) {
-    showBanner(result.message, '#dc2626');
-    return;
-  }
-  closeModal();
-  updateHUD(G);
-  renderPanel(G, uiState);
-  showBanner(`${target.dataset.lease === 'true' ? '租赁' : '购买'} ${result.planes.length}架 ${result.plane.name}`, target.dataset.lease === 'true' ? '#d97706' : '#2563eb');
-  updateOnboarding(G);
-  updateMilestones();
-}
-
-function sellSelectedPlane(target) {
-  const sold = sellPlane(G, parseInt(target.dataset.uid, 10));
-  if (!sold) return;
-  updateHUD(G);
-  renderPanel(G, uiState);
-  closeModal();
-  showBanner(`出售 ${sold.plane.name}，获得 ${fmt(sold.sellPrice)}`, '#d97706');
-  updateMilestones();
-}
-
-function returnSelectedLease(target) {
-  const returned = returnLease(G, parseInt(target.dataset.uid, 10));
-  if (!returned) return;
-  updateHUD(G);
-  renderPanel(G, uiState);
-  closeModal();
-  showBanner(`退租 ${returned.plane.name}`, '#d97706');
-}
-
-function adjustPrice(from, to, price) {
-  const route = adjustRoutePrice(G, from, to, price);
-  if (!route) return;
-  renderGame();
-  showRouteList(G);
-  showBanner(`${getCity(route.from).name}→${getCity(route.to).name} 票价调整为 $${route.price}`, '#2563eb');
-}
-
-function closeRoute(target) {
-  closeRouteDomain(G, target.dataset.from, target.dataset.to);
-  renderGame();
-  showRouteList(G);
-}
-
-function toggleRouteSuspend(target) {
-  const route = findRoute(G, target.dataset.from, target.dataset.to);
-  if (!route) return;
-  if (route.suspended) showRouteResumeConfirm(G, route.from, route.to);
-  else showRouteSuspendConfirm(G, route.from, route.to);
-}
-
-function confirmSuspendRoute(target) {
-  const result = suspendRoute(G, target.dataset.from, target.dataset.to);
-  if (!result.ok) {
-    showBanner(result.message, '#d97706');
-    showRouteList(G);
-    return;
-  }
-  renderGame();
-  showBanner(`航线已停飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, '#d97706');
-  showRouteList(G);
-}
-
-function confirmResumeRoute(target) {
-  const result = resumeRoute(G, target.dataset.from, target.dataset.to);
-  if (!result.ok) {
-    showBanner(result.message, '#d97706');
-    showRouteList(G);
-    return;
-  }
-  renderGame();
-  showBanner(`航线已复飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, '#16a34a');
-  showRouteList(G);
-}
-
-function changeSelectedRoutePlane(target) {
-  const result = changeRoutePlane(G, target.dataset.from, target.dataset.to, target.dataset.uid);
-  if (!result.ok) {
-    showBanner(result.message, '#dc2626');
-    showRouteList(G);
-    return;
-  }
-  renderGame();
-  showBanner(`${getCity(result.route.from).name}→${getCity(result.route.to).name} 已更换执飞机型`, '#d97706');
-  showRouteList(G);
-}
-
 function confirmTrait(target) {
   const trait = normalizePlayerTrait(target.dataset.trait);
   const isPendingChoice = !Array.isArray(G.pendingTraitChoices) || G.pendingTraitChoices.includes(trait);
@@ -605,6 +320,16 @@ const turnController = createTurnController({
   updateMilestones,
   closeModal,
 });
+const networkController = createNetworkController({
+  getState: state,
+  uiState,
+  renderGame,
+  renderMapOnly,
+  setBottomHint,
+  scrollPanelToTop,
+  updateMilestones,
+  closeModal,
+});
 
 const coreClickActions = {
   'save-game': saveGame,
@@ -621,16 +346,6 @@ const coreClickActions = {
   'show-version-log': showVersionLog,
   'cancel-hq-select': cancelHQSelect,
   'confirm-hq-start': confirmHQAndStart,
-  'map-empty': onMapEmptyClick,
-  'city-click': ({ target }) => onCityClick(target.dataset.cityId),
-  'open-route-modal': openRouteModal,
-  'open-route-from-warning': () => {
-    closeModal();
-    openRouteModal();
-  },
-  'open-buy-plane-modal': () => {
-    if (G) showBuyPlaneModal(G);
-  },
   'open-main-quest': () => {
     if (!G) return;
     G._mainQuestOnboardShown = true;
@@ -638,41 +353,8 @@ const coreClickActions = {
     showMainQuestPanel(G);
     updateOnboarding(G, uiState);
   },
-  'open-branch-modal': () => {
-    if (G) showBranchModal(G);
-  },
   'open-milestones': () => {
     if (G) showMilestoneList(G);
-  },
-  'start-branch-select': startBranchSelect,
-  'cancel-branch-select': cancelBranchSelect,
-  'confirm-branch': confirmBranchFromMap,
-  'close-branch': ({ target }) => {
-    if (G) showCloseBranchConfirm(G, target.dataset.cityId);
-  },
-  'confirm-close-branch': ({ target }) => closeBranch(target.dataset.cityId),
-  'open-fleet-panel': () => {
-    if (G) showFleetPanel(G);
-  },
-  'open-route-list': ({ action }) => {
-    if (G) showRouteList(G, { reset: action === 'open-route-list' });
-  },
-  'open-route-detail': ({ action }) => {
-    if (G) showRouteList(G, { reset: action === 'open-route-list' });
-  },
-  'return-route-list': () => {
-    if (G) showRouteList(G);
-  },
-  'route-list-sort': ({ target }) => {
-    if (!G) return;
-    toggleRouteListSort(target.dataset.sortKey);
-    showRouteList(G);
-  },
-  'route-list-page': ({ target }) => {
-    if (G) showRouteList(G, { page: target.dataset.page });
-  },
-  'route-list-page-size': ({ target }) => {
-    if (G) showRouteList(G, { pageSize: target.dataset.pageSize });
   },
   'dismiss-onboarding': () => {
     dismissOnboarding(G);
@@ -691,13 +373,6 @@ const coreClickActions = {
     if (G) renderGame();
     showBanner('新手提示已重新开启', '#16a34a');
   },
-  'set-map-zoom': ({ target }) => {
-    setMapZoom(G, parseFloat(target.dataset.zoom));
-    renderMapOnly();
-  },
-  'focus-hq': () => {
-    if (G?.hq && focusMapOnCity(G, G.hq)) renderMapOnly();
-  },
   'close-modal': closeModal,
   'modal-backdrop': closeModal,
   'close-main-quest-overlay': ({ target }) => closeMainQuestOverlay(target.closest('.main-quest-overlay')),
@@ -709,38 +384,6 @@ const coreClickActions = {
     renderGame();
     showVictoryEnding(G);
   },
-  'confirm-open-route': ({ target }) => confirmOpenRoute(target.dataset.from, target.dataset.to),
-  'set-route-price-preset': ({ target }) => setRoutePricePreset(Number(target.dataset.basePrice), Number(target.dataset.pct)),
-  'open-route-price-adjust': ({ target }) => {
-    if (G) showRoutePriceAdjust(G, target.dataset.from, target.dataset.to);
-  },
-  'set-adjust-price-preset': ({ target }) => setAdjustPricePreset(Number(target.dataset.basePrice), Number(target.dataset.pct)),
-  'confirm-price-adjust': ({ target }) => {
-    const slider = byId('adj-price-slider');
-    if (slider) adjustPrice(target.dataset.from, target.dataset.to, slider.value);
-  },
-  'toggle-route-suspend': ({ target }) => {
-    if (G) toggleRouteSuspend(target);
-  },
-  'confirm-suspend-route': ({ target }) => {
-    if (G) confirmSuspendRoute(target);
-  },
-  'confirm-resume-route': ({ target }) => {
-    if (G) confirmResumeRoute(target);
-  },
-  'confirm-close-route': ({ target }) => {
-    if (G) showRouteCloseConfirm(G, target.dataset.from, target.dataset.to);
-  },
-  'open-route-change-plane': ({ target }) => {
-    if (G) showRouteChangePlaneModal(G, target.dataset.from, target.dataset.to);
-  },
-  'change-route-plane': ({ target }) => {
-    if (G) changeSelectedRoutePlane(target);
-  },
-  'buy-plane': ({ target }) => buySelectedPlane(target),
-  'sell-plane': ({ target }) => sellSelectedPlane(target),
-  'return-lease': ({ target }) => returnSelectedLease(target),
-  'close-route': ({ target }) => closeRoute(target),
   'open-trait-coins': () => openTraitCoins(G),
   'select-trait-coin': ({ target }) => revealSelectedTrait(target.dataset.trait, target.dataset.coinIndex),
   'confirm-trait': ({ target }) => {
@@ -754,15 +397,15 @@ const clickActions = {
   ...coreClickActions,
   ...financeController.clickActions,
   ...turnController.clickActions,
+  ...networkController.clickActions,
 };
 
-const inputActions = {
+const coreInputActions = {
   'company-name-input': ({ target }) => setTutorialCompanyName(target.value),
-  'route-price-preview': () => updatePricePreview(G),
-  'plane-purchase-quantity': ({ target }) => {
-    if (G) updatePlanePurchaseOptions(G, target.dataset.planeId);
-  },
-  'adjust-price-preview': updateAdjustedPriceDisplay,
+};
+const inputActions = {
+  ...coreInputActions,
+  ...networkController.inputActions,
 };
 
 const knownActions = actionNames(clickActions, inputActions);
