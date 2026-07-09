@@ -1,6 +1,7 @@
 import './styles/app.css';
 
 import { actionNames, createDelegatedActionHandler } from './app/actionDispatcher.js';
+import { createFinanceController } from './app/financeController.js';
 import { ERAS } from './data/eras.js';
 import { normalizePlayerTrait } from './data/playerTraits.js';
 import { closeBranch as closeBranchDomain, isBase, isBranchConstructing, openBranch } from './domain/bases.js';
@@ -8,7 +9,6 @@ import { applyAngelInvestment } from './domain/angelInvestment.js';
 import { DEFAULT_COMPANY_NAME } from './domain/constants.js';
 import { buyPlane, returnLease, sellPlane } from './domain/fleet.js';
 import { byId, cityDist, fmt, getCity, routeKey } from './domain/helpers.js';
-import { repayLoan, takeLoan } from './domain/loans.js';
 import { checkMilestones } from './domain/milestones.js';
 import { loadGameState, saveGameState } from './domain/save.js';
 import { createSetupState, initState, seedInitialFleet } from './domain/state.js';
@@ -65,8 +65,6 @@ import {
   showDeliveryPopup,
   showFleetPanel,
   showGameOver,
-  showLoanConfirm,
-  showLoanModal,
   showNewspaper,
   showReportAlone,
   setAdjustPricePreset,
@@ -78,19 +76,11 @@ import {
   showRoutePriceAdjust,
   showRouteResumeConfirm,
   showRouteSuspendConfirm,
-  showStockMarket,
-  executeSubsidiaryOpen,
-  executeSubsidiarySell,
-  showCompanyValueModal,
-  showSubsidiaryConfirm,
-  showSubsidiaryOverview,
   toggleRouteListSort,
   updateAdjustedPriceDisplay,
   updatePlanePurchaseOptions,
   showTurnSummary,
   updatePricePreview,
-  buyStockFromModal,
-  sellStockFromModal,
 } from './ui/modals.js';
 import {
   getTutorialCompanyName,
@@ -622,80 +612,6 @@ function confirmTrait(target) {
   showBanner('欢迎经营 ' + G.companyName + '！(' + G.year + '-' + G.endYear + ') 试试开通第一条航线吧', '#2563eb');
 }
 
-function takeSelectedLoan(target) {
-  const amount = parseFloat(target.dataset.amount);
-  const result = takeLoan(G, amount);
-  if (!result.ok) {
-    showBanner(result.message, '#dc2626');
-    return;
-  }
-  updateHUD(G);
-  showLoanModal(G);
-  showBanner(`贷款 $${result.amount}M 已到账（手续费 ${fmt(result.fee)}）`, '#b45309');
-  updateMilestones();
-}
-
-function repaySelectedLoan(target) {
-  const amount = parseFloat(target.dataset.amount);
-  const result = repayLoan(G, amount);
-  if (!result.ok) {
-    showBanner(result.message, '#dc2626');
-    return;
-  }
-  updateHUD(G);
-  showLoanModal(G);
-  showBanner(`还款 ${fmt(result.amount)}`, '#16a34a');
-  updateMilestones();
-}
-
-function buySelectedStock(target) {
-  const result = buyStockFromModal(G, target.dataset.stockId, Number(target.dataset.shares));
-  if (!result.ok) {
-    showBanner(result.message, '#b91c1c');
-    return;
-  }
-  updateHUD(G);
-  renderPanel(G, uiState);
-  showBanner(`买入 ${result.stock.code} ${target.dataset.shares}M，花费 ${fmt(result.totalCost)}`, '#16a34a');
-}
-
-function sellSelectedStock(target) {
-  const result = sellStockFromModal(G, target.dataset.stockId, Number(target.dataset.shares));
-  if (!result.ok) {
-    showBanner(result.message, '#b91c1c');
-    return;
-  }
-  updateHUD(G);
-  renderPanel(G, uiState);
-  showBanner(`卖出 ${result.stock.code} ${target.dataset.shares}M，到账 ${fmt(result.netRevenue)}`, '#d97706');
-}
-
-function executeSubOpen(target) {
-  const result = executeSubsidiaryOpen(G, target.dataset.subMode, target.dataset.cityId, target.dataset.subType);
-  if (!result.ok) {
-    showBanner(result.message, '#b91c1c');
-    return;
-  }
-  renderGame();
-  const city = getCity(target.dataset.cityId);
-  const action = target.dataset.subMode === 'acquire' ? '收购' : target.dataset.subType === 'airport' ? '投资' : '新设';
-  showBanner(`${action}完成：${city?.name || target.dataset.cityId}，花费 ${fmt(result.totalCost)}`, '#16a34a');
-  checkFirstTimePopups(G);
-  updateMilestones();
-}
-
-function executeSubSell(target) {
-  const result = executeSubsidiarySell(G, target.dataset.cityId, target.dataset.subType);
-  if (!result.ok) {
-    showBanner(result.message, '#b91c1c');
-    return;
-  }
-  renderGame();
-  const city = getCity(target.dataset.cityId);
-  showBanner(`已出售：${city?.name || target.dataset.cityId}，到账 ${fmt(result.sellPrice)}`, '#d97706');
-  updateMilestones();
-}
-
 function showBankruptcyAction(report) {
   const action = report?.bankruptcyAction;
   if (!action || action.angelRescue || action.gameOver) return;
@@ -806,7 +722,14 @@ function focusNextPendingContract() {
   if (type) focusContractFromPanel(G, type);
 }
 
-const clickActions = {
+const financeController = createFinanceController({
+  getState: state,
+  uiState,
+  renderGame,
+  updateMilestones,
+});
+
+const coreClickActions = {
   'save-game': saveGame,
   'load-game': loadGame,
   'show-main-menu': () => showMainMenu(uiState.selectedEra),
@@ -836,9 +759,6 @@ const clickActions = {
   'open-buy-plane-modal': () => {
     if (G) showBuyPlaneModal(G);
   },
-  'open-loan-modal': () => {
-    if (G) showLoanModal(G);
-  },
   'open-operations-panel': () => {
     if (!G) return;
     showOperationsPanel(G);
@@ -858,48 +778,12 @@ const clickActions = {
     if (G) focusContractFromPanel(G, target.dataset.contractType);
   },
   'advance-contract-guide': focusNextPendingContract,
-  'open-stock-market': () => {
-    if (!G) return;
-    G._stockPanelOpened = true;
-    showStockMarket(G);
-    checkFirstTimePopups(G);
-  },
-  'open-subsidiary-overview': ({ target }) => {
-    if (!G) return;
-    G._subPanelOpened = true;
-    showSubsidiaryOverview(G, target.dataset.cityId);
-    checkFirstTimePopups(G);
-  },
-  'open-company-value': () => {
-    if (G) showCompanyValueModal(G);
-  },
-  'confirm-sub-open': ({ target }) => {
-    if (G) showSubsidiaryConfirm(G, target.dataset.subMode, target.dataset.cityId, target.dataset.subType);
-  },
-  'confirm-sub-sell': ({ target }) => {
-    if (G) showSubsidiaryConfirm(G, 'sell', target.dataset.cityId, target.dataset.subType);
-  },
-  'execute-sub-open': ({ target }) => {
-    if (G) executeSubOpen(target);
-  },
-  'execute-sub-sell': ({ target }) => {
-    if (G) executeSubSell(target);
-  },
   'open-main-quest': () => {
     if (!G) return;
     G._mainQuestOnboardShown = true;
     completeOnboardingStep(G, 4);
     showMainQuestPanel(G);
     updateOnboarding(G, uiState);
-  },
-  'select-stock': ({ target }) => {
-    if (G) showStockMarket(G, target.dataset.stockId);
-  },
-  'buy-stock': ({ target }) => {
-    if (G) buySelectedStock(target);
-  },
-  'sell-stock': ({ target }) => {
-    if (G) sellSelectedStock(target);
   },
   'open-branch-modal': () => {
     if (G) showBranchModal(G);
@@ -1015,11 +899,6 @@ const clickActions = {
     if (G) confirmTrait(target);
   },
   noop: () => {},
-  'confirm-loan': ({ target }) => {
-    if (G) showLoanConfirm(G, parseFloat(target.dataset.amount));
-  },
-  'take-loan': ({ target }) => takeSelectedLoan(target),
-  'repay-loan': ({ target }) => repaySelectedLoan(target),
   'show-newspaper': () => {
     if (G) showNewspaper(G);
   },
@@ -1032,6 +911,11 @@ const clickActions = {
   'close-delivery-popup': closeDeliveryPopup,
   'delivery-backdrop': closeDeliveryPopup,
   'reload-page': () => location.reload(),
+};
+
+const clickActions = {
+  ...coreClickActions,
+  ...financeController.clickActions,
 };
 
 const inputActions = {
