@@ -2,6 +2,7 @@ import { CITIES } from '../data/cities.js';
 
 export const STORAGE_KEYS = {
   save: 'skyline_save',
+  backup: 'skyline_save_backup',
   slots: 'skyline_slots',
 };
 

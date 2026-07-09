@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { loadGameState, saveGameState } from '../src/domain/save.js';
+import { getSaveSummaries, loadGameState, PERSISTED_GAME_STATE_FIELDS, SAVE_VERSION, saveGameState } from '../src/domain/save.js';
+import { initState } from '../src/domain/state.js';
 
 function memoryStorage(value) {
   return {
@@ -24,6 +25,71 @@ function writableStorage() {
 }
 
 describe('save migration', () => {
+  it('uses an explicit current schema and excludes session-only or unknown fields', () => {
+    const storage = writableStorage();
+    const state = initState('beijing', 'era3');
+    state.selectedCity = 'tokyo';
+    state.unexpectedRuntimeCache = { stale: true };
+
+    saveGameState(state, storage);
+    const saved = JSON.parse(storage.getItem('skyline_save'));
+
+    expect(saved.v).toBe(SAVE_VERSION);
+    expect(saved.g.selectedCity).toBeUndefined();
+    expect(saved.g.unexpectedRuntimeCache).toBeUndefined();
+    const expectedFields = Object.keys(state).filter((field) => !['selectedCity', 'unexpectedRuntimeCache'].includes(field));
+    expect(Object.keys(saved.g)).toEqual(expect.arrayContaining(expectedFields));
+    expect(Object.keys(saved.g).every((field) => PERSISTED_GAME_STATE_FIELDS.includes(field))).toBe(true);
+  });
+
+  it('treats unversioned saves as legacy and records their migration source', () => {
+    const raw = JSON.stringify({ g: { routes: [], fleet: [] } });
+
+    const result = loadGameState(memoryStorage(raw));
+
+    expect(result.ok).toBe(true);
+    expect(result.version).toBe(SAVE_VERSION);
+    expect(result.migratedFrom).toBe(0);
+  });
+
+  it('rejects malformed and newer-version saves without mutating them', () => {
+    const malformed = loadGameState(memoryStorage('{not-json'));
+    const newer = loadGameState(memoryStorage(JSON.stringify({ v: SAVE_VERSION + 1, g: {} })));
+
+    expect(malformed).toMatchObject({ ok: false, code: 'invalid_json' });
+    expect(newer).toMatchObject({ ok: false, code: 'newer_version' });
+    expect(newer.message).toContain(`v${SAVE_VERSION + 1}`);
+  });
+
+  it('backs up the previous save before overwriting it', () => {
+    const storage = writableStorage();
+    const state = initState('beijing', 'era3');
+    state.cash = 100;
+    saveGameState(state, storage);
+    state.cash = 200;
+
+    saveGameState(state, storage);
+
+    expect(JSON.parse(storage.getItem('skyline_save')).g.cash).toBe(200);
+    expect(JSON.parse(storage.getItem('skyline_save_backup')).g.cash).toBe(100);
+  });
+
+  it('recovers a readable backup when the primary save is corrupt', () => {
+    const storage = writableStorage();
+    const state = initState('beijing', 'era3');
+    saveGameState(state, storage);
+    storage.setItem('skyline_save_backup', storage.getItem('skyline_save'));
+    storage.setItem('skyline_save', '{not-json');
+
+    const result = loadGameState(storage);
+
+    expect(result).toMatchObject({ ok: true, recoveredFromBackup: true });
+    expect(result.state.hq).toBe('beijing');
+    expect(getSaveSummaries(storage)).toEqual([
+      expect.objectContaining({ company: state.companyName, recoveredFromBackup: true }),
+    ]);
+  });
+
   it('migrates legacy route fields to active modifiers', () => {
     const raw = JSON.stringify({
       v: 5,

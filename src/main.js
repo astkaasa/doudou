@@ -281,7 +281,10 @@ function loadGame() {
     scrollPanelToTop();
     restoreContractState(G);
     showTraitEnvelope(G);
-    showBanner('存档已载入！' + G.companyName + ' - ' + G.year + ' Q' + G.quarter, '#16a34a');
+    const loadMessage = result.recoveredFromBackup
+      ? '主存档损坏，已从上一份备份恢复：'
+      : '存档已载入！';
+    showBanner(loadMessage + G.companyName + ' - ' + G.year + ' Q' + G.quarter, result.recoveredFromBackup ? '#d97706' : '#16a34a');
   } catch (e) {
     showBanner('读档失败：' + e.message, '#dc2626');
   }

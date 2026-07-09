@@ -4,7 +4,8 @@ import { ERAS } from '../data/eras.js';
 import { PLAYER_TRAITS } from '../data/playerTraits.js';
 import { GAME_VERSION, VERSION_LOG } from '../data/version.js';
 import { DEFAULT_COMPANY_NAME } from '../domain/constants.js';
-import { byId, fmt, STORAGE_KEYS } from '../domain/helpers.js';
+import { byId, fmt } from '../domain/helpers.js';
+import { getSaveSummaries } from '../domain/save.js';
 import { escapeAttr, escapeHtml } from './html.js';
 import { hasCompletedOnboarding } from './onboarding.js';
 
@@ -237,34 +238,6 @@ function renderVersionBadge() {
 
 function hasStoredSave() {
   return getSaveSummaries().length > 0;
-}
-
-function getSaveSummaries() {
-  const rawSave = localStorage.getItem(STORAGE_KEYS.save);
-  if (!rawSave) return [];
-  let parsedSave = null;
-  try {
-    parsedSave = JSON.parse(rawSave);
-    if (!parsedSave?.g) return [];
-    const slots = JSON.parse(localStorage.getItem(STORAGE_KEYS.slots) || '[]');
-    if (Array.isArray(slots) && slots.length > 0) return slots;
-  } catch {
-    // Fall back to the legacy single-save key below.
-  }
-  try {
-    const raw = parsedSave || JSON.parse(rawSave);
-    return raw?.g ? [{
-      ts: raw.ts,
-      company: raw.g.companyName,
-      year: raw.g.year,
-      quarter: raw.g.quarter,
-      cash: raw.g.cash,
-      routes: raw.g.routes?.length || 0,
-      fleet: raw.g.fleet?.length || 0,
-    }] : [];
-  } catch {
-    return [];
-  }
 }
 
 function startCreditsScroll() {

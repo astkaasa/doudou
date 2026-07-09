@@ -10,11 +10,113 @@ import { normalizeStockState } from './stocks.js';
 import { normalizeSubsidiaryState } from './subsidiaries.js';
 import { PLAYER_TRAIT_SYMBOLS, normalizePlayerTrait } from '../data/playerTraits.js';
 
+export const SAVE_VERSION = 12;
+
+export const PERSISTED_GAME_STATE_FIELDS = Object.freeze([
+  'companyName',
+  'hq',
+  'era',
+  'cash',
+  'year',
+  'quarter',
+  'endYear',
+  'oilPrice',
+  'prevOilPrice',
+  'brand',
+  'playerTrait',
+  'traitChosen',
+  'pendingTraitChoices',
+  'routes',
+  'fleet',
+  'loan',
+  'loanRate',
+  'branches',
+  'branchesConstructing',
+  'tech',
+  'ai',
+  'events',
+  'newsItems',
+  'cityStates',
+  'stocks',
+  'portfolio',
+  'stockEvents',
+  'subsidiaries',
+  '_subReturnThisTurn',
+  '_subMaintThisTurn',
+  '_subValueChangeThisTurn',
+  '_acquirePriceSeed',
+  'ftpShown',
+  'activeModifiers',
+  'activeMegaEvents',
+  'staffCount',
+  'staffNeeded',
+  'staffMorale',
+  'serviceTier',
+  'maintTier',
+  'adTier',
+  'opsEfficiency',
+  'accidentPenalty',
+  'accidentPenaltyTurns',
+  '_pendingRecruit',
+  '_pendingBonus',
+  '_retiredThisTurn',
+  '_recruitCostThisTurn',
+  '_bonusCostThisTurn',
+  '_opsCostThisTurn',
+  '_faultLossThisTurn',
+  '_faultsThisTurn',
+  'modifierIdCounter',
+  'turnProfit',
+  'turnRevenue',
+  'turnCost',
+  'totalProfit',
+  'turnsPlayed',
+  'consecutiveProfit',
+  'milestones',
+  'mainQuest',
+  'bankruptRescued',
+  'gameOver',
+  'planeIdCounter',
+  'history',
+  'mapZoom',
+  'mapPanX',
+  'mapPanY',
+  'onboardStep',
+  '_onboardReportShown',
+  '_mainQuestOnboardShown',
+  '_opsPanelOpened',
+  '_stockPanelOpened',
+  '_subPanelOpened',
+  'deliveredThisTurn',
+  'lastReportData',
+  '_lastTraitFund',
+  '_lastStockDividend',
+  'redPacketClaimed',
+]);
+
+const SAVE_MIGRATIONS = Object.freeze({
+  0: preserveLegacyState,
+  1: preserveLegacyState,
+  2: preserveLegacyState,
+  3: preserveLegacyState,
+  4: preserveLegacyState,
+  5: preserveLegacyState,
+  6: preserveLegacyState,
+  7: preserveLegacyState,
+  8: preserveLegacyState,
+  9: preserveLegacyState,
+  10: preserveLegacyState,
+  11: migrateV11ToV12,
+});
+
 export function saveGameState(state, storage = localStorage) {
-  const saveData = JSON.stringify({ v: 11, ts: Date.now(), g: serializeGameState(state) });
+  const timestamp = Date.now();
+  const previousSave = storage.getItem(STORAGE_KEYS.save);
+  if (previousSave) safeStorageSet(storage, STORAGE_KEYS.backup, previousSave);
+  const saveData = JSON.stringify({ v: SAVE_VERSION, ts: timestamp, g: serializeGameState(state) });
   storage.setItem(STORAGE_KEYS.save, saveData);
   const info = {
-    ts: Date.now(),
+    ts: timestamp,
     company: state.companyName,
     year: state.year,
     quarter: state.quarter,
@@ -25,19 +127,119 @@ export function saveGameState(state, storage = localStorage) {
   storage.setItem(STORAGE_KEYS.slots, JSON.stringify([info]));
 }
 
-function serializeGameState(state) {
-  const cleanState = { ...state };
-  delete cleanState._lastReportData;
+export function serializeGameState(state) {
+  const cleanState = {};
+  PERSISTED_GAME_STATE_FIELDS.forEach((field) => {
+    if (state[field] !== undefined) cleanState[field] = state[field];
+  });
   return cleanState;
 }
 
 export function loadGameState(storage = localStorage) {
   const raw = storage.getItem(STORAGE_KEYS.save);
   if (!raw) return { ok: false, message: '没有找到存档' };
-  const data = JSON.parse(raw);
-  if (!data.g) return { ok: false, message: '存档格式无效' };
-  normalizeLoadedState(data.g);
-  return { ok: true, state: data.g };
+  const result = decodeSave(raw);
+  if (result.ok || result.code === 'newer_version') return result;
+
+  const backupRaw = storage.getItem(STORAGE_KEYS.backup);
+  if (!backupRaw) return result;
+  const backup = decodeSave(backupRaw);
+  if (!backup.ok) return result;
+  return {
+    ...backup,
+    recoveredFromBackup: true,
+    message: '主存档损坏，已从上一份备份恢复',
+  };
+}
+
+export function getSaveSummaries(storage = localStorage) {
+  const primary = decodeSave(storage.getItem(STORAGE_KEYS.save));
+  if (primary.ok) return [saveSummary(primary)];
+  const backup = decodeSave(storage.getItem(STORAGE_KEYS.backup));
+  return backup.ok ? [{ ...saveSummary(backup), recoveredFromBackup: true }] : [];
+}
+
+function decodeSave(raw) {
+  if (!raw) return { ok: false, code: 'missing', message: '没有找到存档' };
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return { ok: false, code: 'invalid_json', message: '存档内容已损坏' };
+  }
+  if (!isPlainObject(data) || !isPlainObject(data.g)) {
+    return { ok: false, code: 'invalid_format', message: '存档格式无效' };
+  }
+  const version = data.v === undefined ? 0 : Number(data.v);
+  if (!Number.isInteger(version) || version < 0) {
+    return { ok: false, code: 'invalid_version', message: '存档版本无效' };
+  }
+  if (version > SAVE_VERSION) {
+    return { ok: false, code: 'newer_version', message: `存档来自较新版本（v${version}），请升级游戏后再读取` };
+  }
+  try {
+    const state = migrateSaveState(data.g, version);
+    return {
+      ok: true,
+      state,
+      timestamp: Number.isFinite(Number(data.ts)) ? Number(data.ts) : null,
+      version: SAVE_VERSION,
+      migratedFrom: version,
+    };
+  } catch {
+    return { ok: false, code: 'migration_failed', message: '存档迁移失败，内容可能已损坏' };
+  }
+}
+
+function migrateSaveState(initialState, fromVersion) {
+  let state = initialState;
+  for (let version = fromVersion; version < SAVE_VERSION; version++) {
+    const migrate = SAVE_MIGRATIONS[version];
+    if (!migrate) throw new Error(`Missing save migration for v${version}`);
+    state = migrate(state);
+  }
+  normalizeLoadedState(state);
+  return serializeGameState(state);
+}
+
+function preserveLegacyState(state) {
+  // Versions 0-10 predate gated migrations; their idempotent repairs remain in normalizeLoadedState.
+  return state;
+}
+
+function migrateV11ToV12(state) {
+  if (state.lastReportData === undefined && state._lastReportData !== undefined) {
+    state.lastReportData = state._lastReportData;
+  }
+  delete state._lastReportData;
+  delete state.lastNewspaperHtml;
+  delete state.selectedCity;
+  return state;
+}
+
+function saveSummary(result) {
+  const state = result.state;
+  return {
+    ts: result.timestamp,
+    company: state.companyName,
+    year: state.year,
+    quarter: state.quarter,
+    cash: state.cash,
+    routes: state.routes?.length || 0,
+    fleet: state.fleet?.length || 0,
+  };
+}
+
+function safeStorageSet(storage, key, value) {
+  try {
+    storage.setItem(key, value);
+  } catch {
+    // A backup must not prevent the current save from being written.
+  }
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 export function normalizeLoadedState(state) {
