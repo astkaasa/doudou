@@ -1,5 +1,6 @@
 import './styles/app.css';
 
+import { actionNames, createDelegatedActionHandler } from './app/actionDispatcher.js';
 import { ERAS } from './data/eras.js';
 import { normalizePlayerTrait } from './data/playerTraits.js';
 import { closeBranch as closeBranchDomain, isBase, isBranchConstructing, openBranch } from './domain/bases.js';
@@ -805,361 +806,249 @@ function focusNextPendingContract() {
   if (type) focusContractFromPanel(G, type);
 }
 
-function handleClick(event) {
-  const target = event.target.closest('[data-action]');
-  if (!target) return;
-  const action = target.dataset.action;
-  if (action === 'modal-backdrop' && event.target !== target) return;
-  if (action === 'delivery-backdrop' && event.target !== target) return;
-  switch (action) {
-    case 'save-game':
-      saveGame();
-      break;
-    case 'load-game':
-      loadGame();
-      break;
-    case 'show-main-menu':
-      showMainMenu(uiState.selectedEra);
-      break;
-    case 'show-era-menu':
-      showEraMenu(uiState.selectedEra);
-      break;
-    case 'show-save-menu':
-      showSaveMenu();
-      break;
-    case 'show-credits-menu':
-      showCreditsMenu();
-      break;
-    case 'select-era':
-      uiState.selectedEra = target.dataset.eraId;
-      selectEraCard(uiState.selectedEra);
-      break;
-    case 'tutorial-next-step':
-      tutorialNextStep();
-      break;
-    case 'show-version-log':
-      showVersionLog();
-      break;
-    case 'start-angel-slot':
-      if (G) showAngelSlotPhase(G);
-      break;
-    case 'lock-angel-slot':
-      lockAngelSlot();
-      break;
-    case 'apply-angel-rescue':
-      applyAngelRescue(target);
-      break;
-    case 'cancel-hq-select':
-      cancelHQSelect();
-      break;
-    case 'confirm-hq-start':
-      confirmHQAndStart();
-      break;
-    case 'map-empty':
-      onMapEmptyClick();
-      break;
-    case 'city-click':
-      onCityClick(target.dataset.cityId);
-      break;
-    case 'open-route-modal':
-      openRouteModal();
-      break;
-    case 'open-route-from-warning':
-      closeModal();
-      openRouteModal();
-      break;
-    case 'open-buy-plane-modal':
-      if (G) showBuyPlaneModal(G);
-      break;
-    case 'open-loan-modal':
-      if (G) showLoanModal(G);
-      break;
-    case 'open-operations-panel':
-      if (G) {
-        showOperationsPanel(G);
-        G._opsPanelOpened = true;
-        checkFirstTimePopups(G);
-      }
-      break;
-    case 'set-ops-tier':
-      updateOpsTier(target);
-      break;
-    case 'toggle-contract':
-      if (G) toggleContract(G, target.dataset.contractType);
-      break;
-    case 'select-contract-option':
-      if (G) selectContractOption(G, target.dataset.contractType, target.dataset.option);
-      break;
-    case 'sign-contract':
-      signContract(target);
-      break;
-    case 'open-contract-from-panel':
-      closeModalRoot();
-      if (G) focusContractFromPanel(G, target.dataset.contractType);
-      break;
-    case 'advance-contract-guide':
-      focusNextPendingContract();
-      break;
-    case 'open-stock-market':
-      if (G) {
-        G._stockPanelOpened = true;
-        showStockMarket(G);
-        checkFirstTimePopups(G);
-      }
-      break;
-    case 'open-subsidiary-overview':
-      if (G) {
-        G._subPanelOpened = true;
-        showSubsidiaryOverview(G, target.dataset.cityId);
-        checkFirstTimePopups(G);
-      }
-      break;
-    case 'open-company-value':
-      if (G) showCompanyValueModal(G);
-      break;
-    case 'confirm-sub-open':
-      if (G) showSubsidiaryConfirm(G, target.dataset.subMode, target.dataset.cityId, target.dataset.subType);
-      break;
-    case 'confirm-sub-sell':
-      if (G) showSubsidiaryConfirm(G, 'sell', target.dataset.cityId, target.dataset.subType);
-      break;
-    case 'execute-sub-open':
-      if (G) executeSubOpen(target);
-      break;
-    case 'execute-sub-sell':
-      if (G) executeSubSell(target);
-      break;
-    case 'open-main-quest':
-      if (G) {
-        G._mainQuestOnboardShown = true;
-        completeOnboardingStep(G, 4);
-        showMainQuestPanel(G);
-        updateOnboarding(G, uiState);
-      }
-      break;
-    case 'select-stock':
-      if (G) showStockMarket(G, target.dataset.stockId);
-      break;
-    case 'buy-stock':
-      if (G) buySelectedStock(target);
-      break;
-    case 'sell-stock':
-      if (G) sellSelectedStock(target);
-      break;
-    case 'open-branch-modal':
-      if (G) showBranchModal(G);
-      break;
-    case 'open-milestones':
-      if (G) showMilestoneList(G);
-      break;
-    case 'start-branch-select':
-      startBranchSelect();
-      break;
-    case 'cancel-branch-select':
-      cancelBranchSelect();
-      break;
-    case 'confirm-branch':
-      confirmBranchFromMap();
-      break;
-    case 'close-branch':
-      if (G) showCloseBranchConfirm(G, target.dataset.cityId);
-      break;
-    case 'confirm-close-branch':
-      closeBranch(target.dataset.cityId);
-      break;
-    case 'open-fleet-panel':
-      if (G) showFleetPanel(G);
-      break;
-    case 'open-route-list':
-    case 'open-route-detail':
-      if (G) showRouteList(G, { reset: action === 'open-route-list' });
-      break;
-    case 'return-route-list':
-      if (G) showRouteList(G);
-      break;
-    case 'route-list-sort':
-      if (G) {
-        toggleRouteListSort(target.dataset.sortKey);
-        showRouteList(G);
-      }
-      break;
-    case 'route-list-page':
-      if (G) showRouteList(G, { page: target.dataset.page });
-      break;
-    case 'route-list-page-size':
-      if (G) showRouteList(G, { pageSize: target.dataset.pageSize });
-      break;
-    case 'dismiss-onboarding':
-      dismissOnboarding(G);
-      updateOnboarding(G, uiState);
-      break;
-    case 'acknowledge-onboarding':
-      acknowledgeOnboarding();
-      break;
-    case 'show-onboarding-help':
-      showHelpPanel(G);
-      break;
-    case 'switch-help-tab':
-      showHelpPanel(G, target.dataset.helpTab);
-      break;
-    case 'close-ftp-card':
-      closeFirstTimePopup();
-      break;
-    case 'show-settings':
-      showSettings();
-      break;
-    case 'set-map-style':
-      setMapStyle(target.dataset.mapStyle);
-      break;
-    case 'toggle-map-boundaries':
-      toggleMapBoundaries(target.checked);
-      break;
-    case 'reset-onboarding':
-      resetOnboarding(G);
-      closeModalRoot();
-      if (G) renderGame();
-      showBanner('新手提示已重新开启', '#16a34a');
-      break;
-    case 'set-map-zoom':
-      setMapZoom(G, parseFloat(target.dataset.zoom));
-      renderMapOnly();
-      break;
-    case 'focus-hq':
-      if (G?.hq && focusMapOnCity(G, G.hq)) renderMapOnly();
-      break;
-    case 'advance-turn':
-      advanceTurn();
-      break;
-    case 'confirm-advance-without-routes':
-      closeModal();
-      advanceTurn(true);
-      break;
-    case 'close-modal':
-    case 'modal-backdrop':
-      closeModal();
-      break;
-    case 'close-main-quest-overlay':
-      closeMainQuestOverlay(target.closest('.main-quest-overlay'));
-      break;
-    case 'continue-victory-game':
-      continueFromVictory();
-      break;
-    case 'end-victory-game':
-      if (G) {
-        G.gameOver = true;
-        closeMainQuestOverlay(target.closest('.main-quest-overlay'));
-        renderGame();
-        showVictoryEnding(G);
-      }
-      break;
-    case 'confirm-open-route':
-      confirmOpenRoute(target.dataset.from, target.dataset.to);
-      break;
-    case 'set-route-price-preset':
-      setRoutePricePreset(Number(target.dataset.basePrice), Number(target.dataset.pct));
-      break;
-    case 'open-route-price-adjust':
-      if (G) showRoutePriceAdjust(G, target.dataset.from, target.dataset.to);
-      break;
-    case 'set-adjust-price-preset':
-      setAdjustPricePreset(Number(target.dataset.basePrice), Number(target.dataset.pct));
-      break;
-    case 'confirm-price-adjust': {
-      const slider = byId('adj-price-slider');
-      if (slider) adjustPrice(target.dataset.from, target.dataset.to, slider.value);
-      break;
-    }
-    case 'toggle-route-suspend':
-      if (G) toggleRouteSuspend(target);
-      break;
-    case 'confirm-suspend-route':
-      if (G) confirmSuspendRoute(target);
-      break;
-    case 'confirm-resume-route':
-      if (G) confirmResumeRoute(target);
-      break;
-    case 'confirm-close-route':
-      if (G) showRouteCloseConfirm(G, target.dataset.from, target.dataset.to);
-      break;
-    case 'open-route-change-plane':
-      if (G) showRouteChangePlaneModal(G, target.dataset.from, target.dataset.to);
-      break;
-    case 'change-route-plane':
-      if (G) changeSelectedRoutePlane(target);
-      break;
-    case 'buy-plane':
-      buySelectedPlane(target);
-      break;
-    case 'sell-plane':
-      sellSelectedPlane(target);
-      break;
-    case 'return-lease':
-      returnSelectedLease(target);
-      break;
-    case 'close-route':
-      closeRoute(target);
-      break;
-    case 'open-trait-coins':
-      openTraitCoins(G);
-      break;
-    case 'select-trait-coin':
-      revealSelectedTrait(target.dataset.trait, target.dataset.coinIndex);
-      break;
-    case 'confirm-trait':
-      if (G) confirmTrait(target);
-      break;
-    case 'noop':
-      break;
-    case 'confirm-loan':
-      if (G) showLoanConfirm(G, parseFloat(target.dataset.amount));
-      break;
-    case 'take-loan':
-      takeSelectedLoan(target);
-      break;
-    case 'repay-loan':
-      repaySelectedLoan(target);
-      break;
-    case 'show-newspaper':
-      if (G) showNewspaper(G);
-      break;
-    case 'show-report':
-      if (G) showReportAlone(G);
-      break;
-    case 'show-delivery-popup':
-      if (G) showDeliveryPopup(G);
-      break;
-    case 'close-delivery-popup':
-    case 'delivery-backdrop':
-      closeDeliveryPopup();
-      break;
-    case 'reload-page':
-      location.reload();
-      break;
-    default:
-      break;
-  }
-}
+const clickActions = {
+  'save-game': saveGame,
+  'load-game': loadGame,
+  'show-main-menu': () => showMainMenu(uiState.selectedEra),
+  'show-era-menu': () => showEraMenu(uiState.selectedEra),
+  'show-save-menu': showSaveMenu,
+  'show-credits-menu': showCreditsMenu,
+  'select-era': ({ target }) => {
+    uiState.selectedEra = target.dataset.eraId;
+    selectEraCard(uiState.selectedEra);
+  },
+  'tutorial-next-step': tutorialNextStep,
+  'show-version-log': showVersionLog,
+  'start-angel-slot': () => {
+    if (G) showAngelSlotPhase(G);
+  },
+  'lock-angel-slot': lockAngelSlot,
+  'apply-angel-rescue': ({ target }) => applyAngelRescue(target),
+  'cancel-hq-select': cancelHQSelect,
+  'confirm-hq-start': confirmHQAndStart,
+  'map-empty': onMapEmptyClick,
+  'city-click': ({ target }) => onCityClick(target.dataset.cityId),
+  'open-route-modal': openRouteModal,
+  'open-route-from-warning': () => {
+    closeModal();
+    openRouteModal();
+  },
+  'open-buy-plane-modal': () => {
+    if (G) showBuyPlaneModal(G);
+  },
+  'open-loan-modal': () => {
+    if (G) showLoanModal(G);
+  },
+  'open-operations-panel': () => {
+    if (!G) return;
+    showOperationsPanel(G);
+    G._opsPanelOpened = true;
+    checkFirstTimePopups(G);
+  },
+  'set-ops-tier': ({ target }) => updateOpsTier(target),
+  'toggle-contract': ({ target }) => {
+    if (G) toggleContract(G, target.dataset.contractType);
+  },
+  'select-contract-option': ({ target }) => {
+    if (G) selectContractOption(G, target.dataset.contractType, target.dataset.option);
+  },
+  'sign-contract': ({ target }) => signContract(target),
+  'open-contract-from-panel': ({ target }) => {
+    closeModalRoot();
+    if (G) focusContractFromPanel(G, target.dataset.contractType);
+  },
+  'advance-contract-guide': focusNextPendingContract,
+  'open-stock-market': () => {
+    if (!G) return;
+    G._stockPanelOpened = true;
+    showStockMarket(G);
+    checkFirstTimePopups(G);
+  },
+  'open-subsidiary-overview': ({ target }) => {
+    if (!G) return;
+    G._subPanelOpened = true;
+    showSubsidiaryOverview(G, target.dataset.cityId);
+    checkFirstTimePopups(G);
+  },
+  'open-company-value': () => {
+    if (G) showCompanyValueModal(G);
+  },
+  'confirm-sub-open': ({ target }) => {
+    if (G) showSubsidiaryConfirm(G, target.dataset.subMode, target.dataset.cityId, target.dataset.subType);
+  },
+  'confirm-sub-sell': ({ target }) => {
+    if (G) showSubsidiaryConfirm(G, 'sell', target.dataset.cityId, target.dataset.subType);
+  },
+  'execute-sub-open': ({ target }) => {
+    if (G) executeSubOpen(target);
+  },
+  'execute-sub-sell': ({ target }) => {
+    if (G) executeSubSell(target);
+  },
+  'open-main-quest': () => {
+    if (!G) return;
+    G._mainQuestOnboardShown = true;
+    completeOnboardingStep(G, 4);
+    showMainQuestPanel(G);
+    updateOnboarding(G, uiState);
+  },
+  'select-stock': ({ target }) => {
+    if (G) showStockMarket(G, target.dataset.stockId);
+  },
+  'buy-stock': ({ target }) => {
+    if (G) buySelectedStock(target);
+  },
+  'sell-stock': ({ target }) => {
+    if (G) sellSelectedStock(target);
+  },
+  'open-branch-modal': () => {
+    if (G) showBranchModal(G);
+  },
+  'open-milestones': () => {
+    if (G) showMilestoneList(G);
+  },
+  'start-branch-select': startBranchSelect,
+  'cancel-branch-select': cancelBranchSelect,
+  'confirm-branch': confirmBranchFromMap,
+  'close-branch': ({ target }) => {
+    if (G) showCloseBranchConfirm(G, target.dataset.cityId);
+  },
+  'confirm-close-branch': ({ target }) => closeBranch(target.dataset.cityId),
+  'open-fleet-panel': () => {
+    if (G) showFleetPanel(G);
+  },
+  'open-route-list': ({ action }) => {
+    if (G) showRouteList(G, { reset: action === 'open-route-list' });
+  },
+  'open-route-detail': ({ action }) => {
+    if (G) showRouteList(G, { reset: action === 'open-route-list' });
+  },
+  'return-route-list': () => {
+    if (G) showRouteList(G);
+  },
+  'route-list-sort': ({ target }) => {
+    if (!G) return;
+    toggleRouteListSort(target.dataset.sortKey);
+    showRouteList(G);
+  },
+  'route-list-page': ({ target }) => {
+    if (G) showRouteList(G, { page: target.dataset.page });
+  },
+  'route-list-page-size': ({ target }) => {
+    if (G) showRouteList(G, { pageSize: target.dataset.pageSize });
+  },
+  'dismiss-onboarding': () => {
+    dismissOnboarding(G);
+    updateOnboarding(G, uiState);
+  },
+  'acknowledge-onboarding': acknowledgeOnboarding,
+  'show-onboarding-help': () => showHelpPanel(G),
+  'switch-help-tab': ({ target }) => showHelpPanel(G, target.dataset.helpTab),
+  'close-ftp-card': closeFirstTimePopup,
+  'show-settings': showSettings,
+  'set-map-style': ({ target }) => setMapStyle(target.dataset.mapStyle),
+  'toggle-map-boundaries': ({ target }) => toggleMapBoundaries(target.checked),
+  'reset-onboarding': () => {
+    resetOnboarding(G);
+    closeModalRoot();
+    if (G) renderGame();
+    showBanner('新手提示已重新开启', '#16a34a');
+  },
+  'set-map-zoom': ({ target }) => {
+    setMapZoom(G, parseFloat(target.dataset.zoom));
+    renderMapOnly();
+  },
+  'focus-hq': () => {
+    if (G?.hq && focusMapOnCity(G, G.hq)) renderMapOnly();
+  },
+  'advance-turn': () => advanceTurn(),
+  'confirm-advance-without-routes': () => {
+    closeModal();
+    advanceTurn(true);
+  },
+  'close-modal': closeModal,
+  'modal-backdrop': closeModal,
+  'close-main-quest-overlay': ({ target }) => closeMainQuestOverlay(target.closest('.main-quest-overlay')),
+  'continue-victory-game': continueFromVictory,
+  'end-victory-game': ({ target }) => {
+    if (!G) return;
+    G.gameOver = true;
+    closeMainQuestOverlay(target.closest('.main-quest-overlay'));
+    renderGame();
+    showVictoryEnding(G);
+  },
+  'confirm-open-route': ({ target }) => confirmOpenRoute(target.dataset.from, target.dataset.to),
+  'set-route-price-preset': ({ target }) => setRoutePricePreset(Number(target.dataset.basePrice), Number(target.dataset.pct)),
+  'open-route-price-adjust': ({ target }) => {
+    if (G) showRoutePriceAdjust(G, target.dataset.from, target.dataset.to);
+  },
+  'set-adjust-price-preset': ({ target }) => setAdjustPricePreset(Number(target.dataset.basePrice), Number(target.dataset.pct)),
+  'confirm-price-adjust': ({ target }) => {
+    const slider = byId('adj-price-slider');
+    if (slider) adjustPrice(target.dataset.from, target.dataset.to, slider.value);
+  },
+  'toggle-route-suspend': ({ target }) => {
+    if (G) toggleRouteSuspend(target);
+  },
+  'confirm-suspend-route': ({ target }) => {
+    if (G) confirmSuspendRoute(target);
+  },
+  'confirm-resume-route': ({ target }) => {
+    if (G) confirmResumeRoute(target);
+  },
+  'confirm-close-route': ({ target }) => {
+    if (G) showRouteCloseConfirm(G, target.dataset.from, target.dataset.to);
+  },
+  'open-route-change-plane': ({ target }) => {
+    if (G) showRouteChangePlaneModal(G, target.dataset.from, target.dataset.to);
+  },
+  'change-route-plane': ({ target }) => {
+    if (G) changeSelectedRoutePlane(target);
+  },
+  'buy-plane': ({ target }) => buySelectedPlane(target),
+  'sell-plane': ({ target }) => sellSelectedPlane(target),
+  'return-lease': ({ target }) => returnSelectedLease(target),
+  'close-route': ({ target }) => closeRoute(target),
+  'open-trait-coins': () => openTraitCoins(G),
+  'select-trait-coin': ({ target }) => revealSelectedTrait(target.dataset.trait, target.dataset.coinIndex),
+  'confirm-trait': ({ target }) => {
+    if (G) confirmTrait(target);
+  },
+  noop: () => {},
+  'confirm-loan': ({ target }) => {
+    if (G) showLoanConfirm(G, parseFloat(target.dataset.amount));
+  },
+  'take-loan': ({ target }) => takeSelectedLoan(target),
+  'repay-loan': ({ target }) => repaySelectedLoan(target),
+  'show-newspaper': () => {
+    if (G) showNewspaper(G);
+  },
+  'show-report': () => {
+    if (G) showReportAlone(G);
+  },
+  'show-delivery-popup': () => {
+    if (G) showDeliveryPopup(G);
+  },
+  'close-delivery-popup': closeDeliveryPopup,
+  'delivery-backdrop': closeDeliveryPopup,
+  'reload-page': () => location.reload(),
+};
 
-function handleInput(event) {
-  const target = event.target.closest('[data-action]');
-  if (!target) return;
-  switch (target.dataset.action) {
-    case 'company-name-input':
-      setTutorialCompanyName(target.value);
-      break;
-    case 'route-price-preview':
-      updatePricePreview(G);
-      break;
-    case 'plane-purchase-quantity':
-      if (G) updatePlanePurchaseOptions(G, target.dataset.planeId);
-      break;
-    case 'adjust-price-preview':
-      updateAdjustedPriceDisplay();
-      break;
-    default:
-      break;
-  }
-}
+const inputActions = {
+  'company-name-input': ({ target }) => setTutorialCompanyName(target.value),
+  'route-price-preview': () => updatePricePreview(G),
+  'plane-purchase-quantity': ({ target }) => {
+    if (G) updatePlanePurchaseOptions(G, target.dataset.planeId);
+  },
+  'adjust-price-preview': updateAdjustedPriceDisplay,
+};
+
+const knownActions = actionNames(clickActions, inputActions);
+const handleClick = createDelegatedActionHandler(clickActions, {
+  knownActions,
+  selfOnlyActions: ['modal-backdrop', 'delivery-backdrop'],
+});
+const handleInput = createDelegatedActionHandler(inputActions, { knownActions });
 
 function handleKeydown(event) {
   if (event.key !== 'Escape') return;
