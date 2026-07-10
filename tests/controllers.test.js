@@ -122,6 +122,7 @@ describe('application controllers', () => {
       'open-route-price-adjust',
       'return-lease',
       'return-route-list',
+      'route-list-filter',
       'route-list-page',
       'route-list-page-size',
       'route-list-sort',

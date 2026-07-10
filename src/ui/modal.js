@@ -26,7 +26,7 @@ export function showRouteModal(html) {
   renderModalRoot(`<div class="modal-overlay route-overlay" data-action="modal-backdrop"><div class="modal route-modal modal-relative" role="dialog" aria-modal="true" tabindex="-1">${html}</div></div>`);
 }
 
-export function renderModalRoot(html) {
+export function renderModalRoot(html, options = {}) {
   const root = byId('modal-root');
   if (!root) return;
   hideBanner();
@@ -43,9 +43,10 @@ export function renderModalRoot(html) {
     if (!heading.id) heading.id = 'modal-title';
     dialog.setAttribute('aria-labelledby', heading.id);
   }
+  const focusTarget = options.focusSelector ? dialog.querySelector(options.focusSelector) : dialog;
   queueMicrotask(() => {
     if (!dialog.isConnected) return;
-    dialog.focus({ preventScroll: true });
+    (focusTarget || dialog).focus({ preventScroll: true });
   });
 }
 

@@ -242,6 +242,107 @@ test('management workspaces fit the viewport and restore their triggers', async 
   expect(pageErrors, `${testInfo.project.name} browser errors`).toEqual([]);
 });
 
+test('dense route management filters diagnostic states', async ({ page, pageErrors }, testInfo) => {
+  await page.goto('/');
+  const counts = await page.evaluate(async () => {
+    const [{ createLongGameFixture }, { analyzeRouteDiagnostics }, { saveGameState }, { showSaveMenu }] = await Promise.all([
+      import('/src/simulation/longGame.js'),
+      import('/src/domain/routeDiagnostics.js'),
+      import('/src/domain/save.js'),
+      import('/src/ui/tutorial.js'),
+    ]);
+    const { state } = createLongGameFixture();
+    const fleetUids = new Set(state.fleet.filter((plane) => !plane.delivering).map((plane) => plane.uid));
+    const candidates = state.routes.filter((route) => (
+      !route.suspended
+      && !route.isNew
+      && (route.assignedPlanes || []).some((uid) => fleetUids.has(uid))
+    ));
+    Object.assign(candidates[0], { profit: -2.5, loadFactor: 0.72 });
+    Object.assign(candidates[1], { profit: 1.2, loadFactor: 0.48 });
+    Object.assign(candidates[2], { suspended: true, loadFactor: 0, revenue: 0, cost: 0, profit: 0 });
+    const contractRoute = candidates[3];
+    const contract = {
+      id: 'airport-contract-9999',
+      status: 'active',
+      airportId: contractRoute.toAirportId,
+      cityId: contractRoute.to,
+      originCityId: contractRoute.from,
+      offerPeriod: `${state.year}-Q${state.quarter}`,
+      durationQuarters: 4,
+      remainingQuarters: 4,
+      requiredMetQuarters: 3,
+      metQuarters: 0,
+      missedQuarters: 0,
+      minLoadFactor: 0.45,
+      minServiceMultiplier: 1,
+      upfrontSubsidy: 0,
+      quarterlyGuarantee: 0.8,
+      completionBonus: 1.5,
+      landingDiscount: 0.2,
+      routeUid: contractRoute.uid,
+      acceptedTurn: state.turnsPlayed,
+      resolvedTurn: null,
+      lastQuarterMet: false,
+    };
+    state.airportContracts.push(contract);
+    state.airportContractIdCounter = 10000;
+    contractRoute.airportContractId = contract.id;
+    const analysis = analyzeRouteDiagnostics(state);
+    saveGameState(state);
+    showSaveMenu();
+    return analysis.counts;
+  });
+
+  expect(counts.all).toBeGreaterThanOrEqual(60);
+  expect(counts.attention).toBeGreaterThanOrEqual(3);
+  expect(counts.loss).toBeGreaterThanOrEqual(1);
+  expect(counts.lowLoad).toBeGreaterThanOrEqual(1);
+  expect(counts.unassigned).toBeGreaterThanOrEqual(1);
+  expect(counts.suspended).toBeGreaterThanOrEqual(1);
+  expect(counts.contract).toBeGreaterThanOrEqual(1);
+
+  await page.locator('.save-card').click();
+  await page.getByRole('button', { name: '航线管理' }).click();
+  const dialog = page.getByRole('dialog', { name: '航线管理' });
+  await expect(dialog).toBeVisible();
+  await assertDialogFitsViewport(dialog, page);
+  await expect(dialog.locator('[data-route-filter="all"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(dialog.locator('[data-route-filter="all"]')).toContainText(String(counts.all));
+  await dialog.locator('[data-route-filter="attention"]').click();
+  await expect(dialog.locator('[data-route-filter="attention"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(dialog.locator('[data-route-filter="attention"]')).toBeFocused();
+  await expect(dialog.locator('.route-filter-result')).toHaveText(`${counts.attention} / ${counts.all} 条`);
+
+  const expectedPageRows = Math.min(10, counts.attention);
+  if (testInfo.project.name === 'desktop') {
+    await expect(dialog.locator('.route-table tbody tr')).toHaveCount(expectedPageRows);
+    await expect(dialog.locator('.route-table .route-diagnostic-badge').first()).toBeVisible();
+  } else {
+    await expect(dialog.locator('.route-card')).toHaveCount(expectedPageRows);
+    await expect(dialog.locator('.route-card .route-diagnostic-badge').first()).toBeVisible();
+    await expect(dialog.locator('.route-card', { hasText: '无飞机' }).first()).toContainText('待配机');
+  }
+  const filterGeometry = await dialog.evaluate((element) => {
+    const toolbar = element.querySelector('.route-filter-toolbar').getBoundingClientRect();
+    const contentElement = [...element.querySelectorAll('.route-table-wrap, .route-card-list')]
+      .find((candidate) => getComputedStyle(candidate).display !== 'none');
+    const content = contentElement.getBoundingClientRect();
+    return {
+      toolbarBottom: toolbar.bottom,
+      contentTop: content.top,
+      horizontalOverflow: element.scrollWidth - element.clientWidth,
+    };
+  });
+  expect(filterGeometry.toolbarBottom).toBeLessThanOrEqual(filterGeometry.contentTop + 1);
+  expect(filterGeometry.horizontalOverflow).toBeLessThanOrEqual(1);
+
+  if (process.env.ROUTE_VISUAL_QA === '1') {
+    await dialog.screenshot({ path: `/tmp/doudou-route-diagnostics-${testInfo.project.name}.png` });
+  }
+  expect(pageErrors, `${testInfo.project.name} browser errors`).toEqual([]);
+});
+
 test('angel rescue returns to a rereadable quarter report', async ({ page, pageErrors }, testInfo) => {
   await page.goto('/');
   await page.evaluate(async () => {

@@ -853,6 +853,15 @@ body.modal-open #milestone-toast{visibility:hidden;opacity:0;pointer-events:none
 .route-selection-hint{color:#556}
 .route-selection-base-warning{color:#f87171;font-size:11px;margin-left:6px}
 .route-selection-warning{color:#f87171;font-size:11px;margin-top:4px}
+.route-filter-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 9px;padding-bottom:8px;border-bottom:1px solid #1a2d48}
+.route-filter-group{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.route-filter-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:28px;border:1px solid #1e3a5f;border-radius:5px;background:#0a1628;color:#94a3b8;padding:3px 8px;font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+.route-filter-btn:hover,.route-filter-btn:focus-visible{border-color:#60a5fa;color:#dbeafe;outline:none}
+.route-filter-btn.active{border-color:#3b82f6;background:#17345c;color:#fff}
+.route-filter-btn b{min-width:1.2em;color:#64748b;font-size:10px;font-variant-numeric:tabular-nums}
+.route-filter-btn.active b{color:#bfdbfe}
+.route-filter-result{flex:0 0 auto;color:#7ba3cc;font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.route-filter-empty{min-height:160px;display:flex;align-items:center;justify-content:center;border:1px dashed #1e3a5f;border-radius:7px;background:#081426;color:#64748b;font-size:12px}
 .route-table-wrap{overflow-x:auto}
 .route-card-list{display:none}
 .route-table{width:100%;border-collapse:collapse;font-size:12px}
@@ -865,8 +874,15 @@ body.modal-open #milestone-toast{visibility:hidden;opacity:0;pointer-events:none
 .route-table td{padding:7px 6px;border-bottom:1px solid #1a2d48;text-align:center;vertical-align:middle}
 .route-airport-operational{display:block;color:#64748b;font-size:8px;white-space:nowrap;margin-top:2px}
 .route-table tr:hover td{background:#162d5060}
+.route-row-attention td:first-child{box-shadow:inset 2px 0 #f59e0b}
 .route-row-suspended{opacity:0.5}
-.route-suspended-badge{color:#f87171;font-size:10px;margin-left:4px;font-weight:700}
+.route-city-name{display:block;white-space:nowrap}
+.route-diagnostic-badges{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px;margin-top:3px}
+.route-diagnostic-badge{display:inline-flex;align-items:center;min-height:16px;border:1px solid currentColor;border-radius:4px;padding:0 4px;font-size:9px;font-weight:700;line-height:1.2;white-space:nowrap}
+.route-diagnostic-danger{color:#fca5a5;background:#451a1a}
+.route-diagnostic-warning{color:#fcd34d;background:#3b2a0c}
+.route-diagnostic-muted{color:#94a3b8;background:#1e293b}
+.route-diagnostic-info{color:#67e8f9;background:#083344}
 .route-state-tag{font-size:13px;font-weight:700}
 .route-state-reopened{color:#60a5fa}
 .route-state-new{color:#fbbf24}
@@ -910,7 +926,8 @@ body.modal-open #milestone-toast{visibility:hidden;opacity:0;pointer-events:none
 .route-page-btn.active{background:#2563eb;color:#fff}
 .route-list-actions{margin-top:8px}
 .route-list-modal{max-width:900px!important;min-width:min(700px,calc(100vw - 24px))!important}
-.route-card{border:1px solid #1e3a5f;border-radius:10px;background:#0a1628;padding:10px;display:flex;flex-direction:column;gap:8px}
+.route-card{border:1px solid #1e3a5f;border-radius:8px;background:#0a1628;padding:10px;display:flex;flex-direction:column;gap:8px}
+.route-card-attention{border-left-color:#f59e0b;border-left-width:2px}
 .route-card-suspended{opacity:0.68}
 .route-card-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .route-card-head strong{font-size:14px;color:#e0e8f0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -921,6 +938,7 @@ body.modal-open #milestone-toast{visibility:hidden;opacity:0;pointer-events:none
 .route-card-grid b{font-size:12px;color:#e0e8f0;font-weight:700}
 .route-card-plane{color:#7ba3cc;font-size:12px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .route-card-operational{color:#60a5fa;font-size:10px;line-height:1.3}
+.route-card>.route-diagnostic-badges{justify-content:flex-start;margin-top:-2px}
 .route-card-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:6px}
 .route-card-actions .btn{min-width:0;padding:6px 4px;background:#334155;color:#e0e8f0}
 .route-card-actions .btn-danger{background:#dc2626;color:#fff}

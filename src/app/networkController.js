@@ -378,6 +378,10 @@ export function createNetworkController(app) {
       toggleRouteListSort(target.dataset.sortKey);
       showRouteList(game);
     },
+    'route-list-filter': ({ target }) => {
+      const game = state();
+      if (game) showRouteList(game, { filter: target.dataset.routeFilter });
+    },
     'route-list-page': ({ target }) => {
       const game = state();
       if (game) showRouteList(game, { page: target.dataset.page });

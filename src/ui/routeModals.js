@@ -3,6 +3,11 @@ import { airportDisplayCode, getAirport } from '../domain/airports.js';
 import { routePlanePerformance } from '../domain/airportPerformance.js';
 import { airportCapacitySnapshot, routeHubDemandMultiplier } from '../domain/airportCapacity.js';
 import { byId, clamp, fmt, fmtPct, getCity } from '../domain/helpers.js';
+import {
+  analyzeRouteDiagnostics,
+  matchesRouteDiagnostic,
+  normalizeRouteDiagnosticFilter,
+} from '../domain/routeDiagnostics.js';
 import { availablePlanes, findRoute } from '../domain/routes.js';
 import { getRouteAlternateOptions, routeAlternateSummary } from '../domain/airportResilience.js';
 import { escapeAttr, escapeHtml } from './html.js';
@@ -11,6 +16,25 @@ import { renderModalRoot, showModal } from './modal.js';
 let routeListSort = { key: 'profit', dir: 'desc' };
 let routeListPage = 0;
 let routeListPageSize = 10;
+let routeListFilter = 'all';
+
+const ROUTE_FILTER_OPTIONS = [
+  { key: 'all', label: '全部' },
+  { key: 'attention', label: '需关注' },
+  { key: 'loss', label: '亏损' },
+  { key: 'lowLoad', label: '低客座' },
+  { key: 'unassigned', label: '无飞机' },
+  { key: 'suspended', label: '停飞' },
+  { key: 'contract', label: '合同' },
+];
+
+const ROUTE_DIAGNOSTIC_BADGES = [
+  { key: 'unassigned', label: '无飞机', tone: 'danger', title: '没有可运营的执飞飞机' },
+  { key: 'loss', label: '亏损', tone: 'danger', title: '最近已结算季度为负收益' },
+  { key: 'lowLoad', label: '低客座', tone: 'warning', title: '最近已结算季度客座率低于 60%' },
+  { key: 'suspended', label: '停飞', tone: 'muted', title: '航线当前处于停飞状态' },
+  { key: 'contract', label: '合同', tone: 'info', title: '航线正在履行机场开发合同' },
+];
 
 export {
   setRoutePricePreset,
@@ -19,22 +43,32 @@ export {
 } from './routeCreationModal.js';
 
 export function showRouteList(state, options = {}) {
+  let focusSelector = null;
   if (options.reset) {
     routeListSort = { key: 'profit', dir: 'desc' };
     routeListPage = 0;
     routeListPageSize = 10;
+    routeListFilter = 'all';
   }
   if (options.page !== undefined) routeListPage = Number(options.page) || 0;
   if (options.pageSize !== undefined) {
     routeListPageSize = Number(options.pageSize) || 10;
     routeListPage = 0;
   }
+  if (options.filter !== undefined) {
+    routeListFilter = normalizeRouteDiagnosticFilter(options.filter);
+    routeListPage = 0;
+    focusSelector = `[data-route-filter="${routeListFilter}"]`;
+  }
   if (state.routes.length === 0) {
     showModal('<h2>航线管理</h2><p class="modal-empty modal-empty-compact">尚未开通航线。</p><div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>');
     return;
   }
-  const rows = buildRouteRows(state);
-  sortRouteRows(rows);
+  const analysis = analyzeRouteDiagnostics(state);
+  const diagnosticsByRoute = new Map(analysis.entries.map((entry) => [entry.route, entry.diagnostics]));
+  const allRows = buildRouteRows(state, diagnosticsByRoute);
+  sortRouteRows(allRows);
+  const rows = allRows.filter((row) => matchesRouteDiagnostic(row.diagnostics, routeListFilter));
   const total = rows.length;
   const totalPages = Math.max(1, Math.ceil(total / routeListPageSize));
   routeListPage = clamp(routeListPage, 0, totalPages - 1);
@@ -48,20 +82,26 @@ export function showRouteList(state, options = {}) {
     { key: 'lf', icon: '👥', label: '客座率' },
     { key: 'profit', icon: '📈', label: '收益' },
   ];
-  let html = `<h2>航线管理</h2><div class="route-table-wrap"><table class="route-table"><caption class="sr-only">航线经营数据</caption><thead><tr>`;
-  cols.forEach((col) => {
-    const sorted = routeListSort.key === col.key;
-    const cls = sorted ? (routeListSort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
-    const ariaSort = sorted ? (routeListSort.dir === 'asc' ? 'ascending' : 'descending') : 'none';
-    const indicator = sorted ? `<span class="route-sort-indicator" aria-hidden="true">${routeListSort.dir === 'asc' ? '▲' : '▼'}</span>` : '';
-    html += `<th class="${cls}" aria-sort="${ariaSort}"><button class="route-sort-btn" type="button" data-action="route-list-sort" data-sort-key="${escapeAttr(col.key)}" title="按${escapeAttr(col.label)}排序">${escapeHtml(col.icon)} <span class="route-sort-label">${escapeHtml(col.label)}</span>${indicator}</button></th>`;
-  });
-  html += '<th class="no-sort" title="操作">操作</th></tr></thead><tbody>';
-  pageRows.forEach((row) => {
-    html += renderRouteRow(row);
-  });
-  html += `</tbody></table></div><div class="route-card-list">${pageRows.map(renderRouteCard).join('')}</div>${renderPagination(totalPages)}<div class="modal-actions route-list-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>`;
-  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop"><div class="modal route-list-modal modal-relative">${html}</div></div>`);
+  let html = `<h2>航线管理</h2>${renderRouteFilters(analysis.counts, total)}`;
+  if (pageRows.length === 0) {
+    html += '<div class="route-filter-empty" role="status">当前筛选没有匹配航线。</div>';
+  } else {
+    html += '<div class="route-table-wrap"><table class="route-table"><caption class="sr-only">航线经营数据</caption><thead><tr>';
+    cols.forEach((col) => {
+      const sorted = routeListSort.key === col.key;
+      const cls = sorted ? (routeListSort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+      const ariaSort = sorted ? (routeListSort.dir === 'asc' ? 'ascending' : 'descending') : 'none';
+      const indicator = sorted ? `<span class="route-sort-indicator" aria-hidden="true">${routeListSort.dir === 'asc' ? '▲' : '▼'}</span>` : '';
+      html += `<th class="${cls}" aria-sort="${ariaSort}"><button class="route-sort-btn" type="button" data-action="route-list-sort" data-sort-key="${escapeAttr(col.key)}" title="按${escapeAttr(col.label)}排序">${escapeHtml(col.icon)} <span class="route-sort-label">${escapeHtml(col.label)}</span>${indicator}</button></th>`;
+    });
+    html += '<th class="no-sort" title="操作">操作</th></tr></thead><tbody>';
+    pageRows.forEach((row) => {
+      html += renderRouteRow(row);
+    });
+    html += `</tbody></table></div><div class="route-card-list">${pageRows.map(renderRouteCard).join('')}</div>${renderPagination(totalPages)}`;
+  }
+  html += '<div class="modal-actions route-list-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>';
+  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop"><div class="modal route-list-modal modal-relative">${html}</div></div>`, { focusSelector });
 }
 
 export function toggleRouteListSort(key) {
@@ -195,7 +235,7 @@ export function showRouteAlternateModal(state, routeUid) {
   showModal(`<div class="route-alternate-modal"><h2>备降与韧性计划</h2><p>为 ${escapeHtml(getCity(route.from)?.name || route.from)} → ${escapeHtml(getCity(route.to)?.name || route.to)} 的两端机场预先指定备降点。每次新增方案收取 0.5M 规划费；机场中断时可显著保留需求并降低额外成本。</p>${sections}<div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="return-route-list">返回航线管理</button></div></div>`);
 }
 
-function buildRouteRows(state) {
+function buildRouteRows(state, diagnosticsByRoute) {
   const fleetByUid = new Map(state.fleet.map((plane) => [plane.uid, plane]));
   return state.routes.flatMap((route) => {
     const a = getCity(route.from);
@@ -222,7 +262,7 @@ function buildRouteRows(state) {
     const hubBonus = Math.max(0, routeHubDemandMultiplier(state, route) - 1);
     const alternates = routeAlternateSummary(route);
     const alternateText = [alternates.from, alternates.to].filter(Boolean).map(airportDisplayCode).join('/');
-    const operationalNote = `${capacityText}${hubBonus > 0 ? ` · 枢纽+${fmtPct(hubBonus * 100)}` : ''}${route.airportContractId ? ' · 合同' : ''}${alternateText ? ` · 备降 ${alternateText}` : ''}`;
+    const operationalNote = `${capacityText}${hubBonus > 0 ? ` · 枢纽+${fmtPct(hubBonus * 100)}` : ''}${alternateText ? ` · 备降 ${alternateText}` : ''}`;
     return {
       uid: route.uid,
       from: `${a.name} ${fromCode}`,
@@ -246,6 +286,7 @@ function buildRouteRows(state) {
       suspendCooldown: route._suspendTurn !== undefined && route._suspendTurn >= state.turnsPlayed,
       resumeCooldown: route._resumedTurn !== undefined && route._resumedTurn >= state.turnsPlayed,
       operationalNote,
+      diagnostics: diagnosticsByRoute.get(route),
     };
   });
 }
@@ -269,7 +310,7 @@ function renderRouteRow(row) {
   const profitTrend = row.profit > row.lastProfit ? '📈' : row.profit < row.lastProfit ? '📉' : '📊';
   const reopenedTag = '<span class="route-state-tag route-state-reopened">reopen</span>';
   const newTag = '<span class="route-state-tag route-state-new">new</span>';
-  const suspendedBadge = row.suspended ? '<span class="route-suspended-badge">停飞中</span>' : '';
+  const diagnosticBadges = renderRouteDiagnosticBadges(row.diagnostics);
   const lfDisplay = row.suspended ? '0%' : row.reopened ? reopenedTag : row.isNew ? newTag : changed ? `${lastLfPct}<span class="route-trend" title="数据下季度可能变化">${lfTrend}</span>` : lfPct;
   const profitDisplay = row.suspended ? '--' : row.reopened ? reopenedTag : row.isNew ? newTag : changed ? `<span class="${lastProfitClass}">${fmt(row.lastProfit)}</span><span class="route-trend" title="数据下季度可能变化">${profitTrend}</span>` : `<span class="${profitClass}">${fmt(row.profit)}</span>`;
   const changeIcon = changed ? '<span class="route-change-icon" title="本季度调整过票价或机型">🔄</span>' : '';
@@ -279,8 +320,12 @@ function renderRouteRow(row) {
   const toggleClass = row.suspended ? 'route-table-action-resume' : 'route-table-action-suspend';
   const toggleIcon = row.suspended ? '▶' : '⏸';
   const suspendButton = `<button class="btn btn-sm route-table-action ${toggleClass}${toggleCooldown ? ' route-action-disabled' : ''}" type="button" data-action="${toggleCooldown ? 'noop' : 'toggle-route-suspend'}" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}" title="${toggleTitle}" aria-label="${toggleTitle}">${toggleIcon}</button>`;
-  return `<tr class="${row.suspended ? 'route-row-suspended' : ''}">
-    <td>${escapeHtml(row.from)}${suspendedBadge}</td>
+  const rowClasses = [
+    row.suspended ? 'route-row-suspended' : '',
+    row.diagnostics?.attention ? 'route-row-attention' : '',
+  ].filter(Boolean).join(' ');
+  return `<tr class="${rowClasses}">
+    <td><span class="route-city-name">${escapeHtml(row.from)}</span>${diagnosticBadges}</td>
     <td>${escapeHtml(row.to)}</td>
     <td>${row.dist}km<small class="route-airport-operational">${escapeHtml(row.operationalNote)}</small></td>
     <td class="route-plane-cell" title="${escapeAttr(row.planesPlain)}">${row.planes}${row.planeChanged ? changeIcon : ''}</td>
@@ -303,16 +348,18 @@ function renderRouteCard(row) {
   const changed = row.priceAdjusted || row.planeChanged;
   const lfTrend = row.lf > row.lastLf ? '📈' : row.lf < row.lastLf ? '📉' : '📊';
   const profitTrend = row.profit > row.lastProfit ? '📈' : row.profit < row.lastProfit ? '📉' : '📊';
-  const status = row.suspended ? '停飞中' : row.reopened ? '复飞待观察' : row.isNew ? '新航线' : changed ? '本季已调整' : '运营中';
+  const status = row.suspended ? '停飞中' : row.diagnostics?.unassigned ? '待配机' : row.reopened ? '复飞待观察' : row.isNew ? '新航线' : changed ? '本季已调整' : '运营中';
   const lfDisplay = row.suspended ? '0%' : row.reopened ? 'reopen' : row.isNew ? 'new' : changed ? `${fmtPct(row.lastLf * 100)} ${lfTrend}` : fmtPct(row.lf * 100);
   const profitDisplay = row.suspended ? '--' : row.reopened ? 'reopen' : row.isNew ? 'new' : changed ? `<span class="${lastProfitClass}">${fmt(row.lastProfit)}</span> ${profitTrend}` : `<span class="${profitClass}">${fmt(row.profit)}</span>`;
   const suspendAction = row.suspended ? '复飞' : '停飞';
   const suspendDisabled = row.suspended ? row.resumeCooldown : row.suspendCooldown;
-  return `<div class="route-card${row.suspended ? ' route-card-suspended' : ''}">
+  const diagnosticBadges = renderRouteDiagnosticBadges(row.diagnostics);
+  return `<div class="route-card${row.suspended ? ' route-card-suspended' : ''}${row.diagnostics?.attention ? ' route-card-attention' : ''}">
     <div class="route-card-head">
       <strong>${escapeHtml(row.from)} → ${escapeHtml(row.to)}</strong>
       <span>${status}</span>
     </div>
+    ${diagnosticBadges}
     <div class="route-card-grid">
       <div><small>距离</small><b>${row.dist}km</b></div>
       <div><small>票价</small><b>${row.suspended ? '--' : row.priceCoeffStr}</b></div>
@@ -329,6 +376,25 @@ function renderRouteCard(row) {
       <button class="btn btn-danger btn-sm" type="button" data-action="confirm-close-route" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}">关闭</button>
     </div>
   </div>`;
+}
+
+function renderRouteFilters(counts, filteredTotal) {
+  const buttons = ROUTE_FILTER_OPTIONS.map((filter) => {
+    const active = routeListFilter === filter.key;
+    return `<button class="route-filter-btn${active ? ' active' : ''}" type="button" data-action="route-list-filter" data-route-filter="${escapeAttr(filter.key)}" aria-pressed="${active}"><span>${escapeHtml(filter.label)}</span><b>${counts[filter.key] || 0}</b></button>`;
+  }).join('');
+  const total = counts.all || 0;
+  const result = filteredTotal === total ? `${total} 条` : `${filteredTotal} / ${total} 条`;
+  return `<div class="route-filter-toolbar"><div class="route-filter-group" role="group" aria-label="航线状态筛选">${buttons}</div><span class="route-filter-result" aria-live="polite">${result}</span></div>`;
+}
+
+function renderRouteDiagnosticBadges(diagnostics) {
+  const activeBadges = ROUTE_DIAGNOSTIC_BADGES.filter((badge) => diagnostics?.[badge.key]);
+  const badges = activeBadges
+    .map((badge) => `<span class="route-diagnostic-badge route-diagnostic-${badge.tone}" title="${escapeAttr(badge.title)}">${escapeHtml(badge.label)}</span>`)
+    .join('');
+  const label = `航线状态：${activeBadges.map((badge) => badge.label).join('、')}`;
+  return badges ? `<span class="route-diagnostic-badges" aria-label="${escapeAttr(label)}">${badges}</span>` : '';
 }
 
 function renderPagination(totalPages) {
