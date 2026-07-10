@@ -27,6 +27,7 @@ export {
   updateAdjustedPriceDisplay,
   updatePricePreview,
 } from './routeModals.js';
+export { showTurnPreview } from './turnPreviewModal.js';
 export {
   buyStockFromModal,
   sellStockFromModal,

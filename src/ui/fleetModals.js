@@ -1,7 +1,21 @@
-import { AIRCRAFT_RETIREMENT_AGE_YEARS, LEASE_TERM_QUARTERS, availablePlaneTemplates, countBoughtPlanes, countLeasedPlanes, maxLeasedPlanes, quotePlaneAcquisition } from '../domain/fleet.js';
+import { LEASE_TERM_QUARTERS, availablePlaneTemplates, countBoughtPlanes, countLeasedPlanes, maxLeasedPlanes, quotePlaneAcquisition } from '../domain/fleet.js';
+import { analyzeFleetPlan, matchesFleetPlanFilter, normalizeFleetPlanFilter } from '../domain/fleetPlanning.js';
 import { fmt, getCity } from '../domain/helpers.js';
 import { escapeAttr, escapeHtml } from './html.js';
 import { showModal } from './modal.js';
+
+let fleetListFilter = 'all';
+let fleetListPage = 0;
+const FLEET_LIST_PAGE_SIZE = 20;
+
+const FLEET_FILTER_OPTIONS = [
+  { key: 'all', label: '全部' },
+  { key: 'renewal', label: '8季内更新' },
+  { key: 'assigned', label: '已分配' },
+  { key: 'idle', label: '空闲' },
+  { key: 'delivering', label: '交付中' },
+  { key: 'leased', label: '租赁' },
+];
 
 export function showBuyPlaneModal(state) {
   const boughtCount = countBoughtPlanes(state);
@@ -124,41 +138,124 @@ function planeTypeLabel(type) {
   return '超宽体';
 }
 
-export function showFleetPanel(state) {
-  let html = '<h2>机队管理</h2>';
+export function showFleetPanel(state, options = {}) {
+  let focusSelector = null;
+  if (options.reset) {
+    fleetListFilter = 'all';
+    fleetListPage = 0;
+  }
+  if (options.filter !== undefined) {
+    fleetListFilter = normalizeFleetPlanFilter(options.filter);
+    fleetListPage = 0;
+    focusSelector = `[data-fleet-filter="${fleetListFilter}"]`;
+  }
+  if (options.page !== undefined) {
+    fleetListPage = Math.max(0, Number(options.page) || 0);
+  }
+
+  const plan = analyzeFleetPlan(state);
+  const entries = plan.entries
+    .filter((entry) => matchesFleetPlanFilter(entry, fleetListFilter))
+    .sort(compareFleetPlanEntries);
+  const totalPages = Math.max(1, Math.ceil(entries.length / FLEET_LIST_PAGE_SIZE));
+  fleetListPage = Math.min(fleetListPage, totalPages - 1);
+  const pageEntries = entries.slice(
+    fleetListPage * FLEET_LIST_PAGE_SIZE,
+    fleetListPage * FLEET_LIST_PAGE_SIZE + FLEET_LIST_PAGE_SIZE,
+  );
+
+  let html = `<div class="fleet-panel"><div class="fleet-panel-head"><div><h2>机队管理</h2><p>自有 ${plan.summary.owned} 架 · 租赁 ${plan.summary.leased} 架 · 共 ${plan.summary.total} 架</p></div><button class="btn btn-primary btn-sm" type="button" data-action="open-buy-plane-modal">补充运力</button></div>`;
   if (state.fleet.length === 0) {
     html += '<p class="modal-empty modal-empty-compact">尚未拥有飞机，请先购买。</p>';
   } else {
-    const routeByPlaneUid = new Map();
-    state.routes.forEach((route) => {
-      (route.assignedPlanes || []).forEach((uid) => {
-        if (!routeByPlaneUid.has(uid)) routeByPlaneUid.set(uid, route);
-      });
-    });
-    state.fleet.forEach((p) => {
-      const assignedRoute = routeByPlaneUid.get(p.uid);
-      const status = p.delivering ? `交付中 (${p.deliverIn}回合)` : assignedRoute ? `${getCity(assignedRoute.from).name}→${getCity(assignedRoute.to).name}` : '空闲';
-      const statusClass = p.delivering ? 'status-delivering' : assignedRoute ? 'status-assigned' : 'status-idle';
-      const lifecycleMeta = fleetLifecycleMeta(p);
-      const action = p.isLease ? 'return-lease' : 'sell-plane';
-      const actionLabel = p.isLease ? '退租' : '出售';
-      html += `<div class="fleet-item"><div class="fleet-item-main"><span class="name">${escapeHtml(p.name)}</span>${lifecycleMeta}<span class="fleet-age">机龄${p.age.toFixed(1)}年</span></div><div class="fleet-item-side"><span class="status ${statusClass}">${escapeHtml(status)}</span>${!p.delivering && !assignedRoute ? `<button class="btn btn-danger btn-sm" type="button" data-action="${action}" data-uid="${escapeAttr(p.uid)}">${actionLabel}</button>` : ''}</div></div>`;
-    });
+    html += renderFleetPlanSummary(plan.summary);
+    html += renderFleetFilters(plan.counts, entries.length);
+    html += pageEntries.length > 0
+      ? `<div class="fleet-list">${pageEntries.map((entry) => renderFleetItem(entry)).join('')}</div>${renderFleetPagination(totalPages)}`
+      : '<div class="fleet-filter-empty" role="status">当前筛选没有匹配飞机。</div>';
   }
-  html += '<div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>';
-  showModal(html);
+  html += '<div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div></div>';
+  showModal(html, { wide: true, focusSelector });
 }
 
-function fleetLifecycleMeta(plane) {
-  if (plane.isLease) {
-    const leaseTurns = Math.max(0, Number(plane.leaseTurns) || 0);
-    const maxLeaseTurns = Math.max(1, Number(plane.maxLeaseTurns) || LEASE_TERM_QUARTERS);
-    const remainingTurns = Math.max(0, maxLeaseTurns - leaseTurns);
-    const warningClass = remainingTurns <= 4 ? ' fleet-lifecycle-warning' : '';
-    const label = remainingTurns <= 4 ? `剩余${remainingTurns}季` : `租${leaseTurns}/${maxLeaseTurns}季`;
-    return `<span class="lease-badge">R</span><span class="fleet-lease-meta${warningClass}">${label}</span>`;
+function renderFleetPlanSummary(summary) {
+  return `<div class="fleet-plan-summary" aria-label="机队更新计划">
+    <span class="${summary.dueNextQuarter > 0 ? 'risk' : ''}"><small>下季离场</small><strong>${summary.dueNextQuarter} 架</strong></span>
+    <span class="${summary.dueWithinFourQuarters > 0 ? 'warning' : ''}"><small>4季内离场</small><strong>${summary.dueWithinFourQuarters} 架</strong></span>
+    <span><small>4季替代需求</small><strong>${summary.affectedRoutesWithinFourQuarters} 线 · ${summary.replacementSeatsWithinFourQuarters} 座</strong></span>
+    <span class="positive"><small>2季内交付</small><strong>${summary.deliveriesWithinTwoQuarters} 架 · ${summary.seatsDeliveringWithinTwoQuarters} 座</strong></span>
+  </div>`;
+}
+
+function renderFleetFilters(counts, filteredTotal) {
+  const buttons = FLEET_FILTER_OPTIONS.map((filter) => {
+    const active = fleetListFilter === filter.key;
+    return `<button class="fleet-filter-btn${active ? ' active' : ''}" type="button" data-action="fleet-list-filter" data-fleet-filter="${escapeAttr(filter.key)}" aria-pressed="${active}"><span>${escapeHtml(filter.label)}</span><b>${counts[filter.key] || 0}</b></button>`;
+  }).join('');
+  const total = counts.all || 0;
+  const result = filteredTotal === total ? `${total} 架` : `${filteredTotal} / ${total} 架`;
+  return `<div class="fleet-filter-toolbar"><div class="fleet-filter-group" role="group" aria-label="机队筛选">${buttons}</div><span class="fleet-filter-result" aria-live="polite">${result}</span></div>`;
+}
+
+function renderFleetItem(entry) {
+  const plane = entry.plane;
+  const routeLabel = entry.route
+    ? `${getCity(entry.route.from)?.name || entry.route.from}→${getCity(entry.route.to)?.name || entry.route.to}`
+    : '';
+  const status = entry.delivering
+    ? `交付中 · ${entry.deliveryInQuarters}季`
+    : entry.assigned
+      ? `${entry.route.suspended ? '停飞占用 · ' : ''}${routeLabel}`
+      : '空闲';
+  const statusClass = entry.delivering ? 'status-delivering' : entry.assigned ? 'status-assigned' : 'status-idle';
+  const action = plane.isLease ? 'return-lease' : 'sell-plane';
+  const actionLabel = plane.isLease ? '退租' : '出售';
+  const impact = entry.renewal
+    ? entry.route
+      ? `影响 ${routeLabel} · 需替代 ${entry.replacementSeats} 座`
+      : '当前无航线受影响'
+    : entry.delivering
+      ? `${Math.max(0, Number(plane.seats) || 0)} 座即将加入机队`
+      : '';
+  const urgencyClass = entry.departureInQuarters <= 1 ? ' fleet-item-critical' : entry.renewal ? ' fleet-item-renewal' : '';
+  return `<article class="fleet-item${urgencyClass}">
+    <div class="fleet-item-main">
+      <div class="fleet-item-title"><span class="name">${escapeHtml(plane.name)}</span>${plane.isLease ? '<span class="lease-badge">R</span>' : ''}${renderFleetLifecycleMeta(entry)}</div>
+      <div class="fleet-item-meta"><span>机龄 ${Math.max(0, Number(plane.age) || 0).toFixed(1)} 年</span><span>${Math.max(0, Number(plane.seats) || 0)} 座</span></div>
+    </div>
+    <div class="fleet-item-side"><span class="status ${statusClass}">${escapeHtml(status)}</span>${impact ? `<small>${escapeHtml(impact)}</small>` : ''}${entry.idle ? `<button class="btn btn-danger btn-sm" type="button" data-action="${action}" data-uid="${escapeAttr(plane.uid)}">${actionLabel}</button>` : ''}</div>
+  </article>`;
+}
+
+function renderFleetLifecycleMeta(entry) {
+  if (entry.renewal) {
+    const timing = entry.departureInQuarters <= 1 ? '下季' : `${entry.departureInQuarters}季后`;
+    const reason = entry.departureReason === 'lease_expired' ? '租约到期' : '退役';
+    return `<span class="fleet-lifecycle-warning">${timing}${reason}</span>`;
   }
-  const age = Math.max(0, Number(plane.age) || 0);
-  if (age < AIRCRAFT_RETIREMENT_AGE_YEARS - 2) return '';
-  return `<span class="fleet-lifecycle-warning">距退役${Math.max(0, AIRCRAFT_RETIREMENT_AGE_YEARS - age).toFixed(1)}年</span>`;
+  if (!entry.leased) return '';
+  const leaseTurns = Math.max(0, Number(entry.plane.leaseTurns) || 0);
+  const maxLeaseTurns = Math.max(1, Number(entry.plane.maxLeaseTurns) || LEASE_TERM_QUARTERS);
+  return `<span class="fleet-lease-meta">租 ${leaseTurns}/${maxLeaseTurns} 季</span>`;
+}
+
+function renderFleetPagination(totalPages) {
+  if (totalPages <= 1) return '';
+  return `<div class="fleet-page-info"><span>第 ${fleetListPage + 1}/${totalPages} 页</span><div>
+    <button class="btn btn-sm fleet-page-btn" type="button" data-action="fleet-list-page" data-page="0" title="第一页" aria-label="第一页">«</button>
+    <button class="btn btn-sm fleet-page-btn" type="button" data-action="fleet-list-page" data-page="${Math.max(0, fleetListPage - 1)}" title="上一页" aria-label="上一页">‹</button>
+    <button class="btn btn-sm fleet-page-btn" type="button" data-action="fleet-list-page" data-page="${Math.min(totalPages - 1, fleetListPage + 1)}" title="下一页" aria-label="下一页">›</button>
+    <button class="btn btn-sm fleet-page-btn" type="button" data-action="fleet-list-page" data-page="${totalPages - 1}" title="最后一页" aria-label="最后一页">»</button>
+  </div></div>`;
+}
+
+function compareFleetPlanEntries(a, b) {
+  const aDeparture = a.renewal ? a.departureInQuarters : Number.POSITIVE_INFINITY;
+  const bDeparture = b.renewal ? b.departureInQuarters : Number.POSITIVE_INFINITY;
+  if (aDeparture !== bDeparture) return aDeparture - bDeparture;
+  const aDelivery = a.deliveryInQuarters ?? Number.POSITIVE_INFINITY;
+  const bDelivery = b.deliveryInQuarters ?? Number.POSITIVE_INFINITY;
+  if (aDelivery !== bDelivery) return aDelivery - bDelivery;
+  if (a.assigned !== b.assigned) return a.assigned ? -1 : 1;
+  return String(a.plane.name).localeCompare(String(b.plane.name), 'zh-CN') || a.plane.uid - b.plane.uid;
 }

@@ -19,7 +19,7 @@ let bannerHideTimer = null;
 
 export function showModal(html, options = {}) {
   const widthClass = options.wide ? ' modal-wide' : '';
-  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop"><div class="modal modal-relative${widthClass}" role="dialog" aria-modal="true" tabindex="-1">${html}</div></div>`);
+  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop"><div class="modal modal-relative${widthClass}" role="dialog" aria-modal="true" tabindex="-1">${html}</div></div>`, { focusSelector: options.focusSelector });
 }
 
 export function showRouteModal(html) {

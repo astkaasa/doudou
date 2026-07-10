@@ -358,7 +358,15 @@ export function createNetworkController(app) {
     'confirm-close-branch': ({ target }) => closeBranch(target.dataset.cityId),
     'open-fleet-panel': () => {
       const game = state();
-      if (game) showFleetPanel(game);
+      if (game) showFleetPanel(game, { reset: true });
+    },
+    'fleet-list-filter': ({ target }) => {
+      const game = state();
+      if (game) showFleetPanel(game, { filter: target.dataset.fleetFilter });
+    },
+    'fleet-list-page': ({ target }) => {
+      const game = state();
+      if (game) showFleetPanel(game, { page: target.dataset.page });
     },
     'open-route-list': ({ action }) => {
       const game = state();

@@ -242,16 +242,19 @@ test('management workspaces fit the viewport and restore their triggers', async 
   expect(pageErrors, `${testInfo.project.name} browser errors`).toEqual([]);
 });
 
-test('dense route management filters diagnostic states', async ({ page, pageErrors }, testInfo) => {
+test('dense long-game management surfaces routes, fleet renewal, and fixed risks', async ({ page, pageErrors }, testInfo) => {
+  test.setTimeout(45_000);
   await page.goto('/');
-  const counts = await page.evaluate(async () => {
-    const [{ createLongGameFixture }, { analyzeRouteDiagnostics }, { saveGameState }, { showSaveMenu }] = await Promise.all([
+  const fixture = await page.evaluate(async () => {
+    const [{ createLongGameFixture }, { analyzeRouteDiagnostics }, { analyzeFleetPlan }, { saveGameState }, { showSaveMenu }] = await Promise.all([
       import('/src/simulation/longGame.js'),
       import('/src/domain/routeDiagnostics.js'),
+      import('/src/domain/fleetPlanning.js'),
       import('/src/domain/save.js'),
       import('/src/ui/tutorial.js'),
     ]);
     const { state } = createLongGameFixture();
+    state.onboardStep = 99;
     const fleetUids = new Set(state.fleet.filter((plane) => !plane.delivering).map((plane) => plane.uid));
     const candidates = state.routes.filter((route) => (
       !route.suspended
@@ -270,10 +273,10 @@ test('dense route management filters diagnostic states', async ({ page, pageErro
       originCityId: contractRoute.from,
       offerPeriod: `${state.year}-Q${state.quarter}`,
       durationQuarters: 4,
-      remainingQuarters: 4,
+      remainingQuarters: 1,
       requiredMetQuarters: 3,
-      metQuarters: 0,
-      missedQuarters: 0,
+      metQuarters: 2,
+      missedQuarters: 1,
       minLoadFactor: 0.45,
       minServiceMultiplier: 1,
       upfrontSubsidy: 0,
@@ -288,11 +291,30 @@ test('dense route management filters diagnostic states', async ({ page, pageErro
     state.airportContracts.push(contract);
     state.airportContractIdCounter = 10000;
     contractRoute.airportContractId = contract.id;
-    const analysis = analyzeRouteDiagnostics(state);
+    const assignedPlaneUids = new Set(state.routes.flatMap((route) => route.assignedPlanes || []));
+    const ownedDeparture = state.fleet.find((plane) => !plane.isLease && assignedPlaneUids.has(plane.uid));
+    const leasedDeparture = state.fleet.find((plane) => plane.isLease && assignedPlaneUids.has(plane.uid));
+    ownedDeparture.age = 24.75;
+    leasedDeparture.leaseTurns = (leasedDeparture.maxLeaseTurns || 40) - 1;
+    const deliveryTemplate = state.fleet.find((plane) => !plane.isLease);
+    state.fleet.push({
+      ...structuredClone(deliveryTemplate),
+      uid: state.planeIdCounter++,
+      age: 0,
+      isLease: false,
+      leasePrice: 0,
+      leaseTurns: 0,
+      maxLeaseTurns: 40,
+      delivering: true,
+      deliverIn: 1,
+    });
+    const routeAnalysis = analyzeRouteDiagnostics(state);
+    const fleetPlan = analyzeFleetPlan(state);
     saveGameState(state);
     showSaveMenu();
-    return analysis.counts;
+    return { routeCounts: routeAnalysis.counts, fleetCounts: fleetPlan.counts, fleetSummary: fleetPlan.summary };
   });
+  const counts = fixture.routeCounts;
 
   expect(counts.all).toBeGreaterThanOrEqual(60);
   expect(counts.attention).toBeGreaterThanOrEqual(3);
@@ -339,6 +361,37 @@ test('dense route management filters diagnostic states', async ({ page, pageErro
 
   if (process.env.ROUTE_VISUAL_QA === '1') {
     await dialog.screenshot({ path: `/tmp/doudou-route-diagnostics-${testInfo.project.name}.png` });
+  }
+
+  await page.keyboard.press('Escape');
+  const forecastButton = page.locator('#turn-forecast');
+  await expect(forecastButton).toBeVisible();
+  await expect(forecastButton).toContainText(/季度预估/);
+  await forecastButton.click();
+  const previewDialog = page.getByRole('dialog', { name: '下一季度预览' });
+  await expect(previewDialog).toBeVisible();
+  await assertDialogFitsViewport(previewDialog, page);
+  await expect(previewDialog).toContainText('已知变动');
+  await expect(previewDialog).toContainText('固定期限');
+  await expect(previewDialog.locator('.turn-preview-item.risk')).toHaveCount(2);
+  await expect(previewDialog.getByRole('button', { name: '查看机队计划' })).toBeVisible();
+  if (process.env.ROUTE_VISUAL_QA === '1') {
+    await previewDialog.screenshot({ path: `/tmp/doudou-turn-preview-${testInfo.project.name}.png` });
+  }
+
+  await previewDialog.getByRole('button', { name: '查看机队计划' }).click();
+  const fleetDialog = page.getByRole('dialog', { name: '机队管理' });
+  await expect(fleetDialog).toBeVisible();
+  await assertDialogFitsViewport(fleetDialog, page);
+  await expect(fleetDialog).toContainText(`下季离场${fixture.fleetSummary.dueNextQuarter} 架`);
+  await expect(fleetDialog.locator('[data-fleet-filter="all"]')).toContainText(String(fixture.fleetCounts.all));
+  await fleetDialog.locator('[data-fleet-filter="renewal"]').click();
+  await expect(fleetDialog.locator('[data-fleet-filter="renewal"]')).toBeFocused();
+  await expect(fleetDialog.locator('.fleet-filter-result')).toHaveText(`${fixture.fleetCounts.renewal} / ${fixture.fleetCounts.all} 架`);
+  await expect(fleetDialog.locator('.fleet-item')).toHaveCount(Math.min(20, fixture.fleetCounts.renewal));
+  await expect(fleetDialog.locator('.fleet-lifecycle-warning').first()).toBeVisible();
+  if (process.env.ROUTE_VISUAL_QA === '1') {
+    await fleetDialog.screenshot({ path: `/tmp/doudou-fleet-plan-${testInfo.project.name}.png` });
   }
   expect(pageErrors, `${testInfo.project.name} browser errors`).toEqual([]);
 });

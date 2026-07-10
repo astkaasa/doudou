@@ -17,6 +17,7 @@ import {
   showGameOver,
   showNewspaper,
   showReportAlone,
+  showTurnPreview,
   showTurnSummary,
 } from '../ui/modals.js';
 import {
@@ -234,6 +235,10 @@ export function createTurnController(app) {
       },
       'advance-contract-guide': focusNextPendingContract,
       'advance-turn': () => advanceTurn(),
+      'open-turn-preview': () => {
+        const game = state();
+        if (game) showTurnPreview(game);
+      },
       'resolve-airport-relocation': ({ target }) => {
         const game = state();
         if (!game) return;

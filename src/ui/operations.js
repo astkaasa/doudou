@@ -12,7 +12,7 @@ import {
   SERVICE_MULTIPLIER,
 } from '../domain/operations.js';
 import { byId, fmt } from '../domain/helpers.js';
-import { estimateTurnFinancials } from '../domain/turn.js';
+import { previewNextQuarter } from '../domain/turnPreview.js';
 import { escapeHtml, renderHtml } from './html.js';
 import { showModal } from './modal.js';
 
@@ -128,19 +128,28 @@ export function updateAdvanceButton(state) {
 
 function updateTurnForecast(state, forecast, button) {
   if (!forecast) return;
-  const activeRoutes = (state.routes || []).filter((route) => !route.suspended && (route.assignedPlanes || []).length > 0);
+  const readyPlaneUids = new Set((state.fleet || []).filter((plane) => !plane.delivering).map((plane) => plane.uid));
+  const activeRoutes = (state.routes || []).filter((route) => (
+    !route.suspended && (route.assignedPlanes || []).some((uid) => readyPlaneUids.has(uid))
+  ));
   forecast.hidden = false;
   forecast.className = 'turn-forecast';
   if (activeRoutes.length === 0) {
     forecast.textContent = state.routes?.length ? '全部航线停飞' : '无运营航线';
     forecast.classList.add('negative');
+    forecast.title = '打开下一季度预览';
+    forecast.setAttribute('aria-label', `${forecast.textContent}，打开下一季度预览`);
     button.title = '本季仍会产生机队和运营固定成本';
     return;
   }
-  const estimate = estimateTurnFinancials(state);
-  forecast.textContent = `季度预估 ${estimate.profit >= 0 ? '+' : ''}${fmt(estimate.profit)}`;
-  forecast.classList.add(estimate.profit >= 0 ? 'positive' : 'negative');
-  button.title = `静态预估，不含随机事件、故障、合同结算、证券和子公司；预计收入 ${fmt(estimate.totalRev)}，成本 ${fmt(estimate.totalCost)}`;
+  const preview = previewNextQuarter(state);
+  const attention = preview.attentionCount > 0 ? ` · ${preview.attentionCount}项` : '';
+  forecast.textContent = `季度预估 ${preview.financials.profit >= 0 ? '+' : ''}${fmt(preview.financials.profit)}${attention}`;
+  forecast.classList.add(preview.financials.profit >= 0 ? 'positive' : 'negative');
+  if (preview.attentionCount > 0) forecast.classList.add('has-attention');
+  forecast.title = '打开下一季度预览';
+  forecast.setAttribute('aria-label', `${forecast.textContent}，打开下一季度预览`);
+  button.title = `静态预估，不含随机事件、故障、合同结算、证券和子公司；预计收入 ${fmt(preview.financials.totalRev)}，成本 ${fmt(preview.financials.totalCost)}`;
 }
 
 export function showAdvanceContractGuide(state) {
