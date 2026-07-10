@@ -16,6 +16,7 @@ describe('balance acceptance', () => {
       rescues: 1,
       forcedLiquidations: 0,
       endCash: 10000,
+      turnsPlayed: 80,
     }]);
 
     expect(report.passed).toBe(false);

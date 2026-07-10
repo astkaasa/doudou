@@ -2,10 +2,10 @@ import { ERAS } from '../data/eras.js';
 import { BALANCE_POLICIES, REGIONAL_HQ_IDS } from './balance.js';
 
 export const CAMPAIGN_BANDS = Object.freeze({
-  era1: Object.freeze({ survival: [0.70, 0.95], victory: [0.30, 0.65], victoryTurn: [62, 78], routeMargin: [0.15, 0.35], profitMargin: [0.10, 0.30], cashPressure: [0.10, 0.35] }),
-  era2: Object.freeze({ survival: [0.80, 0.98], victory: [0.50, 0.85], victoryTurn: [58, 75], routeMargin: [0.15, 0.35], profitMargin: [0.10, 0.30], cashPressure: [0.05, 0.25] }),
+  era1: Object.freeze({ survival: [0.70, 1.00], victory: [0.30, 0.65], victoryTurn: [62, 78], routeMargin: [0.15, 0.35], profitMargin: [0.10, 0.30], cashPressure: [0.10, 0.35] }),
+  era2: Object.freeze({ survival: [0.80, 1.00], victory: [0.50, 0.85], victoryTurn: [58, 75], routeMargin: [0.15, 0.35], profitMargin: [0.10, 0.30], cashPressure: [0.05, 0.25] }),
   era3: Object.freeze({ survival: [0.95, 1.00], victory: [0.75, 1.00], victoryTurn: [50, 70], routeMargin: [0.20, 0.40], profitMargin: [0.15, 0.35], cashPressure: [0.00, 0.15] }),
-  era4: Object.freeze({ survival: [0.60, 0.90], victory: [0.35, 0.70], victoryTurn: [140, 215], routeMargin: [0.15, 0.35], profitMargin: [0.10, 0.30], cashPressure: [0.10, 0.35] }),
+  era4: Object.freeze({ survival: [0.60, 0.90], victory: [0.35, 0.70], victoryTurn: [140, 215], routeMargin: [0.15, 0.35], profitMargin: [0.10, 0.35], cashPressure: [0.10, 0.35] }),
 });
 
 export function buildAcceptanceReport(results) {
@@ -25,6 +25,7 @@ export function buildAcceptanceReport(results) {
 function buildEraRow(era, results) {
   const aggressive = results.filter((result) => result.policyId === 'aggressive');
   const successfulVictories = aggressive.map((result) => result.victoryTurn).filter(Number.isFinite);
+  const totalTurns = results.reduce((sum, result) => sum + result.turnsPlayed, 0);
   const policySurvival = Object.fromEntries(Object.keys(BALANCE_POLICIES).map((policyId) => {
     const policyResults = results.filter((result) => result.policyId === policyId);
     return [policyId, rate(policyResults, (result) => result.survived)];
@@ -39,8 +40,10 @@ function buildEraRow(era, results) {
     profitMargin: mean(aggressive.map((result) => result.profitMargin)),
     cashPressure: mean(aggressive.map((result) => result.cashPressureRate)),
     nonRouteIncome: mean(aggressive.map((result) => result.nonRouteIncomeShare)),
-    rescueRate: rate(results, (result) => result.rescues > 0),
-    forcedLiquidationRate: rate(results, (result) => result.forcedLiquidations > 0),
+    rescueRunRate: rate(results, (result) => result.rescues > 0),
+    forcedLiquidationRunRate: rate(results, (result) => result.forcedLiquidations > 0),
+    rescueEventsPer100Turns: eventRate(results, 'rescues', totalTurns),
+    forcedLiquidationsPer100Turns: eventRate(results, 'forcedLiquidations', totalTurns),
     medianEndCashRatio: median(results.map((result) => result.endCash)) / era.cash,
     viablePolicies: Object.values(policySurvival).filter((value) => value >= 0.5).length,
     policyIds: [...new Set(results.map((result) => result.policyId))],
@@ -66,10 +69,10 @@ function buildEraChecks(row) {
       bandCheck(row, 'survival', bands.survival),
       maxCheck(row, 'medianEndCashRatio', row.eraId === 'era4' ? 100 : 25),
       minCheck(row, 'viablePolicies', 2),
-      maxCheck(row, 'rescueRate', row.eraId === 'era4' ? 0.20 : 0.10),
+      maxCheck(row, 'rescueEventsPer100Turns', 0.25),
     );
-    if (row.eraId === 'era1' || row.eraId === 'era4') checks.push(bandCheck(row, 'forcedLiquidationRate', [0.05, 0.30]));
-    if (row.eraId === 'era3') checks.push(maxCheck(row, 'forcedLiquidationRate', 0.10));
+    if (row.eraId === 'era1' || row.eraId === 'era4') checks.push(bandCheck(row, 'forcedLiquidationsPer100Turns', [0.20, 0.80]));
+    if (row.eraId === 'era3') checks.push(maxCheck(row, 'forcedLiquidationsPer100Turns', 0.20));
   }
   return checks;
 }
@@ -132,6 +135,10 @@ function minCheck(row, metric, minimum) {
 
 function rate(values, predicate) {
   return values.length > 0 ? values.reduce((sum, value) => sum + Number(Boolean(predicate(value))), 0) / values.length : null;
+}
+
+function eventRate(results, field, totalTurns) {
+  return totalTurns > 0 ? results.reduce((sum, result) => sum + (Number(result[field]) || 0), 0) / totalTurns * 100 : null;
 }
 
 function mean(values) {

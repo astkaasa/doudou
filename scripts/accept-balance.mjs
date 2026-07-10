@@ -115,8 +115,8 @@ function printReport(output) {
     profitMargin: percent(row.profitMargin),
     cashPressure: percent(row.cashPressure),
     nonRoute: percent(row.nonRouteIncome),
-    rescue: percent(row.rescueRate),
-    liquidations: percent(row.forcedLiquidationRate),
+    rescuePer100: fixed(row.rescueEventsPer100Turns),
+    liquidPer100: fixed(row.forcedLiquidationsPer100Turns),
     viablePolicies: row.viablePolicies,
   })));
   const failed = output.report.checks.filter((check) => !check.passed);
