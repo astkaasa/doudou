@@ -40,6 +40,25 @@ export const AIRPORT_ASSIGNMENT_OVERRIDES = {
   KEWR: { cityId: 'newyork', confidence: 'verified', gameplay: { role: 'secondary', feeTier: 5, capacityTier: 5, accessTier: 4, infrastructureTier: 5 } },
   KLGA: { cityId: 'newyork', confidence: 'verified', gameplay: { role: 'secondary', feeTier: 4, capacityTier: 4, accessTier: 5, infrastructureTier: 4 } },
 
+  KPBI: {
+    cityId: 'miami',
+    confidence: 'verified',
+    sourceRefs: [
+      'https://www.pbia.org/about/history/',
+      'https://www.pbia.org/about/name-change-faqs/',
+    ],
+    gameplay: {
+      role: 'special',
+      feeTier: 4,
+      capacityTier: 5,
+      accessTier: 2,
+      infrastructureTier: 4,
+      availableFromYear: 2026,
+      availableFromQuarter: 3,
+      displayCode: 'DJT',
+    },
+  },
+
   ZBAA: { cityId: 'beijing', primary: true, confidence: 'verified', gameplay: { role: 'primary_hub', feeTier: 5, capacityTier: 5, accessTier: 4, infrastructureTier: 5 } },
   ZBAD: { cityId: 'beijing', confidence: 'verified', gameplay: { role: 'secondary', feeTier: 4, capacityTier: 5, accessTier: 3, infrastructureTier: 5 } },
 

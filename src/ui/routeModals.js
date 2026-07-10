@@ -194,7 +194,7 @@ export function updatePricePreview(state) {
 
 function routeAirportOptions(state, cityId) {
   const defaultId = getDefaultAirportIdForYear(cityId, state.year);
-  return getPlayableAirportsForCity(cityId, { year: state.year })
+  return getPlayableAirportsForCity(cityId, { year: state.year, quarter: state.quarter })
     .sort((a, b) => Number(b.id === defaultId) - Number(a.id === defaultId)
       || Number(a.source.provider === 'abstract') - Number(b.source.provider === 'abstract')
       || (b.gameplay.capacityTier || 0) - (a.gameplay.capacityTier || 0));

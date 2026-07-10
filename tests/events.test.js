@@ -25,6 +25,7 @@ describe('news event effects', () => {
     const firstSupersonicWave = findNews('超音速客机试飞引发全球关注');
     const saf = findNews('可持续航空燃料进入商业试用');
     const vaccineRecovery = findNews('全球疫苗接种率创新高，出行信心恢复');
+    const palmBeachRename = findNews('棕榈滩机场启用特朗普国际机场新名');
 
     expect(isNewsAvailableInPeriod(euCarbon, 2007, 1)).toBe(false);
     expect(isNewsAvailableInPeriod(euCarbon, 2008, 1)).toBe(true);
@@ -37,6 +38,9 @@ describe('news event effects', () => {
     expect(isNewsAvailableInPeriod(saf, 2011, 1)).toBe(true);
     expect(isNewsAvailableInPeriod(vaccineRecovery, 2020, 1)).toBe(false);
     expect(isNewsAvailableInPeriod(vaccineRecovery, 2021, 1)).toBe(true);
+    expect(isNewsAvailableInPeriod(palmBeachRename, 2026, 2)).toBe(false);
+    expect(isNewsAvailableInPeriod(palmBeachRename, 2026, 3)).toBe(true);
+    expect(isNewsAvailableInPeriod(palmBeachRename, 2027, 3)).toBe(false);
 
     const titlesIn1960 = Object.values(eligibleNewsPool(1960, 1)).flat().map((item) => item.title);
     expect(titlesIn1960).toContain('新一代航空电子设备投入使用');

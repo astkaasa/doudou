@@ -50,6 +50,17 @@
         "https://www.dfwairport.com/dfwnewsroom/golden-anniversary-dfw-airport-marks-50-years-of-serving-north-texas/"
       ],
       "checkedAt": "2026-07-10"
+    },
+    {
+      "id": "palm-beach-airport-rename-2026",
+      "scope": "airport-renaming-and-code-transition",
+      "title": "President Donald J. Trump International Airport official history and name-change FAQ",
+      "urls": [
+        "https://www.pbia.org/about/history/",
+        "https://www.pbia.org/about/name-change-faqs/"
+      ],
+      "version": "name and KDJT effective 2026-07-09; IATA DJT scheduled 2026-08-18",
+      "checkedAt": "2026-07-10"
     }
   ]
 }

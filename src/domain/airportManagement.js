@@ -110,7 +110,7 @@ export function getAirportInvestment(state, airportId) {
 
 export function getAirportInvestmentTargets(state, cityId) {
   const defaultId = getDefaultAirportIdForYear(cityId, state?.year);
-  return getPlayableAirportsForCity(cityId, { year: state?.year })
+  return getPlayableAirportsForCity(cityId, { year: state?.year, quarter: state?.quarter })
     .filter((airport) => !getAirportInvestment(state, airport.id))
     .sort((a, b) => Number(b.id === defaultId) - Number(a.id === defaultId)
       || (b.gameplay?.capacityTier || 0) - (a.gameplay?.capacityTier || 0));

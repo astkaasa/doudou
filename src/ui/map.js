@@ -102,7 +102,7 @@ export function renderMap(state, uiState) {
     ].filter(Boolean));
     const renderedAirportIds = new Set();
     visibleAirportCityIds.forEach((cityId) => {
-      getPlayableAirportsForCity(cityId, { year: state.year }).forEach((airport) => {
+      getPlayableAirportsForCity(cityId, { year: state.year, quarter: state.quarter }).forEach((airport) => {
         if (renderedAirportIds.has(airport.id)) return;
         renderedAirportIds.add(airport.id);
         const projected = projectLonLat(airport.lat, airport.lon);
@@ -192,7 +192,7 @@ function mapRenderSignature(state, uiState, rect) {
   return JSON.stringify({
     viewport: [rect.width, rect.height],
     camera: [state.mapZoom || 1, state.mapPanX || 0, state.mapPanY || 0],
-    year: state.year,
+    period: [state.year, state.quarter],
     network: [
       state.hq,
       state.selectedCity,

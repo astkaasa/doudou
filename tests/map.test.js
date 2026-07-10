@@ -93,6 +93,27 @@ describe('map rendering', () => {
     expect(container.innerHTML).not.toContain('aria-label="选择上海机场');
   });
 
+  it('reveals the renamed Palm Beach airport when 2026 Q3 begins', () => {
+    const container = {
+      innerHTML: '',
+      getBoundingClientRect: () => ({ width: 1000, height: 500 }),
+    };
+    globalThis.document = {
+      getElementById: (id) => (id === 'map-container' ? container : null),
+    };
+    const state = initState('miami', 'era3');
+    state.year = 2026;
+    state.quarter = 2;
+    state.mapZoom = 1.5;
+
+    renderMap(state, { showBoundaries: true, mapStyle: 'classic' });
+    expect(container.innerHTML).not.toContain('选择迈阿密机场 DJT');
+
+    state.quarter = 3;
+    expect(renderMap(state, { showBoundaries: true, mapStyle: 'classic' })).toBe(true);
+    expect(container.innerHTML).toContain('选择迈阿密机场 DJT');
+  });
+
   it('renders route selection details with semantic styles and escaped city names', () => {
     const from = { name: '<北京>', lat: 39.9042, lon: 116.4074 };
     const to = { name: '东京 & 羽田', lat: 35.6762, lon: 139.6503 };

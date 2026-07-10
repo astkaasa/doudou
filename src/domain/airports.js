@@ -32,6 +32,29 @@ export function isAirportActive(airportOrId, year = null) {
     && targetYear <= (period.toYear ?? Infinity));
 }
 
+export function isAirportGameplayAvailable(airportOrId, year = null, quarter = null) {
+  const airport = typeof airportOrId === 'string' ? getAirport(airportOrId) : airportOrId;
+  if (!airport) return false;
+  const targetYear = Number(year);
+  if (!Number.isFinite(targetYear)) return true;
+  const targetQuarter = Number.isInteger(Number(quarter))
+    ? Math.max(1, Math.min(4, Number(quarter)))
+    : 1;
+  const fromYear = Number(airport.gameplay?.availableFromYear);
+  const fromQuarter = Number.isInteger(Number(airport.gameplay?.availableFromQuarter))
+    ? Math.max(1, Math.min(4, Number(airport.gameplay.availableFromQuarter)))
+    : 1;
+  if (Number.isFinite(fromYear)
+    && (targetYear < fromYear || (targetYear === fromYear && targetQuarter < fromQuarter))) return false;
+  const toYear = Number(airport.gameplay?.availableToYear);
+  const toQuarter = Number.isInteger(Number(airport.gameplay?.availableToQuarter))
+    ? Math.max(1, Math.min(4, Number(airport.gameplay.availableToQuarter)))
+    : 4;
+  return !Number.isFinite(toYear)
+    || targetYear < toYear
+    || (targetYear === toYear && targetQuarter <= toQuarter);
+}
+
 export function getAirportsForCity(cityId, options = {}) {
   const ids = CITY_AIRPORT_IDS[cityId] || [];
   return ids
@@ -42,7 +65,8 @@ export function getAirportsForCity(cityId, options = {}) {
 }
 
 export function getPlayableAirportsForCity(cityId, options = {}) {
-  const airports = getAirportsForCity(cityId, options);
+  const airports = getAirportsForCity(cityId, options)
+    .filter((airport) => isAirportGameplayAvailable(airport, options.year, options.quarter));
   const verified = airports.filter((airport) => airport.source.provider !== 'abstract'
     && ['verified', 'high'].includes(airport.audit?.confidence));
   return verified.length > 0
@@ -82,7 +106,11 @@ export function normalizeAirportIdForCity(airportId, cityId, options = {}) {
 export function airportDisplayCode(airportOrId) {
   const airport = typeof airportOrId === 'string' ? getAirport(airportOrId) : airportOrId;
   if (!airport) return '—';
-  return airport.codes?.iata || airport.codes?.icao || airport.codes?.ident || airport.cityId.toUpperCase();
+  return airport.gameplay?.displayCode
+    || airport.codes?.iata
+    || airport.codes?.icao
+    || airport.codes?.ident
+    || airport.cityId.toUpperCase();
 }
 
 export function airportDisplayName(airportOrId) {

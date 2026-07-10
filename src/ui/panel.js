@@ -152,7 +152,7 @@ export function renderRouteCityPicker(state, selectedCityId = null) {
 }
 
 function renderCityAirports(state, cityId) {
-  const airports = getPlayableAirportsForCity(cityId, { year: state.year });
+  const airports = getPlayableAirportsForCity(cityId, { year: state.year, quarter: state.quarter });
   if (airports.length === 0) return '';
   return `<div class="city-airport-summary"><div class="city-airport-summary-title"><span>可用机场</span><small>${airports.length} 座</small></div><div class="city-airport-chips">${airports.map((airport) => {
     const role = AIRPORT_ROLE_LABELS[airport.gameplay.role] || airport.gameplay.role;

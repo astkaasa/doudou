@@ -443,7 +443,7 @@ function generateArtifacts(parsed) {
         confidence: override?.confidence || (primary ? snapshot.cityMatches[canonicalCityId]?.confidence : 'candidate'),
         matchScore: canonicalOwner.candidate.score,
         distanceKm: canonicalOwner.candidate.distanceKm,
-        sourceRefs: [],
+        sourceRefs: override?.sourceRefs || [],
       },
     });
   }

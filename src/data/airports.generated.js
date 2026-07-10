@@ -33487,17 +33487,23 @@ export const AIRPORTS = [
       }
     ],
     "gameplay": {
-      "role": "secondary",
+      "role": "special",
       "feeTier": 4,
       "capacityTier": 5,
       "accessTier": 2,
-      "infrastructureTier": 4
+      "infrastructureTier": 4,
+      "availableFromYear": 2026,
+      "availableFromQuarter": 3,
+      "displayCode": "DJT"
     },
     "audit": {
-      "confidence": "candidate",
+      "confidence": "verified",
       "matchScore": 85.01,
       "distanceKm": 100,
-      "sourceRefs": []
+      "sourceRefs": [
+        "https://www.pbia.org/about/history/",
+        "https://www.pbia.org/about/name-change-faqs/"
+      ]
     }
   },
   {

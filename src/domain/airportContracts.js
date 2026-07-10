@@ -7,6 +7,7 @@ import {
   getAirport,
   getDefaultAirportIdForYear,
   isAirportActive,
+  isAirportGameplayAvailable,
 } from './airports.js';
 import { addAirportRelation, normalizeAirportManagementState } from './airportManagement.js';
 import { routeOperatingDistance, suggestedPrice } from './economy.js';
@@ -86,7 +87,7 @@ export function getAirportOpportunityPool(state) {
   const cityById = new Map(CITIES.map((city) => [city.id, city]));
   const candidates = [];
   allAirports().forEach((airport) => {
-    if (!isOpportunityAirport(airport, state?.year)) return;
+    if (!isOpportunityAirport(airport, state?.year, state?.quarter)) return;
     const cityIds = (airport.servedCityIds || [airport.cityId]).filter((cityId) => cityById.has(cityId));
     cityIds.forEach((cityId) => {
       const city = cityById.get(cityId);
@@ -326,8 +327,10 @@ function createOffer(state, opportunity, period) {
   };
 }
 
-function isOpportunityAirport(airport, year) {
-  if (!airport || airport.source?.provider !== 'ourairports' || !isAirportActive(airport, year)) return false;
+function isOpportunityAirport(airport, year, quarter) {
+  if (!airport || airport.source?.provider !== 'ourairports'
+    || !isAirportActive(airport, year)
+    || !isAirportGameplayAvailable(airport, year, quarter)) return false;
   if ((Number(airport.factual?.maxRunwayM) || 0) < 900) return false;
   const city = getCity(airport.cityId);
   if (!city) return false;

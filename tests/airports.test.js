@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AIRPORTS, AIRPORT_DATA_VERSION, CITY_AIRPORT_IDS, DEFAULT_AIRPORT_IDS } from '../src/data/airports.generated.js';
 import { CITIES } from '../src/data/cities.js';
-import { airportDisplayCode, airportServesCity, getAirport, getAirportsForCity, getDefaultAirportId, getPlayableAirportsForCity, normalizeAirportIdForCity, virtualAirportId } from '../src/domain/airports.js';
+import { airportDisplayCode, airportServesCity, getAirport, getAirportByIdent, getAirportsForCity, getDefaultAirportId, getPlayableAirportsForCity, normalizeAirportIdForCity, virtualAirportId } from '../src/domain/airports.js';
 
 describe('generated airport data', () => {
   it('pins the OurAirports snapshot and uses stable source ids', () => {
@@ -47,6 +47,21 @@ describe('generated airport data', () => {
     expect(getPlayableAirportsForCity('tokyo').map(airportDisplayCode)).toEqual(['NRT', 'HND']);
     expect(getPlayableAirportsForCity('seville').map(airportDisplayCode)).toEqual(['SVQ']);
     expect(getPlayableAirportsForCity('seville').some((airport) => airport.source.provider === 'abstract')).toBe(false);
+  });
+
+  it('opens the renamed Palm Beach airport to the Miami market in 2026 Q3', () => {
+    const trumpAirport = getAirportByIdent('KPBI');
+
+    expect(trumpAirport).toMatchObject({
+      cityId: 'miami',
+      name: 'President Donald J Trump International Airport',
+      codes: { iata: 'PBI', icao: 'KDJT' },
+      audit: { confidence: 'verified' },
+    });
+    expect(trumpAirport.audit.sourceRefs).toContain('https://www.pbia.org/about/history/');
+    expect(airportDisplayCode(trumpAirport)).toBe('DJT');
+    expect(getPlayableAirportsForCity('miami', { year: 2026, quarter: 2 })).not.toContain(trumpAirport);
+    expect(getPlayableAirportsForCity('miami', { year: 2026, quarter: 3 })).toContain(trumpAirport);
   });
 
   it('supports explicitly shared special-service airports without broad overlap', () => {

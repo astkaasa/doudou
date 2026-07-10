@@ -44,6 +44,9 @@ function disasterStockEffect(title) {
 }
 
 export const NEWS_POOL = {
+  aviation: [
+    {title:'棕榈滩机场启用特朗普国际机场新名',desc:'迈阿密都会区北侧的棕榈滩国际机场正式更名为“President Donald J. Trump International Airport”。FAA 识别码同步改为 KDJT，IATA 代码将在本季度由 PBI 过渡为 DJT。',effect:'迈阿密开放远端特殊机场选择',years:[2026],quarters:[3],stockEffect:{tourism:0.02,finance:0.01},effectFn:()=>{}},
+  ],
   politics: [
     {title:'中东局势紧张，多国发布旅行警告',desc:'区域冲突升级，多国政府建议公民避免前往中东部分地区。航空公司纷纷调整航线。',effect:'中东航线需求下降15%',stockEffect:{tourism:-0.05,culture:-0.03,energy:0.04},effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'中东局势紧张',scopeSubRegion('mideast'),0.85);}},
     {title:'欧盟通过新的航空碳排放法规',desc:'欧盟扩大航空碳排放交易规则，航空公司的合规成本随之上升。',effect:'欧洲航线运营成本增加3%',startYear:2008,stockEffect:{finance:-0.02,tech:0.04,energy:-0.02},effectFn:({state:G,addCostModifier})=>{addCostModifier(G,'欧盟航空碳排放法规',scopeRegion('europe'),1.03);}},

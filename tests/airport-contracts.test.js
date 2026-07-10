@@ -7,7 +7,7 @@ import {
   refreshAirportContractOffers,
   settleAirportContracts,
 } from '../src/domain/airportContracts.js';
-import { airportServesCity } from '../src/domain/airports.js';
+import { airportServesCity, getAirportByIdent } from '../src/domain/airports.js';
 import { airportRelation } from '../src/domain/airportManagement.js';
 import { assertGameState } from '../src/domain/invariants.js';
 import { closeRoute } from '../src/domain/routes.js';
@@ -32,6 +32,17 @@ describe('airport route-development contracts', () => {
     expect(pool.length).toBeGreaterThan(100);
     expect(pool.every((item) => item.airport.source.provider === 'ourairports')).toBe(true);
     expect(pool.every((item) => item.airport.factual.maxRunwayM >= 900)).toBe(true);
+  });
+
+  it('adds the renamed Palm Beach airport to opportunities from 2026 Q3', () => {
+    const state = initState('newyork', 'era3', { seed: 'palm-beach-rename' });
+    const trumpAirport = getAirportByIdent('KPBI');
+    state.year = 2026;
+    state.quarter = 2;
+
+    expect(getAirportOpportunityPool(state).some((item) => item.airportId === trumpAirport.id)).toBe(false);
+    state.quarter = 3;
+    expect(getAirportOpportunityPool(state).some((item) => item.airportId === trumpAirport.id)).toBe(true);
   });
 
   it('accepts an actionable offer and completes it through quarterly targets', () => {
