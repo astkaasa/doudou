@@ -170,6 +170,7 @@ export const PLANES = [
   {
     "id": "b747-500",
     "name": "B747-500",
+    "fictional": true,
     "type": "superjumbo",
     "seats": 600,
     "range": 11200,
@@ -184,6 +185,7 @@ export const PLANES = [
   {
     "id": "b2000hc",
     "name": "B2000HC",
+    "fictional": true,
     "type": "superjumbo",
     "seats": 1000,
     "range": 12000,
@@ -198,6 +200,7 @@ export const PLANES = [
   {
     "id": "b2001sst",
     "name": "B2001SST",
+    "fictional": true,
     "type": "wide",
     "seats": 300,
     "range": 6500,
@@ -324,6 +327,7 @@ export const PLANES = [
   {
     "id": "md12",
     "name": "MD-12",
+    "fictional": true,
     "type": "wide",
     "seats": 400,
     "range": 12800,
@@ -338,6 +342,7 @@ export const PLANES = [
   {
     "id": "md100",
     "name": "MD-100",
+    "fictional": true,
     "type": "wide",
     "seats": 200,
     "range": 7500,
@@ -352,6 +357,7 @@ export const PLANES = [
   {
     "id": "md1",
     "name": "MD-1",
+    "fictional": true,
     "type": "wide",
     "seats": 300,
     "range": 8000,
@@ -436,6 +442,7 @@ export const PLANES = [
   {
     "id": "a360",
     "name": "A360",
+    "fictional": true,
     "type": "superjumbo",
     "seats": 500,
     "range": 6000,
@@ -450,6 +457,7 @@ export const PLANES = [
   {
     "id": "a370",
     "name": "A370",
+    "fictional": true,
     "type": "narrow",
     "seats": 200,
     "range": 7200,
@@ -464,6 +472,7 @@ export const PLANES = [
   {
     "id": "a700",
     "name": "A700",
+    "fictional": true,
     "type": "wide",
     "seats": 350,
     "range": 6000,
@@ -478,6 +487,7 @@ export const PLANES = [
   {
     "id": "a720",
     "name": "A720",
+    "fictional": true,
     "type": "wide",
     "seats": 200,
     "range": 4500,

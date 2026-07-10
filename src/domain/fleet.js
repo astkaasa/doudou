@@ -5,6 +5,7 @@ import { randomInt } from './random.js';
 
 export function availablePlaneTemplates(state) {
   if (!state) return PLANES;
+  // Legacy service fields define the gameplay purchase window, not literal fleet retirement.
   return PLANES.filter((plane) => {
     const start = plane.serviceStart ?? -Infinity;
     const end = plane.serviceEnd ?? Infinity;
@@ -28,7 +29,7 @@ export function quotePlaneAcquisition(state, planeId, isLease = false, count = 1
   const template = PLANES.find((p) => p.id === planeId);
   if (!template) return { ok: false, code: 'not-found', message: '机型不存在' };
   if (!availablePlaneTemplates(state).some((p) => p.id === planeId)) {
-    return { ok: false, code: 'unavailable', template, message: `${template.name} 在当前年份不可用（服役期：${template.serviceStart}-${template.serviceEnd}）` };
+    return { ok: false, code: 'unavailable', template, message: `${template.name} 在当前年份不可用（可购年份：${template.serviceStart}-${template.serviceEnd}）` };
   }
   const safeCount = clamp(parseInt(count, 10) || 1, 1, 10);
   const leaseFeePerPlane = isLease ? template.buyPrice * 0.1 : 0;

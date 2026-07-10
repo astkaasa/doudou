@@ -52,8 +52,8 @@ function renderPlanePurchaseCard(state, plane, maker) {
   const leaseQuote = quotePlaneAcquisition(state, plane.id, true, 1);
   return `<article class="plane-purchase-card">
     <div class="plane-purchase-head">
-      <div><strong>${escapeHtml(plane.name)}</strong><span>${escapeHtml(planeTypeLabel(plane.type))} · ${escapeHtml(maker)}</span></div>
-      <small>服役 ${plane.serviceStart}-${plane.serviceEnd}</small>
+      <div><strong>${escapeHtml(plane.name)}</strong><span>${escapeHtml(planeTypeLabel(plane.type))} · ${escapeHtml(maker)}${plane.fictional ? ' · 架空机型' : ''}</span></div>
+      <small>可购 ${plane.serviceStart}-${plane.serviceEnd}</small>
     </div>
     <div class="plane-spec-grid">
       <span><small>座位</small><strong>${plane.seats}</strong></span>

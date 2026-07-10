@@ -74,18 +74,19 @@ export function syncMegaEventState(state) {
 
 export function megaEventNewsFor(event) {
   const typeLabel = event.type === 'olympics_summer' ? '夏奥' : '世博';
+  const isExpo = event.type === 'world_expo';
   const q = event.quartersFromEvent;
   let title = '';
   let desc = '';
   let effect = '';
 
   if (q === -4) {
-    title = `${event.cityName}将举办${typeLabel === '夏奥' ? '奥运会' : '世博会'}！`;
-    desc = `国际${typeLabel === '夏奥' ? '奥委会' : '展览局'}正式宣布，${event.cityName}获得举办权。预计将吸引数百万国际游客。`;
+    title = `${event.name}进入开幕前一年倒计时`;
+    desc = `${event.cityName}的场馆、交通和接待设施进入最后一年筹备，国际旅客开始提前规划行程。`;
     effect = `${event.cityName}航线需求开始升温`;
   } else if (q === -2) {
     title = `${event.name}进入倒计时，${event.cityName}航空客流攀升`;
-    desc = '筹备工作进入冲刺阶段，各国代表团与参展方陆续安排先遣团队，航空预订量持续走高。';
+    desc = `筹备工作进入冲刺阶段，各国${isExpo ? '参展方' : '代表团'}陆续安排先遣团队，航空预订量持续走高。`;
     effect = `${event.cityName}航线需求明显上升`;
   } else if (q === -1) {
     title = `${event.name}即将开幕！`;
@@ -93,20 +94,26 @@ export function megaEventNewsFor(event) {
     effect = `${event.cityName}航线需求大幅攀升`;
   } else if (q === 0) {
     title = `${event.fullName}隆重开幕！`;
-    desc = `盛大的开幕式震撼全球，${event.cityName}成为世界焦点。机场客流量创历史新高。`;
+    desc = event.desc;
     effect = `${event.cityName}航线需求达到峰值`;
   } else if (q === 1) {
-    title = `${event.name}圆满落幕`;
-    desc = `盛会画上句号，但会后旅游热度不减。${event.cityName}航空客流仍维持高位。`;
-    effect = `${event.cityName}航线需求维持余温`;
+    title = isExpo ? `${event.name}持续开放` : `${event.name}落幕`;
+    desc = isExpo
+      ? `展馆持续迎接各国访客，${event.cityName}航空客流仍维持高位。`
+      : `盛会画上句号，但会后旅游热度不减。${event.cityName}航空客流仍维持高位。`;
+    effect = `${event.cityName}航线需求维持高位`;
   } else if (q === 2) {
-    title = `${event.name}效应延续`;
-    desc = `${event.cityName}游客量仍高于常态，会后效应持续释放。`;
+    title = isExpo ? `${event.name}进入尾声` : `${event.name}效应延续`;
+    desc = isExpo
+      ? `闭幕日期临近，${event.cityName}国际参观客流开始从高位回落。`
+      : `${event.cityName}游客量仍高于常态，会后效应持续释放。`;
     effect = `${event.cityName}航线需求逐步回落`;
   } else if (q === 3) {
-    title = `${event.name}热度渐退`;
-    desc = `${event.cityName}航空需求逐步回归常态水平。`;
-    effect = `${event.cityName}航线需求回归常态`;
+    title = isExpo ? `${event.name}落幕后热度延续` : `${event.name}热度渐退`;
+    desc = isExpo
+      ? `世博会已经闭幕，${event.cityName}的会后旅游需求仍高于常态。`
+      : `${event.cityName}航空需求逐步回归常态水平。`;
+    effect = isExpo ? `${event.cityName}航线需求仍有余温` : `${event.cityName}航线需求逐步回归常态`;
   }
 
   if (!title) return null;

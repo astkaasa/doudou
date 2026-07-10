@@ -3,6 +3,7 @@ import { CITIES, HQ_RECOMMENDED_CITY_IDS } from '../data/cities.js';
 import { ERAS } from '../data/eras.js';
 import { MAIN_QUEST_STAGES, VICTORY_GRADES } from '../data/mainQuest.js';
 import { MEGA_EVENTS } from '../data/megaEvents.js';
+import { NEWS_POOL } from '../data/news.js';
 import { PLANES } from '../data/planes.js';
 import { STOCKS, STOCK_SECTORS } from '../data/stocks.js';
 import { ERA_SETTLEMENT_OUTCOMES, ERA_SETTLEMENT_STATUSES, eraSettlementDeadlineTurns } from './eraSettlement.js';
@@ -48,6 +49,9 @@ export function validateStaticData() {
     const path = `planes[${index}]`;
     requireText(issues, `${path}.name`, plane.name);
     requireText(issues, `${path}.type`, plane.type);
+    if (plane.fictional !== undefined && typeof plane.fictional !== 'boolean') {
+      issues.push(`${path}.fictional must be a boolean`);
+    }
     ['seats', 'range', 'fuel', 'maint', 'buyPrice', 'leasePrice'].forEach((field) => {
       requirePositive(issues, `${path}.${field}`, plane[field]);
     });
@@ -75,6 +79,8 @@ export function validateStaticData() {
     requirePositive(issues, `${path}.maxBoost`, event.maxBoost);
   });
 
+  validateNewsData(issues);
+
   validateUniqueIds(issues, 'stocks', STOCKS);
   validateUniqueValues(issues, 'stocks.code', STOCKS.map((stock) => stock.code));
   STOCKS.forEach((stock, index) => {
@@ -86,6 +92,44 @@ export function validateStaticData() {
   });
 
   return issues;
+}
+
+function validateNewsData(issues) {
+  const titles = [];
+  Object.entries(NEWS_POOL).forEach(([category, items]) => {
+    requireArray(issues, `news.${category}`, items).forEach((item, index) => {
+      const path = `news.${category}[${index}]`;
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        issues.push(`${path} must be an object`);
+        return;
+      }
+      requireText(issues, `${path}.title`, item.title);
+      requireText(issues, `${path}.desc`, item.desc);
+      requireText(issues, `${path}.effect`, item.effect);
+      titles.push(item.title);
+
+      if (item.startYear !== undefined) requireInteger(issues, `${path}.startYear`, item.startYear);
+      if (item.endYear !== undefined) requireInteger(issues, `${path}.endYear`, item.endYear);
+      if (Number.isInteger(item.startYear) && Number.isInteger(item.endYear) && item.endYear < item.startYear) {
+        issues.push(`${path}.endYear must not precede startYear`);
+      }
+      if (item.years !== undefined) {
+        const years = requireArray(issues, `${path}.years`, item.years);
+        if (years.length === 0) issues.push(`${path}.years must not be empty`);
+        validateUniqueValues(issues, `${path}.years`, years);
+        years.forEach((year, yearIndex) => requireInteger(issues, `${path}.years[${yearIndex}]`, year));
+      }
+      if (item.quarters !== undefined) {
+        const quarters = requireArray(issues, `${path}.quarters`, item.quarters);
+        if (quarters.length === 0) issues.push(`${path}.quarters must not be empty`);
+        validateUniqueValues(issues, `${path}.quarters`, quarters);
+        quarters.forEach((quarter, quarterIndex) => {
+          requireFiniteRange(issues, `${path}.quarters[${quarterIndex}]`, quarter, 1, 4, true);
+        });
+      }
+    });
+  });
+  validateUniqueValues(issues, 'news.title', titles);
 }
 
 function validateMainQuestData(issues) {

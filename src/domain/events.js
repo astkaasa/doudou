@@ -28,16 +28,18 @@ export function generateEvents(state) {
       state.events.push({ type: 'mega_event', text: item.title, severity: item._isHeadline ? 'high' : 'medium' });
     });
   const numNews = randomInt(state, 2, 4);
-  const categories = Object.keys(NEWS_POOL);
+  const newsPool = eligibleNewsPool(state.year, state.quarter);
+  const categories = Object.keys(newsPool);
   const picked = new Set();
   for (let i = 0; i < numNews; i++) {
+    if (categories.length === 0) break;
     let cat;
     let news;
     let tries = 0;
     let rejected = false;
     do {
       cat = categories[randomInt(state, 0, categories.length - 1)];
-      news = NEWS_POOL[cat][randomInt(state, 0, NEWS_POOL[cat].length - 1)];
+      news = newsPool[cat][randomInt(state, 0, newsPool[cat].length - 1)];
       tries++;
       rejected = picked.has(news.title) || isDisasterProtectedByMegaEvent(state, cat, news);
     } while (rejected && tries < 20);
@@ -62,26 +64,46 @@ export function generateEvents(state) {
     }
     state.events.push({ type: cat, text: news.title, severity: cat === 'disaster' ? 'high' : cat === 'economy' ? 'medium' : 'low' });
   }
-  const newService = PLANES.filter((plane) => plane.serviceStart === state.year);
-  const retiring = PLANES.filter((plane) => plane.serviceEnd === state.year);
-  if (newService.length > 0) {
+  const enteringMarket = PLANES.filter((plane) => plane.serviceStart === state.year);
+  const leavingMarket = PLANES.filter((plane) => plane.serviceEnd === state.year);
+  if (enteringMarket.length > 0) {
+    const fictional = enteringMarket.filter((plane) => plane.fictional);
+    const historical = enteringMarket.filter((plane) => !plane.fictional);
+    const descriptions = [];
+    if (historical.length > 0) descriptions.push(`${historical.map((plane) => plane.name).join('、')}加入采购目录`);
+    if (fictional.length > 0) descriptions.push(`${fictional.map((plane) => plane.name).join('、')}作为架空科技线机型开放采购`);
     state.newsItems.push({
       category: 'aviation',
-      title: '新一代客机投入商业运营',
-      desc: `${newService.map((plane) => plane.name).join('、')}正式投入商业服务，多家航空公司已下达订单。`,
+      title: fictional.length === enteringMarket.length ? '架空机型进入采购市场' : '新机型进入采购市场',
+      desc: `${descriptions.join('；')}。`,
       effect: '',
       stockEffect: { tech: 0.04, finance: 0.02 },
     });
-  } else if (retiring.length > 0) {
+  } else if (leavingMarket.length > 0) {
     state.newsItems.push({
       category: 'aviation',
-      title: '经典机型正式退役',
-      desc: `${retiring.map((plane) => plane.name).join('、')}结束商业飞行生涯，正式退出航线运营。`,
+      title: '部分机型停止接受新订单',
+      desc: `${leavingMarket.map((plane) => plane.name).join('、')}退出新机采购目录，现有机队仍可继续运营。`,
       effect: '',
       stockEffect: { tourism: -0.01 },
     });
   }
   updateStockPrices(state);
+}
+
+export function isNewsAvailableInPeriod(news, year, quarter) {
+  if (!Number.isInteger(year)) return false;
+  if (Number.isInteger(news.startYear) && year < news.startYear) return false;
+  if (Number.isInteger(news.endYear) && year > news.endYear) return false;
+  if (Array.isArray(news.years) && !news.years.includes(year)) return false;
+  if (Array.isArray(news.quarters) && !news.quarters.includes(quarter)) return false;
+  return true;
+}
+
+export function eligibleNewsPool(year, quarter) {
+  return Object.fromEntries(Object.entries(NEWS_POOL)
+    .map(([category, items]) => [category, items.filter((item) => isNewsAvailableInPeriod(item, year, quarter))])
+    .filter(([, items]) => items.length > 0));
 }
 
 export function advanceTemporaryModifiers(state) {
