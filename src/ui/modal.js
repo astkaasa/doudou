@@ -3,6 +3,7 @@ import { renderHtml } from './html.js';
 
 const MODAL_BACKGROUND_IDS = ['app', 'contract-zone', 'delivery-root', 'onboard-hint', 'tutorial'];
 const VALID_BANNER_TONES = new Set(['accent', 'danger', 'info', 'success', 'warning']);
+const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export const BANNER_TONES = Object.freeze({
   accent: 'accent',
@@ -56,6 +57,34 @@ export function closeModalRoot() {
   queueMicrotask(() => {
     if (returnTarget?.isConnected && !returnTarget.inert) returnTarget.focus({ preventScroll: true });
   });
+}
+
+export function trapModalFocus(event) {
+  if (event?.key !== 'Tab') return false;
+  const dialog = byId('modal-root')?.querySelector('[role="dialog"]');
+  if (!dialog) return false;
+  const focusable = [...dialog.querySelectorAll(FOCUSABLE_SELECTOR)].filter((element) => (
+    !element.hidden && !element.disabled && !element.closest('[hidden], [inert]')
+  ));
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const active = document.activeElement;
+  if (!first || !last) {
+    event.preventDefault();
+    dialog.focus({ preventScroll: true });
+    return true;
+  }
+  if (!dialog.contains(active) || active === dialog) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus({ preventScroll: true });
+  } else if (event.shiftKey && active === first) {
+    event.preventDefault();
+    last.focus({ preventScroll: true });
+  } else if (!event.shiftKey && active === last) {
+    event.preventDefault();
+    first.focus({ preventScroll: true });
+  }
+  return true;
 }
 
 export function showBanner(text, tone = BANNER_TONES.info) {

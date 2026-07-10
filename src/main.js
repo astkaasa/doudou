@@ -12,6 +12,7 @@ import { checkMilestones } from './domain/milestones.js';
 import { updateHUD } from './ui/hud.js';
 import { showMilestoneNotification } from './ui/milestones.js';
 import { initMapDrag, renderMap } from './ui/map.js';
+import { trapModalFocus } from './ui/modal.js';
 import { spawnPendingContracts } from './ui/operations.js';
 import { renderPanel } from './ui/panel.js';
 import { applySeasonTheme } from './ui/season.js';
@@ -133,6 +134,7 @@ const handleClick = createDelegatedActionHandler(clickActions, {
 const handleInput = createDelegatedActionHandler(inputActions, { knownActions });
 
 function handleKeydown(event) {
+  if (trapModalFocus(event)) return;
   if (event.key !== 'Escape') return;
   const root = byId('modal-root');
   if (!root?.querySelector('[data-action="modal-backdrop"]')) return;

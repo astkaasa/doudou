@@ -30,7 +30,7 @@ export function showBuyPlaneModal(state) {
     });
     html += '</details>';
   });
-  html += '</div><div class="modal-actions"><button class="btn btn-secondary" data-action="close-modal">关闭</button></div>';
+  html += '</div><div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>';
   showModal(html, { wide: true });
 }
 
@@ -135,9 +135,9 @@ export function showFleetPanel(state) {
       const leaseTag = p.isLease ? `<span class="lease-badge">R</span><span class="fleet-lease-meta">租${p.leaseTurns || 0}/${p.maxLeaseTurns || 40}季</span>` : '';
       const action = p.isLease ? 'return-lease' : 'sell-plane';
       const actionLabel = p.isLease ? '退租' : '出售';
-      html += `<div class="fleet-item"><div class="fleet-item-main"><span class="name">${escapeHtml(p.name)}</span>${leaseTag}<span class="fleet-age">机龄${p.age.toFixed(1)}年</span></div><div class="fleet-item-side"><span class="status ${statusClass}">${escapeHtml(status)}</span>${!p.delivering && !assignedRoute ? `<button class="btn btn-danger btn-sm" data-action="${action}" data-uid="${escapeAttr(p.uid)}">${actionLabel}</button>` : ''}</div></div>`;
+      html += `<div class="fleet-item"><div class="fleet-item-main"><span class="name">${escapeHtml(p.name)}</span>${leaseTag}<span class="fleet-age">机龄${p.age.toFixed(1)}年</span></div><div class="fleet-item-side"><span class="status ${statusClass}">${escapeHtml(status)}</span>${!p.delivering && !assignedRoute ? `<button class="btn btn-danger btn-sm" type="button" data-action="${action}" data-uid="${escapeAttr(p.uid)}">${actionLabel}</button>` : ''}</div></div>`;
     });
   }
-  html += '<div class="modal-actions"><button class="btn btn-secondary" data-action="close-modal">关闭</button></div>';
+  html += '<div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>';
   showModal(html);
 }

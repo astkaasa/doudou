@@ -57,12 +57,12 @@ export function createNetworkController(app) {
     const a = getCity(from);
     const b = getCity(to);
     if (!isBase(game, from)) {
-      showModal(`<h2>无法开通航线</h2><p class="text-danger">起飞城市必须是总部或分部。${a.name}不是你的基地。</p><p class="modal-help">可以在快捷操作中点击「开设分部」扩展基地网络。</p><button class="btn btn-primary" data-action="close-modal">确定</button>`);
+      showModal(`<h2>无法开通航线</h2><p class="text-danger">起飞城市必须是总部或分部。${a.name}不是你的基地。</p><p class="modal-help">可以在快捷操作中点击「开设分部」扩展基地网络。</p><button class="btn btn-primary" type="button" data-action="close-modal">确定</button>`);
       return;
     }
     const existing = game.routes.find((route) => routeKey(route.from, route.to) === routeKey(from, to));
     if (existing) {
-      showModal(`<h2>航线已开通</h2><p>${a.name} → ${b.name} 已在运营中。</p><button class="btn btn-primary" data-action="close-modal">确定</button>`);
+      showModal(`<h2>航线已开通</h2><p>${a.name} → ${b.name} 已在运营中。</p><button class="btn btn-primary" type="button" data-action="close-modal">确定</button>`);
       return;
     }
     showRouteCreateModal(game, from, to, countCompetitors(game, from, to));

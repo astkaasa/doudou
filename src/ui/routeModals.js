@@ -22,7 +22,7 @@ export function showRouteCreateModal(state, from, to, competitors) {
   if (avail.length === 0) {
     const longRange = availablePlaneTemplates(state).find((p) => p.range >= distance);
     const hint = longRange ? `如 ${longRange.name}` : '当前时代暂无航程足够的机型';
-    showModal(`<h2>无法开通航线</h2><p>航程 ${Math.round(distance)} km，没有航程足够的可用飞机。</p><p>请先购买航程足够的飞机，${escapeHtml(hint)}。</p><button class="btn btn-primary" data-action="close-modal">确定</button>`);
+    showModal(`<h2>无法开通航线</h2><p>航程 ${Math.round(distance)} km，没有航程足够的可用飞机。</p><p>请先购买航程足够的飞机，${escapeHtml(hint)}。</p><button class="btn btn-primary" type="button" data-action="close-modal">确定</button>`);
     return false;
   }
   const demand = baseDemand(a, b, state);
@@ -48,7 +48,7 @@ export function showRouteCreateModal(state, from, to, competitors) {
       <span><small>开通后现金</small><strong class="${state.cash - openCost >= 0 ? 'positive' : 'negative'}">${fmt(state.cash - openCost)}</strong></span>
     </div>
     ${renderPricePresetButtons('set-route-price-preset', sp)}
-    <div class="modal-actions"><button class="btn btn-secondary" data-action="close-modal">取消</button><button class="btn btn-success" data-action="confirm-open-route" data-from="${escapeAttr(from)}" data-to="${escapeAttr(to)}"${canAfford ? '' : ' disabled'}>确认开通</button></div>`;
+    <div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">取消</button><button class="btn btn-success" type="button" data-action="confirm-open-route" data-from="${escapeAttr(from)}" data-to="${escapeAttr(to)}"${canAfford ? '' : ' disabled'}>确认开通</button></div>`;
   showRouteModal(html);
   setTimeout(() => updatePricePreview(state), 100);
   return true;
@@ -113,7 +113,7 @@ export function showRouteList(state, options = {}) {
     routeListPage = 0;
   }
   if (state.routes.length === 0) {
-    showModal('<h2>航线管理</h2><p class="modal-empty modal-empty-compact">尚未开通航线。</p><div class="modal-actions"><button class="btn btn-secondary" data-action="close-modal">关闭</button></div>');
+    showModal('<h2>航线管理</h2><p class="modal-empty modal-empty-compact">尚未开通航线。</p><div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>');
     return;
   }
   const rows = buildRouteRows(state);
@@ -131,16 +131,19 @@ export function showRouteList(state, options = {}) {
     { key: 'lf', icon: '👥', label: '客座率' },
     { key: 'profit', icon: '📈', label: '收益' },
   ];
-  let html = `<h2>航线管理</h2><div class="route-table-wrap"><table class="route-table"><thead><tr>`;
+  let html = `<h2>航线管理</h2><div class="route-table-wrap"><table class="route-table"><caption class="sr-only">航线经营数据</caption><thead><tr>`;
   cols.forEach((col) => {
-    const cls = routeListSort.key === col.key ? (routeListSort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
-    html += `<th class="${cls}" data-action="route-list-sort" data-sort-key="${escapeAttr(col.key)}" title="${escapeAttr(col.label)}">${escapeHtml(col.icon)} <span class="route-sort-label">${escapeHtml(col.label)}</span></th>`;
+    const sorted = routeListSort.key === col.key;
+    const cls = sorted ? (routeListSort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+    const ariaSort = sorted ? (routeListSort.dir === 'asc' ? 'ascending' : 'descending') : 'none';
+    const indicator = sorted ? `<span class="route-sort-indicator" aria-hidden="true">${routeListSort.dir === 'asc' ? '▲' : '▼'}</span>` : '';
+    html += `<th class="${cls}" aria-sort="${ariaSort}"><button class="route-sort-btn" type="button" data-action="route-list-sort" data-sort-key="${escapeAttr(col.key)}" title="按${escapeAttr(col.label)}排序">${escapeHtml(col.icon)} <span class="route-sort-label">${escapeHtml(col.label)}</span>${indicator}</button></th>`;
   });
   html += '<th class="no-sort" title="操作">操作</th></tr></thead><tbody>';
   pageRows.forEach((row) => {
     html += renderRouteRow(row);
   });
-  html += `</tbody></table></div><div class="route-card-list">${pageRows.map(renderRouteCard).join('')}</div>${renderPagination(totalPages)}<div class="modal-actions route-list-actions"><button class="btn btn-secondary" data-action="close-modal">关闭</button></div>`;
+  html += `</tbody></table></div><div class="route-card-list">${pageRows.map(renderRouteCard).join('')}</div>${renderPagination(totalPages)}<div class="modal-actions route-list-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>`;
   renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop"><div class="modal route-list-modal modal-relative">${html}</div></div>`);
 }
 
@@ -164,8 +167,8 @@ export function showRoutePriceAdjust(state, from, to) {
     <div class="route-price-range"><span>$${Math.round(sp * 0.5)}</span><span id="adj-price-val">$${route.price}</span><span>$${Math.round(sp * 1.5)}</span></div>
     ${renderPricePresetButtons('set-adjust-price-preset', sp)}
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-action="return-route-list">取消</button>
-      <button class="btn btn-success" data-action="confirm-price-adjust" data-from="${escapeAttr(route.from)}" data-to="${escapeAttr(route.to)}">确认调价</button>
+      <button class="btn btn-secondary" type="button" data-action="return-route-list">取消</button>
+      <button class="btn btn-success" type="button" data-action="confirm-price-adjust" data-from="${escapeAttr(route.from)}" data-to="${escapeAttr(route.to)}">确认调价</button>
     </div>`);
 }
 
@@ -192,8 +195,8 @@ export function showRouteSuspendConfirm(state, from, to) {
     <p class="route-confirm-question">确定停飞 <strong>${escapeHtml(a.name)} → ${escapeHtml(b.name)}</strong> 航线？</p>
     <p class="route-confirm-note route-confirm-note-suspend">停飞后客座率和收入归零，但执飞飞机仍处于占用状态。</p>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-action="return-route-list">取消</button>
-      <button class="btn btn-danger" data-action="confirm-suspend-route" data-from="${escapeAttr(route.from)}" data-to="${escapeAttr(route.to)}">确认停飞</button>
+      <button class="btn btn-secondary" type="button" data-action="return-route-list">取消</button>
+      <button class="btn btn-danger" type="button" data-action="confirm-suspend-route" data-from="${escapeAttr(route.from)}" data-to="${escapeAttr(route.to)}">确认停飞</button>
     </div>`);
 }
 
@@ -206,8 +209,8 @@ export function showRouteResumeConfirm(state, from, to) {
     <p class="route-confirm-question">确定复飞 <strong>${escapeHtml(a.name)} → ${escapeHtml(b.name)}</strong> 航线？</p>
     <p class="route-confirm-note route-confirm-note-resume">复飞后航线将在下季度恢复运营并产生收益。</p>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-action="return-route-list">取消</button>
-      <button class="btn btn-success" data-action="confirm-resume-route" data-from="${escapeAttr(route.from)}" data-to="${escapeAttr(route.to)}">确认复飞</button>
+      <button class="btn btn-secondary" type="button" data-action="return-route-list">取消</button>
+      <button class="btn btn-success" type="button" data-action="confirm-resume-route" data-from="${escapeAttr(route.from)}" data-to="${escapeAttr(route.to)}">确认复飞</button>
     </div>`);
 }
 
@@ -220,8 +223,8 @@ export function showRouteCloseConfirm(state, from, to) {
     <p class="route-confirm-question">确定关闭 <strong>${escapeHtml(a.name)} → ${escapeHtml(b.name)}</strong> 航线？</p>
     <p class="route-confirm-note route-confirm-note-close">关闭后该航线将失去收益，飞机将变为空闲可用状态。</p>
     <div class="modal-actions">
-      <button class="btn btn-secondary" data-action="return-route-list">取消</button>
-      <button class="btn btn-danger" data-action="close-route" data-from="${escapeAttr(route.from)}" data-to="${escapeAttr(route.to)}">确认关闭</button>
+      <button class="btn btn-secondary" type="button" data-action="return-route-list">取消</button>
+      <button class="btn btn-danger" type="button" data-action="close-route" data-from="${escapeAttr(route.from)}" data-to="${escapeAttr(route.to)}">确认关闭</button>
     </div>`);
 }
 
@@ -235,7 +238,7 @@ export function showRouteChangePlaneModal(state, from, to) {
   const currentInfo = currentPlanes.map((plane) => `${plane.name}${plane.isLease ? ' [R]' : ''} (${plane.seats}座)`).join('、') || '无';
   const avail = availablePlanes(state).filter((plane) => plane.range >= distance);
   if (avail.length === 0) {
-    showModal(`<h2>更换机型</h2><p class="route-change-route-plain">${escapeHtml(a.name)} → ${escapeHtml(b.name)}</p><p>当前执飞：${escapeHtml(currentInfo)}</p><p class="route-change-warning">没有可用的替代飞机（需航程 ≥ ${Math.round(distance)} km）。</p><div class="modal-actions"><button class="btn btn-secondary" data-action="return-route-list">返回</button></div>`);
+    showModal(`<h2>更换机型</h2><p class="route-change-route-plain">${escapeHtml(a.name)} → ${escapeHtml(b.name)}</p><p>当前执飞：${escapeHtml(currentInfo)}</p><p class="route-change-warning">没有可用的替代飞机（需航程 ≥ ${Math.round(distance)} km）。</p><div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="return-route-list">返回</button></div>`);
     return;
   }
   let html = `<h2>更换机型</h2>
@@ -248,7 +251,7 @@ export function showRouteChangePlaneModal(state, from, to) {
       <span class="route-plane-option-action">选择</span>
     </button>`;
   });
-  html += '</div><div class="modal-actions"><button class="btn btn-secondary" data-action="return-route-list">取消</button></div>';
+  html += '</div><div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="return-route-list">取消</button></div>';
   showModal(html);
 }
 
@@ -365,10 +368,10 @@ function renderRouteCard(row) {
     </div>
     <div class="route-card-plane" title="${escapeAttr(row.planesPlain)}">执飞：${row.planes || '无'}</div>
     <div class="route-card-actions">
-      ${row.suspended ? '' : `<button class="btn btn-sm" data-action="open-route-price-adjust" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}">调价</button>
-      <button class="btn btn-sm" data-action="open-route-change-plane" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}">换机</button>`}
-      <button class="btn btn-sm" data-action="${suspendDisabled ? 'noop' : 'toggle-route-suspend'}" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}"${suspendDisabled ? ' disabled' : ''}>${suspendAction}</button>
-      <button class="btn btn-danger btn-sm" data-action="confirm-close-route" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}">关闭</button>
+      ${row.suspended ? '' : `<button class="btn btn-sm" type="button" data-action="open-route-price-adjust" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}">调价</button>
+      <button class="btn btn-sm" type="button" data-action="open-route-change-plane" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}">换机</button>`}
+      <button class="btn btn-sm" type="button" data-action="${suspendDisabled ? 'noop' : 'toggle-route-suspend'}" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}"${suspendDisabled ? ' disabled' : ''}>${suspendAction}</button>
+      <button class="btn btn-danger btn-sm" type="button" data-action="confirm-close-route" data-from="${escapeAttr(row.fromId)}" data-to="${escapeAttr(row.toId)}">关闭</button>
     </div>
   </div>`;
 }

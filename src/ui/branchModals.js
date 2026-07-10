@@ -24,7 +24,7 @@ export function showBranchModal(state) {
       const city = getCity(cityId);
       if (!city) return;
       const routesFromBranch = state.routes.filter((route) => route.from === cityId);
-      html += `<div class="branch-chip"><span>${escapeHtml(city.name)}</span><small>${routesFromBranch.length}航线</small><button type="button" data-action="close-branch" data-city-id="${escapeAttr(cityId)}" title="关闭分部">✕</button></div>`;
+      html += `<div class="branch-chip"><span>${escapeHtml(city.name)}</span><small>${routesFromBranch.length}航线</small><button type="button" data-action="close-branch" data-city-id="${escapeAttr(cityId)}" title="关闭分部" aria-label="关闭${escapeAttr(city.name)}分部">✕</button></div>`;
     });
     html += '</div>';
   }
@@ -39,12 +39,12 @@ export function showBranchModal(state) {
       <div class="branch-cost-note">建设需1个季度，完工后才可作为起飞基地。</div>
     </div>`;
     html += canAfford
-      ? '<button class="btn btn-primary btn-block" data-action="start-branch-select">在地图上选择分部城市</button>'
+      ? '<button class="btn btn-primary btn-block" type="button" data-action="start-branch-select">在地图上选择分部城市</button>'
       : '<div class="modal-status text-danger">资金不足</div>';
   } else {
     html += `<div class="modal-status text-warning">已达分部上限（${MAX_BRANCHES}个）</div>`;
   }
-  html += '<div class="modal-actions"><button class="btn btn-secondary" data-action="close-modal">关闭</button></div>';
+  html += '<div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>';
   showModal(html);
 }
 
@@ -70,8 +70,8 @@ export function showCloseBranchConfirm(state, cityId) {
     html += `<div class="impact-row">涉及的飞机将入库变为空闲：<strong class="text-warning">${affectedPlaneIds.size} 架</strong></div>`;
   }
   html += `</div><div class="modal-actions">
-      <button class="btn btn-secondary" data-action="open-branch-modal">取消</button>
-      <button class="btn btn-danger" data-action="confirm-close-branch" data-city-id="${escapeAttr(cityId)}">确认关闭</button>
+      <button class="btn btn-secondary" type="button" data-action="open-branch-modal">取消</button>
+      <button class="btn btn-danger" type="button" data-action="confirm-close-branch" data-city-id="${escapeAttr(cityId)}">确认关闭</button>
     </div>`;
   showModal(html);
 }

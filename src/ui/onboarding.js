@@ -300,14 +300,14 @@ export function showHelpPanel(state, tab = 'mechanics') {
   showModal(`<div class="help-panel">
     <div class="help-panel-head">
       <h2>帮助</h2>
-      <button class="modal-close" type="button" data-action="close-modal" title="关闭">×</button>
+      <button class="modal-close" type="button" data-action="close-modal" title="关闭" aria-label="关闭帮助">×</button>
     </div>
-    <div class="tabs" id="help-tabs">
+    <div class="tabs" id="help-tabs" role="tablist" aria-label="帮助分类">
       ${renderHelpTab('mechanics', '机制速查', activeTab)}
       ${renderHelpTab('guides', '操作指南', activeTab)}
       ${renderHelpTab('replay', '引导回放', activeTab)}
     </div>
-    <div class="help-content">${renderHelpContent(activeTab, state)}</div>
+    <div class="help-content" id="help-content" role="tabpanel" aria-labelledby="help-tab-${activeTab}">${renderHelpContent(activeTab, state)}</div>
   </div>`, { wide: false });
 }
 
@@ -334,7 +334,8 @@ function showNextFirstTimePopup() {
 }
 
 function renderHelpTab(id, label, activeTab) {
-  return `<button class="tab${activeTab === id ? ' active' : ''}" type="button" data-action="switch-help-tab" data-help-tab="${id}">${escapeHtml(label)}</button>`;
+  const active = activeTab === id;
+  return `<button class="tab${active ? ' active' : ''}" id="help-tab-${id}" type="button" role="tab" aria-selected="${active}" aria-controls="help-content" data-action="switch-help-tab" data-help-tab="${id}">${escapeHtml(label)}</button>`;
 }
 
 function renderHelpContent(tab, state) {

@@ -14,12 +14,12 @@ export function showLoanModal(state) {
     [10, 20, 50, 100].forEach((amount) => {
       if (amount <= maxLoan) {
         hasLoanOption = true;
-        html += `<button class="btn btn-warning btn-sm" data-action="confirm-loan" data-amount="${amount}">$${amount}M</button>`;
+        html += `<button class="btn btn-warning btn-sm" type="button" data-action="confirm-loan" data-amount="${amount}">$${amount}M</button>`;
       }
     });
     if (!hasLoanOption) {
       const cappedAmount = Number(maxLoan.toFixed(2));
-      html += `<button class="btn btn-warning btn-sm" data-action="confirm-loan" data-amount="${cappedAmount}">贷满 ${fmt(cappedAmount)}</button>`;
+      html += `<button class="btn btn-warning btn-sm" type="button" data-action="confirm-loan" data-amount="${cappedAmount}">贷满 ${fmt(cappedAmount)}</button>`;
     }
     html += `</div><div class="modal-footnote">可贷额度: $${maxLoan.toFixed(0)}M · 季利率 ${fmtPct((state.loanRate || 0) * 100)} · 手续费 5%</div>`;
   } else if ((state.loan || 0) <= 0) {
@@ -32,20 +32,20 @@ export function showLoanModal(state) {
     [5, 10, 20].forEach((amount) => {
       if (amount <= state.loan && amount <= state.cash) {
         hasRepayOption = true;
-        html += `<button class="btn btn-success btn-sm" data-action="repay-loan" data-amount="${amount}">还 $${amount}M</button>`;
+        html += `<button class="btn btn-success btn-sm" type="button" data-action="repay-loan" data-amount="${amount}">还 $${amount}M</button>`;
       }
     });
     if (state.cash >= state.loan) {
       hasRepayOption = true;
-      html += `<button class="btn btn-success btn-sm" data-action="repay-loan" data-amount="${state.loan}">全部还清 ${fmt(state.loan)}</button>`;
+      html += `<button class="btn btn-success btn-sm" type="button" data-action="repay-loan" data-amount="${state.loan}">全部还清 ${fmt(state.loan)}</button>`;
     } else if (!hasRepayOption && repayable > 0) {
-      html += `<button class="btn btn-success btn-sm" data-action="repay-loan" data-amount="${repayable}">尽力还款 ${fmt(repayable)}</button>`;
+      html += `<button class="btn btn-success btn-sm" type="button" data-action="repay-loan" data-amount="${repayable}">尽力还款 ${fmt(repayable)}</button>`;
     } else if (repayable <= 0) {
       html += '<span class="modal-inline-status text-danger">现金不足，暂时无法还款</span>';
     }
     html += '</div>';
   }
-  html += '<div class="modal-actions"><button class="btn btn-secondary" data-action="close-modal">关闭</button></div>';
+  html += '<div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>';
   showModal(html);
 }
 
@@ -59,5 +59,5 @@ export function showLoanConfirm(state, amount) {
     <div class="loan-row"><span>实际到账</span><strong class="text-positive">${fmt(amount - fee)}</strong></div>
     <div class="loan-row"><span>季度利息</span><span>-${fmt(quarterlyInterest)}</span></div>
     <div class="loan-row"><span>年利率</span><span>${annualRate}</span></div>
-  </div><div class="modal-actions"><button class="btn btn-secondary" data-action="open-loan-modal">取消</button><button class="btn btn-warning" data-action="take-loan" data-amount="${amount}">确认贷款</button></div>`);
+  </div><div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="open-loan-modal">取消</button><button class="btn btn-warning" type="button" data-action="take-loan" data-amount="${amount}">确认贷款</button></div>`);
 }

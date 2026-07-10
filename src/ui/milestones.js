@@ -60,7 +60,7 @@ export function showMilestoneList(state) {
   });
 
   html += `</div>
-    <div class="milestone-footer"><button class="btn btn-primary" data-action="close-modal">关闭</button></div>
+    <div class="milestone-footer"><button class="btn btn-primary" type="button" data-action="close-modal">关闭</button></div>
   </div>`;
   showModal(html, { wide: true });
 }

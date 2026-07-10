@@ -16,7 +16,7 @@ export function showVersionLog() {
   const body = VERSION_LOG.map(renderVersionEntry).join('');
   renderModalRoot(`<div class="modal-overlay version-log-overlay" data-action="modal-backdrop">
     <div class="modal version-log-modal modal-relative">
-      <button class="version-log-close" type="button" data-action="close-modal" title="关闭">✕</button>
+      <button class="version-log-close" type="button" data-action="close-modal" title="关闭" aria-label="关闭更新日志">✕</button>
       <div class="version-log-head">
         <h2>更新日志</h2>
         <span>v${escapeHtml(current.ver)}</span>

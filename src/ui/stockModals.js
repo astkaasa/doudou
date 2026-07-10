@@ -47,7 +47,7 @@ function buildStockMarketHtml(state, activeStocks) {
         <h2>NASDOU 证券市场</h2>
         <span>${state.year}年 第${state.quarter}季度</span>
       </div>
-      <button class="btn btn-sm stock-close" data-action="close-modal">关闭</button>
+      <button class="btn btn-sm stock-close" type="button" data-action="close-modal">关闭</button>
     </div>
     <div class="stock-index">
       <span>综合指数</span>

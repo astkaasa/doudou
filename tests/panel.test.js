@@ -34,4 +34,28 @@ describe('management panel rendering', () => {
     expect(elements['market-info'].innerHTML).toContain('&lt;script&gt;bad()&lt;/script&gt;');
     expect(elements['market-info'].innerHTML).not.toContain('style=');
   });
+
+  it('renders route summaries as keyboard-operable buttons', () => {
+    const elements = {
+      'market-info': { innerHTML: '' },
+      'route-summary': { innerHTML: '' },
+    };
+    globalThis.document = {
+      getElementById: (id) => elements[id] || null,
+    };
+    const state = initState('beijing', 'era1');
+    state.routes = [{
+      assignedPlanes: [],
+      from: 'beijing',
+      loadFactor: 0.75,
+      price: 120,
+      profit: 2,
+      to: 'shanghai',
+    }];
+
+    renderPanel(state, { hqSelectMode: false });
+
+    expect(elements['route-summary'].innerHTML).toContain('<button class="route-item" type="button"');
+    expect(elements['route-summary'].innerHTML).toContain('data-action="open-route-detail"');
+  });
 });

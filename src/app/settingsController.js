@@ -33,9 +33,9 @@ export function createSettingsController(app, storage = localStorage) {
           <strong>地图样式</strong>
           <small>经典适合清晰查看航线，地形使用 Natural Earth II 官方地形底图。</small>
         </div>
-        <div class="settings-choice-row">
-          <button class="settings-choice${classicActive}" data-action="set-map-style" data-map-style="classic">经典</button>
-          <button class="settings-choice${terrainActive}" data-action="set-map-style" data-map-style="terrain">地形</button>
+        <div class="settings-choice-row" role="radiogroup" aria-label="地图样式">
+          <button class="settings-choice${classicActive}" type="button" role="radio" aria-checked="${app.settings.mapStyle !== 'terrain'}" data-action="set-map-style" data-map-style="classic">经典</button>
+          <button class="settings-choice${terrainActive}" type="button" role="radio" aria-checked="${app.settings.mapStyle === 'terrain'}" data-action="set-map-style" data-map-style="terrain">地形</button>
         </div>
       </div>
       <label class="settings-toggle">
@@ -46,7 +46,7 @@ export function createSettingsController(app, storage = localStorage) {
         <input type="checkbox" data-action="toggle-map-boundaries" ${checked}>
       </label>
       <div class="modal-actions">
-        <button class="btn btn-primary" data-action="close-modal">完成</button>
+        <button class="btn btn-primary" type="button" data-action="close-modal">完成</button>
       </div>`);
   }
 

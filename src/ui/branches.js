@@ -12,8 +12,8 @@ export function showBranchBanner(state) {
     <div class="branch-hint">点击地图上的城市开设分部（费用 ${fmt(cost)}）</div>
     <div id="branch-selected-info" class="branch-selected" hidden>已选择: <span id="branch-selected-name" class="branch-name"></span></div>
     <div class="selection-actions">
-      <button class="btn btn-secondary selection-cancel" data-action="cancel-branch-select">← 取消</button>
-      <button class="btn btn-success selection-confirm" id="branch-confirm-btn" data-action="confirm-branch" hidden>确认开设</button>
+      <button class="btn btn-secondary selection-cancel" type="button" data-action="cancel-branch-select">← 取消</button>
+      <button class="btn btn-success selection-confirm" type="button" id="branch-confirm-btn" data-action="confirm-branch" hidden>确认开设</button>
     </div>
   `);
   document.body.appendChild(banner);

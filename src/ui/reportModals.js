@@ -81,7 +81,7 @@ function buildNewspaperHtml(state, includeFooter = true, period = null) {
   if (includeFooter) {
     html += `
     <div class="newspaper-footer">
-      <button class="btn btn-primary btn-dialog-primary" data-action="close-modal">知道了，继续经营</button>
+      <button class="btn btn-primary btn-dialog-primary" type="button" data-action="close-modal">知道了，继续经营</button>
     </div>`;
   }
   html += '</div>';
@@ -178,7 +178,7 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
     html += '</div>';
   }
   if (snapshot.deliveredThisTurn.length > 0) {
-    html += '<div class="report-delivery-trigger"><button class="delivery-mail" type="button" data-action="show-delivery-popup" title="点击查看飞机交付通知">✉️<span>NEW</span></button></div>';
+    html += '<div class="report-delivery-trigger"><button class="delivery-mail" type="button" data-action="show-delivery-popup" title="点击查看飞机交付通知" aria-label="查看飞机交付通知">✉️<span>NEW</span></button></div>';
   }
   if (snapshot.retiredThisTurn > 0) {
     html += `<div class="report-notice"><strong>员工退休</strong><span>本季退休 ${Math.round(snapshot.retiredThisTurn * 1000)} 人</span></div>`;
@@ -252,7 +252,7 @@ function renderBaseRouteRow(route) {
 }
 
 export function showFinancialReport(state, rev, cost, profit, period = null, interest = loanInterest(state), snapshot = createFinancialReportSnapshot(state)) {
-  const html = `${buildFinancialReportHtml(state, rev, cost, profit, period, interest, snapshot)}<div class="report-card-actions"><button class="btn btn-primary btn-dialog-primary" data-action="close-modal">继续经营</button></div>`;
+  const html = `${buildFinancialReportHtml(state, rev, cost, profit, period, interest, snapshot)}<div class="report-card-actions"><button class="btn btn-primary btn-dialog-primary" type="button" data-action="close-modal">继续经营</button></div>`;
   showModal(`<div class="report-card-standalone">${html}</div>`);
 }
 
@@ -266,7 +266,7 @@ export function showTurnSummary(state, report) {
   const overlayAction = isEraSettlement ? '' : ' data-action="modal-backdrop"';
   const buttonAction = isEraSettlement ? 'open-era-settlement' : 'close-modal';
   const buttonLabel = isEraSettlement ? '查看时代结算' : '知道了，继续经营';
-  renderModalRoot(`<div class="modal-overlay"${overlayAction} data-turn-summary="true"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary turn-summary-action" data-action="${buttonAction}">${buttonLabel}</button></div></div></div></div>`);
+  renderModalRoot(`<div class="modal-overlay"${overlayAction} data-turn-summary="true"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary turn-summary-action" type="button" data-action="${buttonAction}">${buttonLabel}</button></div></div></div></div>`);
   const newsBtn = byId('reread-news-btn');
   const reportBtn = byId('reread-report-btn');
   if (newsBtn) newsBtn.hidden = false;
@@ -290,7 +290,7 @@ export function showDeliveryPopup(state) {
   items.forEach((plane) => {
     html += `<div class="report-row"><span class="delivery-plane-name">${escapeHtml(plane.name)}</span><span class="delivery-ready">✓ 已就绪</span></div>`;
   });
-  html += '</div><div class="delivery-actions"><button class="btn btn-primary btn-dialog-primary" data-action="close-delivery-popup">知道了</button></div></div></div>';
+  html += '</div><div class="delivery-actions"><button class="btn btn-primary btn-dialog-primary" type="button" data-action="close-delivery-popup">知道了</button></div></div></div>';
   renderHtml(byId('delivery-root'), html);
 }
 
@@ -299,5 +299,5 @@ export function closeDeliveryPopup() {
 }
 
 export function showGameOver(state) {
-  renderModalRoot(`<div class="modal-overlay"><div class="modal gameover"><h1>破产了</h1><p>你的航空公司因资金耗尽而倒闭。</p><p>存活了 ${state.turnsPlayed} 个季度</p><p>最高曾拥有 ${state.routes.length} 条航线、${state.fleet.length} 架飞机</p><button class="btn btn-primary gameover-action" data-action="reload-page">重新开始</button></div></div>`);
+  renderModalRoot(`<div class="modal-overlay"><div class="modal gameover"><h1>破产了</h1><p>你的航空公司因资金耗尽而倒闭。</p><p>存活了 ${state.turnsPlayed} 个季度</p><p>最高曾拥有 ${state.routes.length} 条航线、${state.fleet.length} 架飞机</p><button class="btn btn-primary gameover-action" type="button" data-action="reload-page">重新开始</button></div></div>`);
 }

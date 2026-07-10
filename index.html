@@ -28,8 +28,8 @@
     <div class="hud-item" id="hud-loan-wrap" hidden><span class="hud-label">贷款</span><span class="hud-val negative" id="hud-loan">$0M</span></div>
     <div id="mega-event-badge" hidden></div>
     <div id="hud-actions">
-      <button class="btn btn-sm btn-secondary" data-action="save-game" title="保存存档">💾 <span class="hud-action-label">存档</span></button>
-      <button class="btn btn-sm btn-secondary" data-action="load-game" title="载入存档">📂 <span class="hud-action-label">读档</span></button>
+      <button class="btn btn-sm btn-secondary" type="button" data-action="save-game" title="保存存档">💾 <span class="hud-action-label">存档</span></button>
+      <button class="btn btn-sm btn-secondary" type="button" data-action="load-game" title="载入存档">📂 <span class="hud-action-label">读档</span></button>
     </div>
     <div id="hud-turn">2020 Q1</div>
   </div>
@@ -39,14 +39,14 @@
       <div class="panel-section">
         <div class="panel-title">快捷操作</div>
         <div class="quick-action-grid">
-          <button class="btn btn-primary btn-sm" id="btn-open-route" data-action="open-route-modal">开通航线</button>
-          <button class="btn btn-primary btn-sm" id="btn-buy-plane" data-action="open-buy-plane-modal">购买飞机</button>
-          <button class="btn btn-warning btn-sm" id="btn-fleet" data-action="open-fleet-panel">机队管理</button>
-          <button class="btn btn-sm btn-secondary" id="btn-routes" data-action="open-route-list">航线管理</button>
-          <button class="btn btn-sm btn-info" id="btn-ops" data-action="open-operations-panel">运营管理</button>
-          <button class="btn btn-sm btn-warning" id="btn-loan" data-action="open-loan-modal">银行贷款</button>
-          <button class="btn btn-sm btn-violet" id="btn-branch" data-action="open-branch-modal">分部管理</button>
-          <button class="btn btn-sm btn-muted" id="btn-subsidiary" data-action="open-subsidiary-overview">投资管理</button>
+          <button class="btn btn-primary btn-sm" type="button" id="btn-open-route" data-action="open-route-modal">开通航线</button>
+          <button class="btn btn-primary btn-sm" type="button" id="btn-buy-plane" data-action="open-buy-plane-modal">购买飞机</button>
+          <button class="btn btn-warning btn-sm" type="button" id="btn-fleet" data-action="open-fleet-panel">机队管理</button>
+          <button class="btn btn-sm btn-secondary" type="button" id="btn-routes" data-action="open-route-list">航线管理</button>
+          <button class="btn btn-sm btn-info" type="button" id="btn-ops" data-action="open-operations-panel">运营管理</button>
+          <button class="btn btn-sm btn-warning" type="button" id="btn-loan" data-action="open-loan-modal">银行贷款</button>
+          <button class="btn btn-sm btn-violet" type="button" id="btn-branch" data-action="open-branch-modal">分部管理</button>
+          <button class="btn btn-sm btn-muted" type="button" id="btn-subsidiary" data-action="open-subsidiary-overview">投资管理</button>
         </div>
       </div>
       <div class="panel-section" id="panel-info">
@@ -67,21 +67,21 @@
     <span id="season-badge"></span>
     <span id="oil-badge"></span>
     <button id="nasdou-badge" type="button" data-action="open-stock-market" hidden>📈 NASDOU</button>
-    <span id="reread-news-btn" data-action="show-newspaper" hidden>📰 上季报纸</span>
-    <span id="reread-report-btn" data-action="show-report" hidden>📊 上季财报</span>
+    <button id="reread-news-btn" type="button" data-action="show-newspaper" hidden>📰 上季报纸</button>
+    <button id="reread-report-btn" type="button" data-action="show-report" hidden>📊 上季财报</button>
     <span id="bottom-hint" hidden></span>
     <span id="turn-forecast" hidden></span>
     <div id="zoom-controls">
       <span class="zoom-label">缩放</span>
-      <button class="btn btn-sm map-zoom-btn active" data-action="set-map-zoom" data-zoom="1" id="zoom1">1x</button>
-      <button class="btn btn-sm map-zoom-btn" data-action="set-map-zoom" data-zoom="1.5" id="zoom15">1.5x</button>
-      <button class="btn btn-sm map-zoom-btn" data-action="set-map-zoom" data-zoom="2" id="zoom2">2x</button>
+      <button class="btn btn-sm map-zoom-btn active" type="button" data-action="set-map-zoom" data-zoom="1" id="zoom1">1x</button>
+      <button class="btn btn-sm map-zoom-btn" type="button" data-action="set-map-zoom" data-zoom="1.5" id="zoom15">1.5x</button>
+      <button class="btn btn-sm map-zoom-btn" type="button" data-action="set-map-zoom" data-zoom="2" id="zoom2">2x</button>
     </div>
-    <button id="advance-btn" data-action="advance-turn">推进回合 ▶</button>
+    <button id="advance-btn" type="button" data-action="advance-turn">推进回合 ▶</button>
     <div id="bottom-tools">
       <button id="focus-hq-btn" type="button" data-action="focus-hq" title="定位总部" aria-label="定位总部">⌖</button>
-      <button id="settings-btn" type="button" data-action="show-settings" title="设置">⚙</button>
-      <button id="help-btn" type="button" data-action="show-onboarding-help" title="帮助与机制速查">?</button>
+      <button id="settings-btn" type="button" data-action="show-settings" title="设置" aria-label="设置">⚙</button>
+      <button id="help-btn" type="button" data-action="show-onboarding-help" title="帮助与机制速查" aria-label="帮助与机制速查">?</button>
     </div>
   </div>
 </div>
@@ -90,7 +90,7 @@
 <div id="contract-zone"></div>
 <div id="delivery-root"></div>
 <div id="onboard-hint" hidden>
-  <button class="hint-close" type="button" data-action="acknowledge-onboarding" title="暂时关闭">×</button>
+  <button class="hint-close" type="button" data-action="acknowledge-onboarding" title="暂时关闭" aria-label="暂时关闭新手引导">×</button>
   <div class="hint-title"></div>
   <div class="hint-body"></div>
   <div class="hint-footer">

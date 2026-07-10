@@ -59,7 +59,7 @@ export function renderPanel(state, uiState) {
       const a = getCity(r.from);
       const b = getCity(r.to);
       const profitClass = r.profit >= 0 ? 'route-item-profit-positive' : 'route-item-profit-negative';
-      html += `<div class="route-item" data-action="open-route-detail" data-from="${escapeAttr(r.from)}" data-to="${escapeAttr(r.to)}"><div class="route-item-head"><span>${escapeHtml(a.name)} → ${escapeHtml(b.name)}</span><span class="route-item-profit ${profitClass}">${fmt(r.profit)}</span></div><div class="route-item-meta">客座率 ${fmtPct(r.loadFactor * 100)} | 票价 $${r.price}</div></div>`;
+      html += `<button class="route-item" type="button" data-action="open-route-detail" data-from="${escapeAttr(r.from)}" data-to="${escapeAttr(r.to)}"><span class="route-item-head"><span>${escapeHtml(a.name)} → ${escapeHtml(b.name)}</span><span class="route-item-profit ${profitClass}">${fmt(r.profit)}</span></span><span class="route-item-meta">客座率 ${fmtPct(r.loadFactor * 100)} | 票价 $${r.price}</span></button>`;
     });
     if (state.routes.length > 6) html += `<div class="route-item-more">...共 ${state.routes.length} 条</div>`;
     renderHtml(rs, html);

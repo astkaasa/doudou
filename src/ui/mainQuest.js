@@ -29,7 +29,7 @@ export function showMainQuestPanel(state) {
     <div class="main-quest-dimensions">${dimensionRows}</div>
     <div class="main-quest-stage-row">${stages}</div>
     <div class="main-quest-actions">
-      <button class="btn btn-primary" data-action="close-modal">关闭</button>
+      <button class="btn btn-primary" type="button" data-action="close-modal">关闭</button>
     </div>
   </div>`, { wide: false });
 }
@@ -43,7 +43,7 @@ export function showMainQuestStageNotification(data) {
     <h2>${escapeHtml(data.title || '阶段达成')}</h2>
     <p>${escapeHtml(data.subtitle || '')}</p>
     ${data.nextTitle ? `<small>下一阶段：${escapeHtml(data.nextTitle)}</small>` : ''}
-    <button class="btn btn-primary" data-action="close-main-quest-overlay">继续</button>
+    <button class="btn btn-primary" type="button" data-action="close-main-quest-overlay">继续</button>
   </div>`);
   document.body.appendChild(overlay);
   window.setTimeout(() => closeMainQuestOverlay(overlay), 5000);
@@ -61,8 +61,8 @@ export function showMainQuestVictory(data) {
     <strong>${escapeHtml(grade.title)}</strong>
     <small>经营 ${Number(data.turnsPlayed) || 0} 季达成通关 · 累计利润 ${fmt(data.totalProfit || 0)}</small>
     <div class="main-quest-victory-actions">
-      <button class="btn btn-primary" data-action="end-victory-game">庆功收官</button>
-      <button class="btn" data-action="continue-victory-game">继续经营</button>
+      <button class="btn btn-primary" type="button" data-action="end-victory-game">庆功收官</button>
+      <button class="btn" type="button" data-action="continue-victory-game">继续经营</button>
     </div>
   </div>`);
   document.body.appendChild(overlay);
@@ -85,7 +85,7 @@ export function showVictoryEnding(state) {
     <p>经营了 ${Number(state.turnsPlayed) || 0} 个季度</p>
     <p>最终资金：${fmt(state.cash || 0)} · 累计利润：${fmt(state.totalProfit || 0)}</p>
     <p>拥有 ${(state.routes || []).length} 条航线 · ${(state.fleet || []).length} 架飞机</p>
-    <button class="btn btn-primary btn-dialog-primary" data-action="reload-page">重新开始</button>
+    <button class="btn btn-primary btn-dialog-primary" type="button" data-action="reload-page">重新开始</button>
   </div>`);
 }
 

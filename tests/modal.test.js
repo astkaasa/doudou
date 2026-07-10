@@ -1,13 +1,42 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BANNER_TONES, showBanner } from '../src/ui/modal.js';
+import { BANNER_TONES, showBanner, trapModalFocus } from '../src/ui/modal.js';
 
 const originalDocument = globalThis.document;
 
 afterEach(() => {
-  vi.runOnlyPendingTimers();
+  if (vi.isFakeTimers()) vi.runOnlyPendingTimers();
   vi.useRealTimers();
   globalThis.document = originalDocument;
+});
+
+describe('modal focus management', () => {
+  it('wraps focus at both ends of a dialog', () => {
+    const first = createFocusable();
+    const last = createFocusable();
+    const dialog = {
+      contains: (element) => element === first || element === last,
+      focus: vi.fn(),
+      querySelectorAll: () => [first, last],
+    };
+    const root = { querySelector: () => dialog };
+    const documentStub = {
+      activeElement: last,
+      getElementById: (id) => (id === 'modal-root' ? root : null),
+    };
+    globalThis.document = documentStub;
+    const forward = { key: 'Tab', preventDefault: vi.fn(), shiftKey: false };
+
+    expect(trapModalFocus(forward)).toBe(true);
+    expect(forward.preventDefault).toHaveBeenCalledOnce();
+    expect(first.focus).toHaveBeenCalledWith({ preventScroll: true });
+
+    documentStub.activeElement = first;
+    const backward = { key: 'Tab', preventDefault: vi.fn(), shiftKey: true };
+    expect(trapModalFocus(backward)).toBe(true);
+    expect(backward.preventDefault).toHaveBeenCalledOnce();
+    expect(last.focus).toHaveBeenCalledWith({ preventScroll: true });
+  });
 });
 
 describe('event banner', () => {
@@ -62,5 +91,14 @@ function createBanner() {
 function documentWithBanner(banner) {
   return {
     getElementById: (id) => (id === 'event-banner' ? banner : null),
+  };
+}
+
+function createFocusable() {
+  return {
+    closest: () => null,
+    disabled: false,
+    focus: vi.fn(),
+    hidden: false,
   };
 }
