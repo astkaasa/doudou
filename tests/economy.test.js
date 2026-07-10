@@ -99,7 +99,7 @@ describe('economy model', () => {
       loadFactor: 0.5,
     };
 
-    expect(routeCost(earlyState, route).catering).toBeCloseTo(routeCost(epicState, route).catering * 0.5);
+    expect(routeCost(earlyState, route).catering).toBeCloseTo(routeCost(epicState, route).catering * 0.1);
   });
 
   it('adds yield premiums for cross-region and cross-subregion long routes', () => {

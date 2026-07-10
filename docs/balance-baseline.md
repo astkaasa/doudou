@@ -139,9 +139,28 @@ The follow-up aggressive-policy matrix used all five headquarters and 20 determi
 
 | Era | Survival | Victory | Average victory turn | Victory band | Turn band |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| era1 | 98.0% | 38.0% | 63.7 | 30%-65% | 62-78 |
+| era1 | 97.0% | 45.0% | 70.1 | 30%-65% | 62-78 |
 | era2 | 99.0% | 59.0% | 65.5 | 50%-85% | 58-75 |
 | era3 | 98.0% | 85.0% | 57.3 | 75%-100% | 50-70 |
 | era4 | 82.0% | 64.0% | 192.0 | 35%-70% | 140-215 |
 
-All four campaign completion bands now pass across the regional sample. The only remaining aggressive-policy failure is era 1 route operating margin at 7.3%, so its early cabin-cost calibration remains a separate economic change.
+All four campaign completion bands now pass across the regional sample. Era 1 was then rerun after its separate cabin-cost adjustment and final quest pacing change; it finished with 16.1% route operating margin, 18.6% total profit margin, and 11.4% cash pressure, all inside the target bands.
+
+The final era 1 cabin-cost multiplier is 0.10. This represents the lower onboard service-cost environment of the early jet era while retaining the same passenger-distance formula used by every scenario. Its five-headquarters, 20-seed aggressive matrix moved route margin from 7.3% to 16.1%; the higher final quest scale target keeps victory timing at turn 70 rather than letting the cheaper operation produce an early automatic win.
+
+## Final acceptance matrix
+
+The completed M2.4 acceptance run used four eras, four policies, five headquarters, and 20 deterministic seeds per combination: 1,600 full campaigns and 80/80 covered combinations. Eight workers completed the run in 435.50 seconds. Every quarter passed the game-state invariant checks and the strict acceptance command returned `PASS`.
+
+| Era | All-policy survival | Aggressive victory | Victory turn | Route margin | Profit margin | Cash pressure | Non-route income | Rescue / 100 turns | Liquidations / 100 turns | Viable policies |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| era1 | 99.3% | 45.0% | 70.1 | 16.1% | 18.6% | 11.4% | 3.3% | 0.0 | 0.4 | 4 |
+| era2 | 99.8% | 59.0% | 65.5 | 23.7% | 26.0% | 8.8% | 3.0% | 0.0 | 0.1 | 4 |
+| era3 | 99.5% | 85.0% | 57.3 | 31.7% | 33.6% | 5.3% | 2.7% | 0.0 | 0.1 | 4 |
+| era4 | 79.3% | 64.0% | 192.0 | 32.2% | 34.6% | 17.7% | 3.1% | 0.2 | 0.5 | 4 |
+
+Reproduce the strict run with:
+
+```bash
+npm run balance:acceptance -- --workers 8 --strict --output /tmp/doudou-balance-final.json
+```

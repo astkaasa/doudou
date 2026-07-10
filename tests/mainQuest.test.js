@@ -44,18 +44,19 @@ describe('main quest progression', () => {
   it('counts active route regions without requiring matching branches', () => {
     const state = initState('beijing', 'era1');
     state.mainQuest.currentStage = 3;
-    addRoutePlaceholders(state, 22);
+    addRoutePlaceholders(state, 35);
     state.routes.push(
       { from: 'beijing', to: 'london', revenue: 0, cost: 0, profit: 0 },
       { from: 'beijing', to: 'cairo', revenue: 0, cost: 0, profit: 0 },
+      { from: 'beijing', to: 'sydney', revenue: 0, cost: 0, profit: 0 },
     );
-    state.cash = 350;
-    state.consecutiveProfit = 4;
+    state.cash = 900;
+    state.consecutiveProfit = 6;
 
     const progress = checkMainQuestProgress(state);
 
     expect(progress.allMet).toBe(true);
-    expect(progress.dimensions.branch).toMatchObject({ current: 3, target: 3, type: 'networkRegion', met: true });
+    expect(progress.dimensions.branch).toMatchObject({ current: 4, target: 4, type: 'networkRegion', met: true });
   });
 
   it('uses company value instead of cash for the wealth dimension', () => {
