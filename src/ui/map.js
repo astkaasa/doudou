@@ -355,8 +355,7 @@ export function initMapDrag(getState, render) {
     if (!stage) return;
     const dx = touch.clientX - mapTouch.startX;
     const dy = touch.clientY - mapTouch.startY;
-    stage.style.willChange = 'transform';
-    stage.style.transformOrigin = '0 0';
+    stage.classList.add('map-stage-previewing', 'map-stage-preview-pan');
     stage.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
   };
   const previewTouchPinch = (state, touches, rect) => {
@@ -366,16 +365,17 @@ export function initMapDrag(getState, render) {
     const dx = center.clientX - mapTouch.startCenterX;
     const dy = center.clientY - mapTouch.startCenterY;
     const scale = (state.mapZoom || MIN_ZOOM) / (mapTouch.startZoom || MIN_ZOOM);
-    stage.style.willChange = 'transform';
+    stage.classList.add('map-stage-previewing');
+    stage.classList.remove('map-stage-preview-pan');
     stage.style.transformOrigin = `${mapTouch.startCenterX - rect.left}px ${mapTouch.startCenterY - rect.top}px`;
     stage.style.transform = `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`;
   };
   const resetTouchPreview = () => {
     const stage = mc.querySelector('.map-stage');
     if (!stage) return;
+    stage.classList.remove('map-stage-previewing', 'map-stage-preview-pan');
     stage.style.transform = '';
     stage.style.transformOrigin = '';
-    stage.style.willChange = '';
   };
   const commitTouchRender = () => {
     resetTouchPreview();
@@ -395,7 +395,8 @@ export function initMapDrag(getState, render) {
       startPanX: state.mapPanX || 0,
       startPanY: state.mapPanY || 0,
     };
-    mc.style.cursor = 'grabbing';
+    mc.classList.remove('map-can-pan');
+    mc.classList.add('map-dragging');
     stopEdgeScroll();
     e.preventDefault();
   });
@@ -499,7 +500,8 @@ export function initMapDrag(getState, render) {
       const mc2 = byId('map-container');
       if (mc2) {
         const stage = mc2.querySelector('.map-stage') || mc2;
-        mc2.style.cursor = state && canPan(state, stage.getBoundingClientRect()) ? 'grab' : 'default';
+        mc2.classList.remove('map-dragging');
+        mc2.classList.toggle('map-can-pan', Boolean(state && canPan(state, stage.getBoundingClientRect())));
       }
     }
   });
@@ -507,14 +509,13 @@ export function initMapDrag(getState, render) {
   mc.addEventListener('mousemove', () => {
     const state = getState();
     const stage = mc.querySelector('.map-stage') || mc;
-    if (state && canPan(state, stage.getBoundingClientRect()) && !mapDrag.dragging) mc.style.cursor = 'grab';
-    else if (!mapDrag.dragging) mc.style.cursor = 'default';
+    if (!mapDrag.dragging) mc.classList.toggle('map-can-pan', Boolean(state && canPan(state, stage.getBoundingClientRect())));
   });
 
   mc.addEventListener('mouseleave', () => {
     hideCityTooltip();
     stopEdgeScroll();
-    if (!mapDrag.dragging) mc.style.cursor = 'default';
+    if (!mapDrag.dragging) mc.classList.remove('map-can-pan');
   });
 }
 

@@ -52,6 +52,7 @@ npm run balance:acceptance
 - `tests/`：Vitest 单元测试。
 - `docs/balance-baseline.md`：四时代批量模拟方法、当前基线和待验证的平衡问题。
 - `docs/balance-targets.md`：四时代平衡验收目标、区域样本矩阵和通关评级阈值。
+- `docs/visual-regression.md`：桌面与手机界面的视觉回归场景矩阵和失败标准。
 - `public/`：开发和构建使用的静态资源。
 - `upstream/`：原始上游快照，包含入口 HTML 和按资源图发现的同源资源，只用于对照，不要手动修改。
 - `dist/index.html`：构建生成的普通静态网站入口。

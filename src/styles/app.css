@@ -46,6 +46,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 #main{display:grid;grid-template-columns:minmax(0,1fr) clamp(300px,22vw,340px);overflow:hidden}
 #map-container{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 48%,#102d3e 0,#081525 52%,#050b16 100%);touch-action:none;user-select:none;-webkit-user-select:none}
 .map-stage{position:absolute;inset:0;margin:auto;overflow:hidden;touch-action:none}
+.map-stage-previewing{will-change:transform}.map-stage-preview-pan{transform-origin:0 0}
+#map-container.map-can-pan{cursor:grab}#map-container.map-dragging{cursor:grabbing}
 #map-container svg{width:100%;height:100%;display:block;touch-action:none}
 .map-tooltip{position:absolute;z-index:5;pointer-events:none;background:rgba(6,17,31,0.92);border:1px solid rgba(147,197,253,0.7);border-radius:6px;color:#eaf4ff;font-size:12px;font-weight:700;line-height:1;padding:7px 9px;box-shadow:0 8px 22px rgba(0,0,0,0.35),0 0 12px rgba(96,165,250,0.22);white-space:nowrap}
 .map-tooltip-hq{display:flex;flex-direction:column;gap:4px;min-width:170px;line-height:1.25;border-color:#f97316;padding:10px 12px}
