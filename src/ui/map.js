@@ -465,8 +465,9 @@ export function initMapDrag(getState, render) {
       return;
     }
     if (e.touches.length === 0) {
+      const committedGesture = Boolean(mapTouch.mode);
       resetMapTouch();
-      commitTouchRender();
+      if (committedGesture) commitTouchRender();
     }
   });
 
@@ -574,11 +575,11 @@ function normalizeCityTouchClick(event) {
   if (!nearest || nearest === target) return;
   const originalCityId = target.dataset.cityId;
   target.dataset.cityId = nearest.dataset.cityId;
-  queueMicrotask(() => {
+  setTimeout(() => {
     if (target.isConnected && target.dataset.cityId === nearest.dataset.cityId) {
       target.dataset.cityId = originalCityId;
     }
-  });
+  }, 0);
 }
 
 function nearestCityTouchTarget(stage, clientX, clientY) {
