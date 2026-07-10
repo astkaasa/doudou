@@ -31,10 +31,12 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 #mega-event-badge{display:inline-flex;align-items:center;justify-content:center;min-height:24px;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:800;white-space:nowrap;flex:0 0 auto}
 #mega-event-badge[hidden]{display:none}
 .mega-badge-active{background:linear-gradient(135deg,#1e3a8a,#2563eb,#1e40af);color:#fbbf24;border:1px solid #3b82f6;text-shadow:0 1px 2px rgba(0,0,0,0.45);animation:mega-pulse 2s ease-in-out infinite}
+.mega-badge-active.mega-badge-urgent{animation-duration:1s}
 @keyframes mega-pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,160,23,0.45)}50%{box-shadow:0 0 0 6px rgba(212,160,23,0)}}
 #hud-actions{display:flex;gap:4px;margin-left:8px;flex:0 0 auto}
 #hud-actions .btn{white-space:nowrap}
 #hud-turn{padding:4px 12px;border-radius:4px;font-weight:700;font-size:14px;transition:background 0.5s;flex:0 0 auto;white-space:nowrap}
+.hud-ops-neutral{color:#7ba3cc}.hud-ops-good{color:#4ade80}.hud-ops-warning{color:#fbbf24}.hud-ops-danger{color:#f87171}
 /* Season HUD colors */
 .season-q1 #hud-turn{background:#15803d}
 .season-q2 #hud-turn{background:#c2410c}
@@ -202,7 +204,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 #nasdou-badge{border:0;border-radius:10px;background:#33415580;color:#fbbf24;padding:2px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
 #nasdou-badge:hover,#nasdou-badge:focus-visible{background:#475569;color:#fde68a;outline:none}
 #nasdou-badge[hidden]{display:none}
+.nasdou-change{font-size:10px}.nasdou-change.up{color:#ef4444}.nasdou-change.down{color:#22c55e}.nasdou-change.flat{color:#fbbf24}
 #oil-badge{padding:2px 10px;border-radius:10px;font-size:13px;font-weight:600;background:#33415580;color:#fbbf24}
+.oil-change{font-size:10px}.oil-change.up{color:#f87171}.oil-change.down{color:#4ade80}.oil-change.flat{color:#7ba3cc}
 #reread-news-btn,#reread-report-btn{padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
 #reread-news-btn{background:#1e3a5f80;color:#93c5fd}
 #reread-report-btn{background:#16a34a20;color:#4ade80}
@@ -566,6 +570,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .stock-row{width:100%;min-height:34px;border:1px solid transparent;border-radius:6px;background:transparent;color:#e0e8f0;padding:5px 8px;margin-bottom:3px;text-align:left;cursor:pointer}
 .stock-row:hover,.stock-row:focus-visible{background:#162d50;outline:none}
 .stock-row.selected{background:#33415580;border-color:var(--sector-color)}
+.stock-sector-default{--sector-color:#7ba3cc}.stock-sector-finance{--sector-color:#3b82f6}.stock-sector-energy{--sector-color:#f59e0b}.stock-sector-culture{--sector-color:#a855f7}.stock-sector-tourism{--sector-color:#14b8a6}.stock-sector-tech{--sector-color:#22c55e}
 .stock-code{color:var(--sector-color);font-weight:800;font-size:12px}
 .stock-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .stock-price,.stock-change,.stock-holding,.stock-cost{text-align:right;font-size:12px;white-space:nowrap}
@@ -850,7 +855,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .coin-back .coin-label{color:#8b6914;font-size:40px}
 /* Tutorial */
 #tutorial{position:fixed;inset:0;background:#050b16;z-index:200;display:block;overflow:hidden}
-#menu-map-bg{position:absolute;inset:-6%;background-position:center;background-size:cover;filter:saturate(0.72) contrast(1.05) brightness(0.42);transform:scale(1.03)}
+#menu-map-bg{position:absolute;inset:-6%;background-image:url('../assets/natural-earth-2-50m.jpg');background-position:center;background-size:cover;filter:saturate(0.72) contrast(1.05) brightness(0.42);transform:scale(1.03)}
 #menu-map-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,11,22,0.92) 0%,rgba(5,11,22,0.56) 45%,rgba(5,11,22,0.88) 100%),radial-gradient(circle at 50% 18%,rgba(74,222,128,0.18),transparent 38%)}
 .menu-game-title{position:fixed;top:7vh;left:50%;transform:translateX(-50%);z-index:2;text-align:center;color:#f8fafc;font-size:42px;font-weight:900;letter-spacing:0;text-shadow:0 8px 26px rgba(0,0,0,0.55)}
 .menu-game-title .title-sub{display:block;margin-top:5px;color:#93c5fd;font-size:12px;font-weight:800;letter-spacing:3px}
@@ -902,7 +907,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .era-card .era-name{display:block;font-size:15px;font-weight:700;color:#e0e8f0;margin-bottom:4px}
 .era-card .era-desc{display:block;font-size:11px;color:#7ba3cc;line-height:1.4}
 .era-card .era-detail{display:block;font-size:10px;color:#556;margin-top:6px}
-.era-difficulty{display:inline-flex;margin-top:7px;border-radius:999px;background:color-mix(in srgb,var(--era-difficulty-color) 17%,transparent);color:var(--era-difficulty-color);font-size:10px;font-weight:800;padding:2px 8px}
+.era-difficulty{--era-difficulty-color:#7ba3cc;display:inline-flex;margin-top:7px;border-radius:999px;background:color-mix(in srgb,var(--era-difficulty-color) 17%,transparent);color:var(--era-difficulty-color);font-size:10px;font-weight:800;padding:2px 8px}
+.era-card[data-era-id="era1"] .era-difficulty{--era-difficulty-color:#f87171}.era-card[data-era-id="era2"] .era-difficulty{--era-difficulty-color:#fbbf24}.era-card[data-era-id="era3"] .era-difficulty{--era-difficulty-color:#4ade80}.era-card[data-era-id="era4"] .era-difficulty{--era-difficulty-color:#c084fc}
 .onboard-mode-row{display:flex;align-items:center;justify-content:center;gap:16px;margin:10px 0 14px;color:#7ba3cc;font-size:12px}
 .onboard-mode-row label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
 .onboard-mode-row input{width:auto;margin:0;accent-color:#4ade80}
@@ -925,7 +931,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a1628;color:#e0e8f0;ov
 .credits-inspiration strong{color:#f8fafc}
 .credits-inspiration small{color:#fbbf24;font-size:11px}
 .credits-traits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.credits-trait{border:1px solid color-mix(in srgb,var(--trait-color) 60%,#1e3a5f);border-radius:8px;background:#071120;padding:10px;text-align:center;display:flex;flex-direction:column;gap:5px}
+.credits-trait{--trait-color:#7ba3cc;border:1px solid color-mix(in srgb,var(--trait-color) 60%,#1e3a5f);border-radius:8px;background:#071120;padding:10px;text-align:center;display:flex;flex-direction:column;gap:5px}
+.credits-trait[data-trait="辣"]{--trait-color:#f87171}.credits-trait[data-trait="机"]{--trait-color:#60a5fa}.credits-trait[data-trait="豆"]{--trait-color:#4ade80}
 .credits-trait span{margin:0 auto;width:28px;height:28px;border-radius:50%;background:var(--trait-color);color:#06111f;font-weight:900;display:flex;align-items:center;justify-content:center}
 .credits-trait strong{font-size:13px;color:#f8fafc}
 .credits-trait small{font-size:11px;color:#7ba3cc;line-height:1.35}

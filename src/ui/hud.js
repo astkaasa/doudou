@@ -57,10 +57,11 @@ export function updateHUD(state) {
     const efficiency = state.opsEfficiency || 0;
     if (state.turnsPlayed === 0 || efficiency <= 0) {
       opsEl.textContent = '--';
-      opsEl.style.color = '#7ba3cc';
+      opsEl.className = 'hud-val hud-ops-neutral';
     } else {
       opsEl.textContent = `${(efficiency * 100).toFixed(0)}%`;
-      opsEl.style.color = efficiency >= 1 ? '#4ade80' : efficiency >= 0.7 ? '#fbbf24' : '#f87171';
+      const status = efficiency >= 1 ? 'good' : efficiency >= 0.7 ? 'warning' : 'danger';
+      opsEl.className = `hud-val hud-ops-${status}`;
     }
   }
   const hq = getCity(state.hq);
@@ -143,9 +144,9 @@ export function updateNasdouBadge(state) {
   }
   badge.hidden = false;
   const nasdou = calcNasdouIndex(state);
-  const color = nasdou > 0.001 ? '#ef4444' : nasdou < -0.001 ? '#22c55e' : '#fbbf24';
+  const trendClass = nasdou > 0.001 ? 'up' : nasdou < -0.001 ? 'down' : 'flat';
   const sign = nasdou > 0.001 ? '+' : '';
-  badge.innerHTML = `📈 NASDOU <span style="color:${color};font-size:10px">${sign}${(nasdou * 100).toFixed(1)}%</span>`;
+  badge.innerHTML = `📈 NASDOU <span class="nasdou-change ${trendClass}">${sign}${(nasdou * 100).toFixed(1)}%</span>`;
 }
 
 function renderMegaEventBadgeLabel(badge) {
@@ -154,7 +155,7 @@ function renderMegaEventBadgeLabel(badge) {
   if (!event) return;
   badge.textContent = `🏆 ${event.name}`;
   badge.title = `${event.cityName || event.name}航线需求提升`;
-  badge.style.animationDuration = event.currentBoost >= event.maxBoost * 0.8 ? '1s' : '2s';
+  badge.classList.toggle('mega-badge-urgent', event.currentBoost >= event.maxBoost * 0.8);
 }
 
 function clearMegaEventRotation() {

@@ -77,8 +77,8 @@ function renderStockRow(state, stock) {
   const change = stockState.prevPrice > 0 ? (stockState.price - stockState.prevPrice) / stockState.prevPrice : 0;
   const trendClass = change > 0.001 ? 'up' : change < -0.001 ? 'down' : 'flat';
   const selected = selectedStockId === stock.id;
-  const sector = STOCK_SECTORS[stock.sector];
-  return `<button class="stock-row ${selected ? 'selected' : ''}" type="button" data-action="select-stock" data-stock-id="${escapeAttr(stock.id)}" style="--sector-color:${sector.color}">
+  const sectorClass = stockSectorClass(stock.sector);
+  return `<button class="stock-row ${sectorClass}${selected ? ' selected' : ''}" type="button" data-action="select-stock" data-stock-id="${escapeAttr(stock.id)}">
     <span class="stock-code">${escapeHtml(stock.code)}</span>
     <span class="stock-name" title="${escapeAttr(stock.name)}">${escapeHtml(stock.name)}</span>
     <span class="stock-price">$${stockState.price.toFixed(1)}</span>
@@ -100,7 +100,7 @@ function renderTradePanel(state) {
   const change = stockState.prevPrice > 0 ? (stockState.price - stockState.prevPrice) / stockState.prevPrice : 0;
   const trendClass = change > 0.001 ? 'up' : change < -0.001 ? 'down' : 'flat';
   const canBuyMore = holding.shares < STOCK_MAX_HOLDING;
-  return `<div class="stock-detail" style="--sector-color:${sector.color}">
+  return `<div class="stock-detail ${stockSectorClass(stock.sector)}">
     <h3>${escapeHtml(stock.name)}</h3>
     <div class="stock-meta">${escapeHtml(stock.code)} · ${escapeHtml(sector.name)}</div>
     <div class="stock-price-line">
@@ -133,6 +133,10 @@ function renderTradePanel(state) {
 
 function tradeButton(action, stockId, shares, disabled, label = `${shares}M`) {
   return `<button class="btn btn-sm stock-${action.startsWith('buy') ? 'buy' : 'sell'}" type="button" data-action="${action}" data-stock-id="${escapeAttr(stockId)}" data-shares="${Number(shares) || 0}" ${disabled ? 'disabled' : ''}>${escapeHtml(label)}</button>`;
+}
+
+function stockSectorClass(sectorId) {
+  return STOCK_SECTORS[sectorId] ? `stock-sector-${sectorId}` : 'stock-sector-default';
 }
 
 function renderPortfolioSummary(portfolio) {

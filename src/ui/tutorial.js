@@ -1,4 +1,3 @@
-import terrainMapUrl from '../assets/natural-earth-2-50m.jpg';
 import { CREDITS } from '../data/credits.js';
 import { ERAS } from '../data/eras.js';
 import { PLAYER_TRAITS } from '../data/playerTraits.js';
@@ -14,8 +13,6 @@ let creditsScrollTimer = null;
 let creditsScrollFrame = null;
 
 export function initTutorial(selectedEra) {
-  const menuMap = byId('menu-map-bg');
-  if (menuMap) menuMap.style.backgroundImage = `url("${terrainMapUrl}")`;
   showMainMenu(selectedEra);
 }
 
@@ -110,7 +107,7 @@ export function showCreditsMenu() {
       <section class="credits-section">
         <h3>金豆特质</h3>
         <div class="credits-traits">
-          ${Object.values(PLAYER_TRAITS).map(renderTraitCredit).join('')}
+          ${Object.entries(PLAYER_TRAITS).map(renderTraitCredit).join('')}
         </div>
       </section>
       <section class="credits-section credits-thanks">
@@ -190,7 +187,7 @@ function renderEraCard(era, selected) {
     <span class="era-name">${escapeHtml(era.name)}</span>
     <span class="era-desc">${escapeHtml(era.desc)}</span>
     <span class="era-detail">${escapeHtml(era.detail)}</span>
-    ${era.difficulty ? `<span class="era-difficulty" style="--era-difficulty-color:${escapeAttr(era.diffColor || '#7ba3cc')}">${escapeHtml(era.difficulty)}</span>` : ''}
+    ${era.difficulty ? `<span class="era-difficulty">${escapeHtml(era.difficulty)}</span>` : ''}
   </button>`;
 }
 
@@ -220,8 +217,8 @@ function renderInspiration(item) {
   </article>`;
 }
 
-function renderTraitCredit(trait) {
-  return `<div class="credits-trait" style="--trait-color:${escapeAttr(trait.color)}">
+function renderTraitCredit([traitId, trait]) {
+  return `<div class="credits-trait" data-trait="${escapeAttr(traitId)}">
     <span>${escapeHtml(trait.symbol)}</span>
     <strong>${escapeHtml(trait.name)}</strong>
     <small>${escapeHtml(trait.desc)}</small>

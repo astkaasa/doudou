@@ -58,7 +58,7 @@ export function renderMap(state, uiState) {
   const container = byId('map-container');
   const { vw, vh, ox, oy } = viewportFor(container.getBoundingClientRect(), zoom, panX, panY);
   const worldOffsets = visibleWorldOffsets(ox, vw);
-  let svg = `<svg viewBox="${ox} ${oy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%" id="map-svg" role="img" aria-label="航空经营世界地图">`;
+  let svg = `<svg viewBox="${ox} ${oy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" id="map-svg" role="img" aria-label="航空经营世界地图">`;
 
   svg += renderBaseMap(worldOffsets, uiState.showBoundaries !== false, uiState.mapStyle || 'classic');
   svg += `<rect x="${ox - vw}" y="${oy - vh}" width="${vw * 3}" height="${vh * 3}" fill="transparent" data-action="map-empty"/>`;
@@ -134,7 +134,7 @@ export function renderMap(state, uiState) {
   cityTouchTargets += '</div>';
   svg += cityLabels;
   svg += '</svg>';
-  container.innerHTML = `<div class="map-stage" style="${mapStageStyle()}">${svg}${cityTouchTargets}<div class="map-tooltip" hidden></div></div>`;
+  container.innerHTML = `<div class="map-stage">${svg}${cityTouchTargets}<div class="map-tooltip" hidden></div></div>`;
 }
 
 function renderBaseMap(worldOffsets, showBoundaries, mapStyle) {
@@ -277,10 +277,6 @@ function renderCityLabel(city, { isHQ, isBranch, isBranchBuilding, isBranchSelec
 function renderMegaEventRing(cx, cy, cityRadiusValue, zoom) {
   const radius = Math.max(cityRadiusValue + radiusAwareOffset(5, zoom), radiusAwareOffset(9, zoom));
   return `<circle cx="${cx}" cy="${cy}" r="${radius}" class="city-mega-ring"><animate attributeName="r" from="${radius}" to="${radius + radiusAwareOffset(7, zoom)}" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.85" to="0" dur="1.5s" repeatCount="indefinite"/></circle>`;
-}
-
-function mapStageStyle() {
-  return 'width:100%;height:100%';
 }
 
 function viewportFor(rect, zoom, panX = 0, panY = 0) {
