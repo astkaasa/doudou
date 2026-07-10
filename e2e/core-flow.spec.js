@@ -242,6 +242,50 @@ test('management workspaces fit the viewport and restore their triggers', async 
   expect(pageErrors, `${testInfo.project.name} browser errors`).toEqual([]);
 });
 
+test('angel rescue returns to a rereadable quarter report', async ({ page, pageErrors }, testInfo) => {
+  await page.goto('/');
+  await page.evaluate(async () => {
+    const [{ initState }, { saveGameState }] = await Promise.all([
+      import('/src/domain/state.js'),
+      import('/src/domain/save.js'),
+    ]);
+    const state = initState('beijing', 'era3', { seed: 'angel-report-e2e' });
+    state.companyName = '救助流程测试';
+    state.cash = -100;
+    state.loan = 5000;
+    state.fleet = [];
+    state.routes = [];
+    state.portfolio = {};
+    state.subsidiaries = {};
+    state.playerTrait = '豆';
+    state.traitChosen = true;
+    state.onboardStep = 99;
+    saveGameState(state);
+    const { showSaveMenu } = await import('/src/ui/tutorial.js');
+    showSaveMenu();
+  });
+  await page.locator('.save-card').click();
+  await page.getByRole('button', { name: /推进回合/ }).click();
+  await page.getByRole('button', { name: '仍然推进' }).click();
+
+  await expect(page.getByRole('dialog', { name: '资金告急' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '开始抽取' })).toBeVisible({ timeout: 4_000 });
+  await page.getByRole('button', { name: '开始抽取' }).click();
+  await page.getByRole('button', { name: '锁定金额' }).click();
+  const rescueButton = page.getByRole('button', { name: '重振旗鼓' });
+  await expect(rescueButton).toBeVisible({ timeout: 12_000 });
+  await rescueButton.click();
+
+  const summary = page.getByRole('dialog', { name: '环球航空报' });
+  await expect(summary).toBeVisible();
+  await expect(summary).toContainText('天使救助');
+  await expect(summary).toContainText('辣豆基金注资');
+  await summary.getByRole('button', { name: '知道了，继续经营' }).click();
+  await page.getByRole('button', { name: '📊 上季财报' }).click();
+  await expect(page.getByRole('dialog', { name: /上季财报/ })).toContainText('天使救助');
+  expect(pageErrors, `${testInfo.project.name} browser errors`).toEqual([]);
+});
+
 async function startCompany(page, options = {}) {
   const eraName = options.eraName || /1960-1980 喷气时代/;
   const headquarters = options.headquarters || '北京';
