@@ -7,8 +7,8 @@ export const MAIN_QUEST_STAGES = [
     targets: {
       cash: { era1: 150, era2: 500, era3: 800, era4: 500 },
       routes: { era1: 8, era2: 10, era3: 12, era4: 10 },
-      branch: { type: 'region', min: { era1: 1, era2: 2, era3: 2, era4: 2 } },
-      profit: { consecutive: { era1: 4, era2: 4, era3: 4, era4: 4 } },
+      branch: { type: 'networkRegion', min: { era1: 1, era2: 2, era3: 2, era4: 2 } },
+      profit: { consecutive: { era1: 2, era2: 2, era3: 2, era4: 4 } },
     },
   },
   {
@@ -17,10 +17,10 @@ export const MAIN_QUEST_STAGES = [
     subtitle: '你的航线已纵横天际',
     icon: '🌍',
     targets: {
-      cash: { era1: 400, era2: 2000, era3: 3000, era4: 2000 },
-      routes: { era1: 22, era2: 40, era3: 45, era4: 40 },
-      branch: { type: 'region', min: { era1: 2, era2: 3, era3: 3, era4: 3 } },
-      profit: { consecutive: { era1: 6, era2: 8, era3: 8, era4: 8 } },
+      cash: { era1: 250, era2: 1500, era3: 2000, era4: 2000 },
+      routes: { era1: 16, era2: 30, era3: 35, era4: 40 },
+      branch: { type: 'networkRegion', min: { era1: 2, era2: 4, era3: 4, era4: 3 } },
+      profit: { consecutive: { era1: 3, era2: 3, era3: 3, era4: 8 } },
     },
   },
   {
@@ -29,10 +29,10 @@ export const MAIN_QUEST_STAGES = [
     subtitle: '航空帝国已成',
     icon: '👑',
     targets: {
-      cash: { era1: 700, era2: 5000, era3: 4500, era4: 5000 },
-      routes: { era1: 38, era2: 68, era3: 68, era4: 70 },
-      branch: { type: 'region', min: { era1: 3, era2: 6, era3: 6, era4: 6 } },
-      profit: { consecutive: { era1: 8, era2: 12, era3: 6, era4: 12 } },
+      cash: { era1: 350, era2: 2500, era3: 3000, era4: 10000 },
+      routes: { era1: 24, era2: 45, era3: 52, era4: 80 },
+      branch: { type: 'networkRegion', min: { era1: 3, era2: 6, era3: 6, era4: 6 } },
+      profit: { consecutive: { era1: 4, era2: 4, era3: 4, era4: 12 } },
     },
   },
 ];
@@ -40,7 +40,7 @@ export const MAIN_QUEST_STAGES = [
 export const MAIN_QUEST_DIMS = [
   { key: 'cash', label: '公司市值', icon: '💰' },
   { key: 'routes', label: '航线数', icon: '✈' },
-  { key: 'branch', label: '分部覆盖', icon: '🌍' },
+  { key: 'branch', label: '网络覆盖', icon: '🌍' },
   { key: 'profit', label: '持续盈利', icon: '📈' },
 ];
 

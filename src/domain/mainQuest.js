@@ -43,7 +43,7 @@ export function getCurrentStageTargets(state) {
     dimensions: {
       cash: { current: Math.max(0, calcCompanyValue(state).totalNetWorth), target: resolveEraTarget(stageData.targets.cash, eraKey) },
       routes: { current: Array.isArray(state.routes) ? state.routes.length : 0, target: resolveEraTarget(stageData.targets.routes, eraKey) },
-      branch: { current: branchType === 'subRegion' ? countBaseSubRegions(state) : countBaseRegions(state), target: resolveEraTarget(stageData.targets.branch.min, eraKey), type: branchType },
+      branch: { current: countQuestMarkets(state, branchType), target: resolveEraTarget(stageData.targets.branch.min, eraKey), type: branchType },
       profit: { current: Math.max(0, Number(state.consecutiveProfit) || 0), target: resolveEraTarget(stageData.targets.profit.consecutive, eraKey) },
     },
   };
@@ -144,4 +144,15 @@ function countBaseMarkets(state, key) {
     if (city?.[key]) values.add(city[key]);
   });
   return values.size;
+}
+
+function countQuestMarkets(state, type) {
+  if (type === 'subRegion') return countBaseSubRegions(state);
+  if (type !== 'networkRegion') return countBaseRegions(state);
+  const cityIds = [state.hq, ...(Array.isArray(state.branches) ? state.branches : [])];
+  (Array.isArray(state.routes) ? state.routes : [])
+    .filter((route) => !route.suspended)
+    .forEach((route) => cityIds.push(route.from, route.to));
+  const regions = new Set(cityIds.map(getCity).filter(Boolean).map((city) => city.region));
+  return regions.size;
 }

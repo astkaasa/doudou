@@ -127,7 +127,7 @@ function renderVictoryDimension(dimension, meta) {
 function formatDimensionValue(dimension, key) {
   if (key === 'cash') return fmt(dimension.current);
   if (key === 'routes') return `${dimension.current}条`;
-  if (key === 'branch') return dimension.type === 'region' ? `${dimension.current} 大洲` : `${dimension.current}个子区域`;
+  if (key === 'branch') return isRegionCoverage(dimension) ? `${dimension.current} 大洲` : `${dimension.current}个子区域`;
   if (key === 'profit') return `${dimension.current}季`;
   return String(dimension.current);
 }
@@ -135,7 +135,11 @@ function formatDimensionValue(dimension, key) {
 function formatDimensionTarget(dimension, key) {
   if (key === 'cash') return fmt(dimension.target);
   if (key === 'routes') return `${dimension.target}条`;
-  if (key === 'branch') return dimension.type === 'region' ? `${dimension.target} 大洲` : `${dimension.target}个子区域`;
+  if (key === 'branch') return isRegionCoverage(dimension) ? `${dimension.target} 大洲` : `${dimension.target}个子区域`;
   if (key === 'profit') return `${dimension.target}季`;
   return String(dimension.target);
+}
+
+function isRegionCoverage(dimension) {
+  return dimension.type === 'region' || dimension.type === 'networkRegion';
 }

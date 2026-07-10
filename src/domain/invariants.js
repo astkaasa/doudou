@@ -95,6 +95,9 @@ function validateMainQuestData(issues) {
     requirePositiveInteger(issues, `${path}.stage`, stage.stage);
     requireText(issues, `${path}.title`, stage.title);
     requireText(issues, `${path}.targets.branch.type`, stage.targets?.branch?.type);
+    if (!['region', 'subRegion', 'networkRegion'].includes(stage.targets?.branch?.type)) {
+      issues.push(`${path}.targets.branch.type is invalid`);
+    }
     ERAS.forEach((era) => {
       requirePositive(issues, `${path}.targets.cash.${era.id}`, stage.targets?.cash?.[era.id]);
       requirePositiveInteger(issues, `${path}.targets.routes.${era.id}`, stage.targets?.routes?.[era.id]);

@@ -130,3 +130,18 @@ This small Beijing sample now sits inside every victory and timing band. It is a
 ## Simulation performance
 
 CPU profiling identified route-key array sorting and repeated AI competitor scans as the dominant batch-simulation costs. Replacing them with direct canonical keys and per-decision route indexes kept the deterministic results identical while reducing the six-game era 2/3 aggressive benchmark from 31.25 seconds to 6.21 seconds on the same machine. This also reduces quarter-advance latency in normal games with mature AI networks.
+
+## Regional quest calibration
+
+The first complete acceptance matrix showed that base-region requirements disproportionately blocked Dubai and Sydney even when their route networks crossed regions. The quest coverage dimension now counts active route endpoints as well as headquarters and branches, and the scale targets use the observed five-headquarters distributions. Era 4 receives a higher final scale target because its previous regional victory rate was slightly above band.
+
+The follow-up aggressive-policy matrix used all five headquarters and 20 deterministic seeds per era, for 400 complete campaigns:
+
+| Era | Survival | Victory | Average victory turn | Victory band | Turn band |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| era1 | 98.0% | 38.0% | 63.7 | 30%-65% | 62-78 |
+| era2 | 99.0% | 59.0% | 65.5 | 50%-85% | 58-75 |
+| era3 | 98.0% | 85.0% | 57.3 | 75%-100% | 50-70 |
+| era4 | 82.0% | 64.0% | 192.0 | 35%-70% | 140-215 |
+
+All four campaign completion bands now pass across the regional sample. The only remaining aggressive-policy failure is era 1 route operating margin at 7.3%, so its early cabin-cost calibration remains a separate economic change.

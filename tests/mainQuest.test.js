@@ -26,7 +26,7 @@ describe('main quest progression', () => {
     expect(progress.allMet).toBe(true);
     expect(progress.dimensions.cash.target).toBe(800);
     expect(progress.dimensions.routes.target).toBe(12);
-    expect(progress.dimensions.branch).toMatchObject({ current: 2, target: 2, type: 'region', met: true });
+    expect(progress.dimensions.branch).toMatchObject({ current: 2, target: 2, type: 'networkRegion', met: true });
   });
 
   it('does not require an early cross-region branch in the first era', () => {
@@ -39,6 +39,23 @@ describe('main quest progression', () => {
 
     expect(progress.allMet).toBe(true);
     expect(progress.dimensions.branch).toMatchObject({ current: 1, target: 1, met: true });
+  });
+
+  it('counts active route regions without requiring matching branches', () => {
+    const state = initState('beijing', 'era1');
+    state.mainQuest.currentStage = 3;
+    addRoutePlaceholders(state, 22);
+    state.routes.push(
+      { from: 'beijing', to: 'london', revenue: 0, cost: 0, profit: 0 },
+      { from: 'beijing', to: 'cairo', revenue: 0, cost: 0, profit: 0 },
+    );
+    state.cash = 350;
+    state.consecutiveProfit = 4;
+
+    const progress = checkMainQuestProgress(state);
+
+    expect(progress.allMet).toBe(true);
+    expect(progress.dimensions.branch).toMatchObject({ current: 3, target: 3, type: 'networkRegion', met: true });
   });
 
   it('uses company value instead of cash for the wealth dimension', () => {
@@ -79,8 +96,8 @@ describe('main quest progression', () => {
     const state = initState('beijing', 'era2');
     state.mainQuest.currentStage = 3;
     state.turnsPlayed = 48;
-    state.cash = 5000;
-    addRoutePlaceholders(state, 68);
+    state.cash = 2500;
+    addRoutePlaceholders(state, 45);
     state.branches = ['london', 'cairo', 'newyork', 'rio', 'sydney'];
     state.consecutiveProfit = 12;
     state.totalProfit = 1234;
@@ -91,7 +108,7 @@ describe('main quest progression', () => {
       type: 'victory',
       grade: 'S',
       gradeTitle: '苍穹领航者',
-      routes: 68,
+      routes: 45,
       totalProfit: 1234,
     });
     expect(state.mainQuest).toMatchObject({ victoryGrade: 'S', victoryTurn: 48, stageCompleted: [3] });
