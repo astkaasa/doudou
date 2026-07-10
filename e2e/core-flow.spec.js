@@ -308,6 +308,27 @@ test('dense long-game management surfaces routes, fleet renewal, and fixed risks
       delivering: true,
       deliverIn: 1,
     });
+    state.fleet.push({
+      ...structuredClone(deliveryTemplate),
+      uid: state.planeIdCounter++,
+      age: 5,
+      isLease: false,
+      leasePrice: 0,
+      leaseTurns: 0,
+      maxLeaseTurns: 40,
+      delivering: false,
+      deliverIn: 0,
+    });
+    state.fleet.push({
+      ...structuredClone(leasedDeparture),
+      uid: state.planeIdCounter++,
+      age: 5,
+      isLease: true,
+      leaseTurns: 5,
+      maxLeaseTurns: 40,
+      delivering: false,
+      deliverIn: 0,
+    });
     const routeAnalysis = analyzeRouteDiagnostics(state);
     const fleetPlan = analyzeFleetPlan(state);
     saveGameState(state);
@@ -393,6 +414,26 @@ test('dense long-game management surfaces routes, fleet renewal, and fixed risks
   if (process.env.ROUTE_VISUAL_QA === '1') {
     await fleetDialog.screenshot({ path: `/tmp/doudou-fleet-plan-${testInfo.project.name}.png` });
   }
+
+  await fleetDialog.locator('[data-fleet-filter="idle"]').click();
+  await expect(fleetDialog.locator('.fleet-item')).toHaveCount(2);
+  const idleSelections = fleetDialog.locator('[data-action="fleet-batch-selection"]');
+  await idleSelections.nth(0).check();
+  await idleSelections.nth(1).check();
+  await expect(fleetDialog.locator('#fleet-batch-count')).toHaveText('2');
+  await fleetDialog.getByRole('button', { name: '处置所选' }).click();
+  const disposalDialog = page.getByRole('dialog', { name: '批量处置确认' });
+  await expect(disposalDialog).toBeVisible();
+  await assertDialogFitsViewport(disposalDialog, page);
+  await expect(disposalDialog).toContainText('航线影响0 条');
+  await expect(disposalDialog).toContainText('出售收入');
+  await expect(disposalDialog).toContainText('季度节省');
+  if (process.env.ROUTE_VISUAL_QA === '1') {
+    await disposalDialog.screenshot({ path: `/tmp/doudou-fleet-disposal-${testInfo.project.name}.png` });
+  }
+  await disposalDialog.getByRole('button', { name: '确认处置 2 架' }).click();
+  await expect(page.getByRole('dialog', { name: '机队管理' }).locator('[data-fleet-filter="all"]')).toContainText(String(fixture.fleetCounts.all - 2));
+  await expect(page.locator('#event-banner')).toContainText('已处置 2 架空闲飞机');
   expect(pageErrors, `${testInfo.project.name} browser errors`).toEqual([]);
 });
 

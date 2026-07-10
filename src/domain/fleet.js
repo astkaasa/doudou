@@ -94,7 +94,7 @@ export function sellPlane(state, uid) {
   const plane = state.fleet.find((p) => p.uid === uid);
   if (!plane) return null;
   if (plane.isLease) return null;
-  const sellPrice = plane.buyPrice * Math.max(0.15, 1 - plane.age * 0.04);
+  const sellPrice = planeSellPrice(plane);
   state.cash += sellPrice;
   state.fleet = state.fleet.filter((p) => p.uid !== uid);
   state.routes.forEach((r) => {
@@ -102,6 +102,11 @@ export function sellPlane(state, uid) {
   });
   syncStaffToNeeded(state, 0);
   return { plane, sellPrice };
+}
+
+export function planeSellPrice(plane) {
+  if (!plane || plane.isLease) return 0;
+  return (Number(plane.buyPrice) || 0) * Math.max(0.15, 1 - (Number(plane.age) || 0) * 0.04);
 }
 
 export function returnLease(state, uid) {

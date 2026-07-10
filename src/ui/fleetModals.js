@@ -6,6 +6,7 @@ import { showModal } from './modal.js';
 
 let fleetListFilter = 'all';
 let fleetListPage = 0;
+const selectedFleetUids = new Set();
 const FLEET_LIST_PAGE_SIZE = 20;
 
 const FLEET_FILTER_OPTIONS = [
@@ -139,10 +140,11 @@ function planeTypeLabel(type) {
 }
 
 export function showFleetPanel(state, options = {}) {
-  let focusSelector = null;
+  let focusSelector = options.focusSelector || null;
   if (options.reset) {
     fleetListFilter = 'all';
     fleetListPage = 0;
+    selectedFleetUids.clear();
   }
   if (options.filter !== undefined) {
     fleetListFilter = normalizeFleetPlanFilter(options.filter);
@@ -153,16 +155,8 @@ export function showFleetPanel(state, options = {}) {
     fleetListPage = Math.max(0, Number(options.page) || 0);
   }
 
-  const plan = analyzeFleetPlan(state);
-  const entries = plan.entries
-    .filter((entry) => matchesFleetPlanFilter(entry, fleetListFilter))
-    .sort(compareFleetPlanEntries);
-  const totalPages = Math.max(1, Math.ceil(entries.length / FLEET_LIST_PAGE_SIZE));
-  fleetListPage = Math.min(fleetListPage, totalPages - 1);
-  const pageEntries = entries.slice(
-    fleetListPage * FLEET_LIST_PAGE_SIZE,
-    fleetListPage * FLEET_LIST_PAGE_SIZE + FLEET_LIST_PAGE_SIZE,
-  );
+  const { plan, entries, totalPages, pageEntries } = fleetView(state);
+  removeInvalidFleetSelections(plan.entries);
 
   let html = `<div class="fleet-panel"><div class="fleet-panel-head"><div><h2>机队管理</h2><p>自有 ${plan.summary.owned} 架 · 租赁 ${plan.summary.leased} 架 · 共 ${plan.summary.total} 架</p></div><button class="btn btn-primary btn-sm" type="button" data-action="open-buy-plane-modal">补充运力</button></div>`;
   if (state.fleet.length === 0) {
@@ -170,6 +164,7 @@ export function showFleetPanel(state, options = {}) {
   } else {
     html += renderFleetPlanSummary(plan.summary);
     html += renderFleetFilters(plan.counts, entries.length);
+    if (pageEntries.some((entry) => entry.idle) || selectedFleetUids.size > 0) html += renderFleetBatchBar(pageEntries);
     html += pageEntries.length > 0
       ? `<div class="fleet-list">${pageEntries.map((entry) => renderFleetItem(entry)).join('')}</div>${renderFleetPagination(totalPages)}`
       : '<div class="fleet-filter-empty" role="status">当前筛选没有匹配飞机。</div>';
@@ -218,9 +213,13 @@ function renderFleetItem(entry) {
       ? `${Math.max(0, Number(plane.seats) || 0)} 座即将加入机队`
       : '';
   const urgencyClass = entry.departureInQuarters <= 1 ? ' fleet-item-critical' : entry.renewal ? ' fleet-item-renewal' : '';
-  return `<article class="fleet-item${urgencyClass}">
+  const selected = selectedFleetUids.has(plane.uid);
+  const selection = entry.idle
+    ? `<label class="fleet-select-control" title="选择 ${escapeAttr(plane.name)}"><input type="checkbox" data-action="fleet-batch-selection" data-uid="${escapeAttr(plane.uid)}"${selected ? ' checked' : ''}><span class="sr-only">选择 ${escapeHtml(plane.name)}</span></label>`
+    : '';
+  return `<article class="fleet-item${urgencyClass}${selected ? ' fleet-item-selected' : ''}" data-plane-uid="${escapeAttr(plane.uid)}">
     <div class="fleet-item-main">
-      <div class="fleet-item-title"><span class="name">${escapeHtml(plane.name)}</span>${plane.isLease ? '<span class="lease-badge">R</span>' : ''}${renderFleetLifecycleMeta(entry)}</div>
+      <div class="fleet-item-title">${selection}<span class="name">${escapeHtml(plane.name)}</span>${plane.isLease ? '<span class="lease-badge">R</span>' : ''}${renderFleetLifecycleMeta(entry)}</div>
       <div class="fleet-item-meta"><span>机龄 ${Math.max(0, Number(plane.age) || 0).toFixed(1)} 年</span><span>${Math.max(0, Number(plane.seats) || 0)} 座</span></div>
     </div>
     <div class="fleet-item-side"><span class="status ${statusClass}">${escapeHtml(status)}</span>${impact ? `<small>${escapeHtml(impact)}</small>` : ''}${entry.idle ? `<button class="btn btn-danger btn-sm" type="button" data-action="${action}" data-uid="${escapeAttr(plane.uid)}">${actionLabel}</button>` : ''}</div>
@@ -247,6 +246,74 @@ function renderFleetPagination(totalPages) {
     <button class="btn btn-sm fleet-page-btn" type="button" data-action="fleet-list-page" data-page="${Math.min(totalPages - 1, fleetListPage + 1)}" title="下一页" aria-label="下一页">›</button>
     <button class="btn btn-sm fleet-page-btn" type="button" data-action="fleet-list-page" data-page="${totalPages - 1}" title="最后一页" aria-label="最后一页">»</button>
   </div></div>`;
+}
+
+function renderFleetBatchBar(pageEntries) {
+  const selectableOnPage = pageEntries.filter((entry) => entry.idle).length;
+  return `<div class="fleet-batch-bar">
+    <span><b id="fleet-batch-count">${selectedFleetUids.size}</b> 架已选</span>
+    <div>
+      <button class="btn btn-sm btn-secondary" type="button" data-action="fleet-select-page"${selectableOnPage > 0 ? '' : ' disabled'}>选择本页空闲</button>
+      <button class="btn btn-sm btn-secondary" type="button" data-action="fleet-clear-selection"${selectedFleetUids.size > 0 ? '' : ' disabled'}>清除</button>
+      <button class="btn btn-sm btn-warning" id="fleet-batch-preview" type="button" data-action="open-fleet-batch-preview"${selectedFleetUids.size > 0 ? '' : ' disabled'}>处置所选</button>
+    </div>
+  </div>`;
+}
+
+export function setFleetBatchSelection(state, uid, selected) {
+  const entry = analyzeFleetPlan(state).entries.find((item) => item.plane.uid === Number(uid));
+  if (!entry?.idle) return false;
+  if (selected) selectedFleetUids.add(entry.plane.uid);
+  else selectedFleetUids.delete(entry.plane.uid);
+  return true;
+}
+
+export function selectVisibleIdleFleet(state) {
+  fleetView(state).pageEntries.filter((entry) => entry.idle).forEach((entry) => selectedFleetUids.add(entry.plane.uid));
+  return getSelectedFleetUids();
+}
+
+export function clearFleetBatchSelection() {
+  selectedFleetUids.clear();
+}
+
+export function getSelectedFleetUids() {
+  return [...selectedFleetUids];
+}
+
+export function updateFleetBatchSelectionUI(state) {
+  removeInvalidFleetSelections(analyzeFleetPlan(state).entries);
+  const count = document.getElementById('fleet-batch-count');
+  const preview = document.getElementById('fleet-batch-preview');
+  const clear = document.querySelector('[data-action="fleet-clear-selection"]');
+  if (count) count.textContent = String(selectedFleetUids.size);
+  if (preview) preview.disabled = selectedFleetUids.size === 0;
+  if (clear) clear.disabled = selectedFleetUids.size === 0;
+  document.querySelectorAll('.fleet-item[data-plane-uid]').forEach((item) => {
+    const uid = Number(item.dataset.planeUid);
+    item.classList.toggle('fleet-item-selected', selectedFleetUids.has(uid));
+  });
+}
+
+function fleetView(state) {
+  const plan = analyzeFleetPlan(state);
+  const entries = plan.entries
+    .filter((entry) => matchesFleetPlanFilter(entry, fleetListFilter))
+    .sort(compareFleetPlanEntries);
+  const totalPages = Math.max(1, Math.ceil(entries.length / FLEET_LIST_PAGE_SIZE));
+  fleetListPage = Math.min(fleetListPage, totalPages - 1);
+  const pageEntries = entries.slice(
+    fleetListPage * FLEET_LIST_PAGE_SIZE,
+    fleetListPage * FLEET_LIST_PAGE_SIZE + FLEET_LIST_PAGE_SIZE,
+  );
+  return { plan, entries, totalPages, pageEntries };
+}
+
+function removeInvalidFleetSelections(entries) {
+  const idleUids = new Set(entries.filter((entry) => entry.idle).map((entry) => entry.plane.uid));
+  [...selectedFleetUids].forEach((uid) => {
+    if (!idleUids.has(uid)) selectedFleetUids.delete(uid);
+  });
 }
 
 function compareFleetPlanEntries(a, b) {

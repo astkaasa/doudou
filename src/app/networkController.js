@@ -1,6 +1,7 @@
 import { closeBranch as closeBranchDomain, isBase, isBranchConstructing, openBranch } from '../domain/bases.js';
 import { airportDisplayCode } from '../domain/airports.js';
 import { buyPlane, returnLease, sellPlane } from '../domain/fleet.js';
+import { disposeIdleFleet } from '../domain/fleetBatch.js';
 import { setRouteAlternateAirport } from '../domain/airportResilience.js';
 import { byId, cityDist, fmt, getCity, routeKey } from '../domain/helpers.js';
 import {
@@ -21,6 +22,11 @@ import {
   showBranchModal,
   showBuyPlaneModal,
   showCloseBranchConfirm,
+  clearFleetBatchSelection,
+  getSelectedFleetUids,
+  selectVisibleIdleFleet,
+  setFleetBatchSelection,
+  showFleetDisposalPreview,
   showFleetPanel,
   setAdjustPricePreset,
   setRoutePricePreset,
@@ -34,6 +40,7 @@ import {
   showRouteSuspendConfirm,
   toggleRouteListSort,
   updateAdjustedPriceDisplay,
+  updateFleetBatchSelectionUI,
   updatePlanePurchaseOptions,
   updatePricePreview,
 } from '../ui/modals.js';
@@ -263,6 +270,21 @@ export function createNetworkController(app) {
     showBanner(`退租 ${returned.plane.name}`, BANNER_TONES.warning);
   }
 
+  function confirmFleetBatchDisposal() {
+    const game = state();
+    if (!game) return;
+    const result = disposeIdleFleet(game, getSelectedFleetUids());
+    if (!result.ok) {
+      showFleetDisposalPreview(game, getSelectedFleetUids());
+      showBanner('机队状态已变化，本批次未执行', BANNER_TONES.warning);
+      return;
+    }
+    clearFleetBatchSelection();
+    app.renderGame();
+    showFleetPanel(game);
+    showBanner(`已处置 ${result.disposed.length} 架空闲飞机：收入 ${fmt(result.saleProceeds)}，每季节省 ${fmt(result.quarterlyLeaseSavings)}`, BANNER_TONES.success);
+  }
+
   function adjustPrice(from, to, price) {
     const game = state();
     if (!game) return;
@@ -368,6 +390,34 @@ export function createNetworkController(app) {
       const game = state();
       if (game) showFleetPanel(game, { page: target.dataset.page });
     },
+    'fleet-batch-selection': ({ target }) => {
+      const game = state();
+      if (!game) return;
+      setFleetBatchSelection(game, target.dataset.uid, target.checked);
+      updateFleetBatchSelectionUI(game);
+    },
+    'fleet-select-page': () => {
+      const game = state();
+      if (!game) return;
+      selectVisibleIdleFleet(game);
+      showFleetPanel(game, { focusSelector: '[data-action="fleet-select-page"]' });
+    },
+    'fleet-clear-selection': () => {
+      const game = state();
+      if (!game) return;
+      clearFleetBatchSelection();
+      showFleetPanel(game, { focusSelector: '[data-action="fleet-clear-selection"]' });
+    },
+    'open-fleet-batch-preview': () => {
+      const game = state();
+      const selected = getSelectedFleetUids();
+      if (game && selected.length > 0) showFleetDisposalPreview(game, selected);
+    },
+    'return-fleet-panel': () => {
+      const game = state();
+      if (game) showFleetPanel(game);
+    },
+    'confirm-fleet-batch-disposal': confirmFleetBatchDisposal,
     'open-route-list': ({ action }) => {
       const game = state();
       if (game) showRouteList(game, { reset: action === 'open-route-list' });

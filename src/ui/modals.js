@@ -1,7 +1,17 @@
 export { showBranchModal, showCloseBranchConfirm } from './branchModals.js';
 export { showAirportProgramModal } from './airportModals.js';
 export { showAirportRelocationModal } from './airportRelocationModals.js';
-export { showBuyPlaneModal, showFleetPanel, updatePlanePurchaseOptions } from './fleetModals.js';
+export { showFleetDisposalPreview } from './fleetBatchModal.js';
+export {
+  clearFleetBatchSelection,
+  getSelectedFleetUids,
+  selectVisibleIdleFleet,
+  setFleetBatchSelection,
+  showBuyPlaneModal,
+  showFleetPanel,
+  updateFleetBatchSelectionUI,
+  updatePlanePurchaseOptions,
+} from './fleetModals.js';
 export { showLoanConfirm, showLoanModal } from './financeModals.js';
 export {
   closeDeliveryPopup,

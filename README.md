@@ -67,6 +67,7 @@ npm run upstream:check
 - `docs/event-news-system.md`：随机新闻、固定日期新闻、历史盛事和机型目录的职责与扩充规则。
 - `docs/codebase-review.md`：整体产品与工程 Review 结论、已修问题、当前约束和后续立项条件。
 - `docs/long-game-baseline.md`：中后期密集经营夹具、性能基线和后续验收要求。
+- `docs/batch-management-assessment.md`：批量操作安全矩阵、空闲机处置边界和航线批量操作立项条件。
 - `docs/airport-slot-feasibility.md`：时刻资产交易的阶段 5 可行性结论、延后原因和后续立项条件。
 - `docs/visual-regression.md`：桌面与手机界面的视觉回归场景矩阵和失败标准。
 - `docs/upstream-sync.md`：上游资源图发现、漂移检查、原子同步和审查流程。
