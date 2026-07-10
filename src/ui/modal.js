@@ -1,4 +1,5 @@
 import { byId } from '../domain/helpers.js';
+import { renderHtml } from './html.js';
 
 const MODAL_BACKGROUND_IDS = ['app', 'contract-zone', 'delivery-root', 'onboard-hint', 'tutorial'];
 const VALID_BANNER_TONES = new Set(['accent', 'danger', 'info', 'success', 'warning']);
@@ -28,7 +29,7 @@ export function renderModalRoot(html) {
   const root = byId('modal-root');
   if (!root) return;
   if (!root.hasChildNodes()) modalReturnFocus = document.activeElement;
-  root.innerHTML = html;
+  renderHtml(root, html);
   lockModalBackground();
   const dialog = root.querySelector('[role="dialog"], .modal, .turn-summary, .newspaper');
   if (!dialog) return;
@@ -48,7 +49,7 @@ export function renderModalRoot(html) {
 
 export function closeModalRoot() {
   const root = byId('modal-root');
-  if (root) root.innerHTML = '';
+  renderHtml(root, '');
   unlockModalBackground();
   const returnTarget = modalReturnFocus;
   modalReturnFocus = null;

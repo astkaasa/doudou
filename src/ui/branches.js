@@ -1,12 +1,13 @@
 import { branchCost } from '../domain/bases.js';
 import { byId, fmt } from '../domain/helpers.js';
+import { renderHtml } from './html.js';
 
 export function showBranchBanner(state) {
   removeBranchBanner();
   const banner = document.createElement('div');
   banner.id = 'branch-banner';
   const cost = branchCost((state.branches || []).length + (state.branchesConstructing || []).length);
-  banner.innerHTML = `
+  renderHtml(banner, `
     <div class="branch-title">📍 选择分部城市</div>
     <div class="branch-hint">点击地图上的城市开设分部（费用 ${fmt(cost)}）</div>
     <div id="branch-selected-info" class="branch-selected" hidden>已选择: <span id="branch-selected-name" class="branch-name"></span></div>
@@ -14,7 +15,7 @@ export function showBranchBanner(state) {
       <button class="btn btn-secondary selection-cancel" data-action="cancel-branch-select">← 取消</button>
       <button class="btn btn-success selection-confirm" id="branch-confirm-btn" data-action="confirm-branch" hidden>确认开设</button>
     </div>
-  `;
+  `);
   document.body.appendChild(banner);
 }
 

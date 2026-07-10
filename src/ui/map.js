@@ -2,7 +2,7 @@ import { CITIES, HQ_RECOMMENDED_CITY_IDS, projectCity, projectLonLat } from '../
 import { WORLD_BOUNDARY_PATH, WORLD_LAND_PATH } from '../data/worldMapPaths.js';
 import { byId, cityDist, clamp, fmt, getCity } from '../domain/helpers.js';
 import terrainMapUrl from '../assets/natural-earth-2-50m.jpg';
-import { escapeHtml } from './html.js';
+import { escapeHtml, renderHtml } from './html.js';
 
 const MAP_WIDTH = 1000;
 const MAP_HEIGHT = 500;
@@ -134,7 +134,7 @@ export function renderMap(state, uiState) {
   cityTouchTargets += '</div>';
   svg += cityLabels;
   svg += '</svg>';
-  container.innerHTML = `<div class="map-stage">${svg}${cityTouchTargets}<div class="map-tooltip" hidden></div></div>`;
+  renderHtml(container, `<div class="map-stage">${svg}${cityTouchTargets}<div class="map-tooltip" hidden></div></div>`);
 }
 
 function renderBaseMap(worldOffsets, showBoundaries, mapStyle) {
@@ -680,7 +680,7 @@ function updateCityTooltip(event) {
     const reachable = reachableCityCount(city);
     const recommended = target.dataset.hqRecommended === 'true';
     tooltip.classList.add('map-tooltip-hq');
-    tooltip.innerHTML = `<strong>${city.name}</strong><span>人口 ${(Number(city.pop) / 1000).toFixed(1)}M · ${REGION_NAMES[city.region] || city.region}</span><span>约可直飞 ${reachable} 城</span>${recommended ? '<em>★ 推荐起点</em>' : ''}`;
+    renderHtml(tooltip, `<strong>${escapeHtml(city.name)}</strong><span>人口 ${(Number(city.pop) / 1000).toFixed(1)}M · ${escapeHtml(REGION_NAMES[city.region] || city.region)}</span><span>约可直飞 ${reachable} 城</span>${recommended ? '<em>★ 推荐起点</em>' : ''}`);
   } else {
     tooltip.classList.remove('map-tooltip-hq');
     tooltip.textContent = city.name;

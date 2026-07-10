@@ -3,7 +3,7 @@ import { isBase } from '../domain/bases.js';
 import { availablePlanes } from '../domain/routes.js';
 import { byId, cityDist, fmt, fmtPct, getCity, routeKey } from '../domain/helpers.js';
 import { MODIFIER_TYPES } from '../domain/modifiers.js';
-import { escapeAttr, escapeHtml } from './html.js';
+import { escapeAttr, escapeHtml, renderHtml } from './html.js';
 import { formatMarketLine, renderMarketCard } from './market.js';
 
 const REGION_NAMES = {
@@ -47,12 +47,12 @@ const HQ_RECOMMENDED = new Set(HQ_RECOMMENDED_CITY_IDS);
 export function renderPanel(state, uiState) {
   const rs = byId('route-summary');
   if (uiState.hqSelectMode) {
-    rs.innerHTML = renderHQCityPicker(state, uiState.selectedHQ);
-    byId('market-info').innerHTML = '';
+    renderHtml(rs, renderHQCityPicker(state, uiState.selectedHQ));
+    renderHtml(byId('market-info'), '');
     return;
   }
   if (state.routes.length === 0) {
-    rs.innerHTML = '<div class="panel-empty">尚未开通航线</div>';
+    renderHtml(rs, '<div class="panel-empty">尚未开通航线</div>');
   } else {
     let html = '';
     state.routes.slice(0, 6).forEach((r) => {
@@ -62,26 +62,27 @@ export function renderPanel(state, uiState) {
       html += `<div class="route-item" data-action="open-route-detail" data-from="${escapeAttr(r.from)}" data-to="${escapeAttr(r.to)}"><div class="route-item-head"><span>${escapeHtml(a.name)} → ${escapeHtml(b.name)}</span><span class="route-item-profit ${profitClass}">${fmt(r.profit)}</span></div><div class="route-item-meta">客座率 ${fmtPct(r.loadFactor * 100)} | 票价 $${r.price}</div></div>`;
     });
     if (state.routes.length > 6) html += `<div class="route-item-more">...共 ${state.routes.length} 条</div>`;
-    rs.innerHTML = html;
+    renderHtml(rs, html);
   }
   const mi = byId('market-info');
   const hq = getCity(state.hq);
-  mi.innerHTML = `<div class="panel-row"><span class="label">总部</span><span class="val">${hq ? escapeHtml(hq.name) : '待选择'}</span></div><div class="panel-row"><span class="label">分部</span><span class="val">${(state.branches || []).length} 个</span></div><div class="panel-row"><span class="label">可用飞机</span><span class="val">${availablePlanes(state).length} 架</span></div><div class="panel-row"><span class="label">品牌等级</span><span class="val">${'★'.repeat(Math.min(5, Math.floor(state.brand)))}</span></div><div class="panel-row"><span class="label">油价</span><span class="val">$${state.oilPrice.toFixed(0)}/桶</span></div>${(state.loan || 0) > 0 ? `<div class="panel-row panel-row-danger"><span class="label">贷款余额</span><span class="val">${fmt(state.loan)}</span></div>` : ''}<div class="panel-subtitle">竞争对手:</div>`;
+  let marketHtml = `<div class="panel-row"><span class="label">总部</span><span class="val">${hq ? escapeHtml(hq.name) : '待选择'}</span></div><div class="panel-row"><span class="label">分部</span><span class="val">${(state.branches || []).length} 个</span></div><div class="panel-row"><span class="label">可用飞机</span><span class="val">${availablePlanes(state).length} 架</span></div><div class="panel-row"><span class="label">品牌等级</span><span class="val">${'★'.repeat(Math.min(5, Math.floor(state.brand)))}</span></div><div class="panel-row"><span class="label">油价</span><span class="val">$${state.oilPrice.toFixed(0)}/桶</span></div>${(state.loan || 0) > 0 ? `<div class="panel-row panel-row-danger"><span class="label">贷款余额</span><span class="val">${fmt(state.loan)}</span></div>` : ''}<div class="panel-subtitle">竞争对手:</div>`;
   state.ai.forEach((ai, index) => {
     const aiClass = ['ai0', 'ai1', 'ai2'].includes(ai.cssClass) ? ai.cssClass : `ai${index % 3}`;
-    mi.innerHTML += `<div class="panel-row"><span class="label panel-ai-label ${aiClass}">${escapeHtml(ai.name)}</span><span class="val">${ai.routes.length} 线 | ${ai.fleet.length} 机</span></div>`;
+    marketHtml += `<div class="panel-row"><span class="label panel-ai-label ${aiClass}">${escapeHtml(ai.name)}</span><span class="val">${ai.routes.length} 线 | ${ai.fleet.length} 机</span></div>`;
   });
   const activeModifiers = (state.activeModifiers || []).filter((modifier) => modifier.turnsRemaining > 0);
   if (activeModifiers.length > 0) {
-    mi.innerHTML += '<div class="modifier-list"><div class="modifier-title">事件影响</div>';
+    marketHtml += '<div class="modifier-list"><div class="modifier-title">事件影响</div>';
     activeModifiers.slice(0, 4).forEach((modifier) => {
-      mi.innerHTML += `<div class="modifier-item"><span>${escapeHtml(modifier.source)}</span><strong>${escapeHtml(formatModifierEffect(modifier))}</strong></div>`;
+      marketHtml += `<div class="modifier-item"><span>${escapeHtml(modifier.source)}</span><strong>${escapeHtml(formatModifierEffect(modifier))}</strong></div>`;
     });
     if (activeModifiers.length > 4) {
-      mi.innerHTML += `<div class="modifier-more">另有 ${activeModifiers.length - 4} 项影响</div>`;
+      marketHtml += `<div class="modifier-more">另有 ${activeModifiers.length - 4} 项影响</div>`;
     }
-    mi.innerHTML += '</div>';
+    marketHtml += '</div>';
   }
+  renderHtml(mi, marketHtml);
 }
 
 export function showRouteCreateInfo(cityFrom, cityTo, html) {
@@ -89,7 +90,7 @@ export function showRouteCreateInfo(cityFrom, cityTo, html) {
   const info = byId('route-create-info');
   if (!sec || !info) return;
   sec.hidden = false;
-  info.innerHTML = html;
+  renderHtml(info, html);
 }
 
 export function renderRouteCityPicker(state, selectedCityId = null) {

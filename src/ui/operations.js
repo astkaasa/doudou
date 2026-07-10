@@ -10,7 +10,7 @@ import {
 } from '../domain/operations.js';
 import { byId, fmt } from '../domain/helpers.js';
 import { estimateTurnFinancials } from '../domain/turn.js';
-import { escapeHtml } from './html.js';
+import { escapeHtml, renderHtml } from './html.js';
 import { showModal } from './modal.js';
 
 let contractCards = {};
@@ -83,8 +83,7 @@ export function restoreContractState(state) {
   contractCards = {};
   guideVisible = false;
   highlightedContract = null;
-  const zone = byId('contract-zone');
-  if (zone) zone.innerHTML = '';
+  renderHtml(byId('contract-zone'), '');
   if (state && !state.gameOver) spawnPendingContracts(state);
   updateAdvanceButton(state);
 }
@@ -101,7 +100,7 @@ export function renderContractZone(state) {
       <button type="button" data-action="advance-contract-guide">去签署</button>
     </div>`);
   }
-  zone.innerHTML = parts.join('');
+  renderHtml(zone, parts.join(''));
 }
 
 export function updateAdvanceButton(state) {

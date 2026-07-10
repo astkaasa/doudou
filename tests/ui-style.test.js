@@ -31,6 +31,15 @@ describe('UI style ownership', () => {
       expect(countStyleMutations(relative), relative).toBeLessThanOrEqual(STYLE_MUTATION_BUDGET[relative] || 0);
     });
   });
+
+  it('routes HTML writes through the shared render boundary', () => {
+    const files = listJavaScriptFiles(path.join(ROOT, 'src'));
+    files.forEach((file) => {
+      const relative = path.relative(ROOT, file);
+      const expected = relative === 'src/ui/html.js' ? 1 : 0;
+      expect(countHtmlSinks(relative), relative).toBe(expected);
+    });
+  });
 });
 
 function countInlineStyles(relativePath) {
@@ -39,6 +48,11 @@ function countInlineStyles(relativePath) {
 
 function countStyleMutations(relativePath) {
   return (fs.readFileSync(path.join(ROOT, relativePath), 'utf8').match(/\.style\./g) || []).length;
+}
+
+function countHtmlSinks(relativePath) {
+  return (fs.readFileSync(path.join(ROOT, relativePath), 'utf8')
+    .match(/\.innerHTML\s*[+]?=|\.outerHTML\s*=|\.insertAdjacentHTML\s*\(/g) || []).length;
 }
 
 function listJavaScriptFiles(directory) {

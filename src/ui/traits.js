@@ -1,7 +1,7 @@
 import { PLAYER_TRAITS, shufflePlayerTraits } from '../data/playerTraits.js';
 import { byId } from '../domain/helpers.js';
 import { randomSource } from '../domain/random.js';
-import { escapeAttr, escapeHtml } from './html.js';
+import { escapeAttr, escapeHtml, renderHtml } from './html.js';
 import { closeModalRoot, renderModalRoot } from './modal.js';
 
 export function showTraitEnvelope(state) {
@@ -26,7 +26,7 @@ export function openTraitCoins(state) {
   if (!overlay) return;
   if (state && !Array.isArray(state.pendingTraitChoices)) state.pendingTraitChoices = shufflePlayerTraits(randomSource(state));
   const traits = state?.pendingTraitChoices || shufflePlayerTraits();
-  overlay.innerHTML = `
+  renderHtml(overlay, `
     <div class="trait-stage">
       <div class="trait-prompt">请随机选择一粒金豆</div>
       <div class="coins-stage" id="coins-stage">
@@ -40,7 +40,7 @@ export function openTraitCoins(state) {
         `).join('')}
       </div>
       <div class="trait-caption">金豆豆，银豆豆，不如我家的辣豆豆</div>
-    </div>`;
+    </div>`);
 }
 
 export function revealSelectedTrait(trait, coinIndex) {
@@ -58,13 +58,13 @@ export function revealSelectedTrait(trait, coinIndex) {
   });
   setTimeout(() => {
     if (!overlay.isConnected) return;
-    overlay.innerHTML = `
+    renderHtml(overlay, `
       <div class="trait-stage trait-result" data-trait="${escapeAttr(trait)}">
         <div class="trait-result-icon">🪙</div>
         <div class="trait-result-title">「${escapeHtml(trait)}」— ${escapeHtml(info.name)}</div>
         <p class="trait-result-desc">${escapeHtml(info.desc)}</p>
         <button class="btn btn-primary trait-confirm" type="button" data-action="confirm-trait" data-trait="${escapeAttr(trait)}">轰~隆隆！ ☁</button>
-      </div>`;
+      </div>`);
   }, 1000);
 }
 

@@ -1,5 +1,6 @@
 import { MILESTONE_CATEGORIES, MILESTONES } from '../data/milestones.js';
 import { getMilestoneStats } from '../domain/milestones.js';
+import { renderHtml } from './html.js';
 import { showModal } from './modal.js';
 
 const TROPHY_MATERIALS = {
@@ -73,7 +74,7 @@ function showNextMilestone() {
   const list = milestoneQueue.shift();
   const popup = document.createElement('div');
   popup.id = 'milestone-toast';
-  popup.innerHTML = `<div class="milestone-toast-card">${buildToastHtml(list)}</div>`;
+  renderHtml(popup, `<div class="milestone-toast-card">${buildToastHtml(list)}</div>`);
   document.body.appendChild(popup);
   popup._timer = setTimeout(dismissMilestone, 3000);
 }

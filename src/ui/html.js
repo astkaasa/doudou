@@ -10,3 +10,9 @@ export function escapeHtml(value) {
 export function escapeAttr(value) {
   return escapeHtml(value);
 }
+
+export function renderHtml(target, markup) {
+  if (!target) return null;
+  target.innerHTML = String(markup ?? '');
+  return target;
+}

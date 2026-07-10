@@ -4,6 +4,7 @@ import { getMainQuestStats } from '../domain/mainQuest.js';
 import { getMilestoneStats } from '../domain/milestones.js';
 import { calcNasdouIndex } from '../domain/stocks.js';
 import { calcCompanyValue } from '../domain/subsidiaries.js';
+import { escapeHtml, renderHtml } from './html.js';
 
 let megaEventRotateTimer = null;
 let megaEventBadgeIndex = 0;
@@ -20,7 +21,7 @@ export function updateHUD(state) {
     if (trait) {
       traitBadge.hidden = false;
       traitBadge.className = 'hud-trait';
-      traitBadge.innerHTML = `${trait.symbol}<span class="trait-tooltip">${trait.name}</span>`;
+      renderHtml(traitBadge, `${escapeHtml(trait.symbol)}<span class="trait-tooltip">${escapeHtml(trait.name)}</span>`);
       traitBadge.title = `${trait.name}：${trait.desc}`;
     } else {
       traitBadge.hidden = true;
@@ -146,7 +147,7 @@ export function updateNasdouBadge(state) {
   const nasdou = calcNasdouIndex(state);
   const trendClass = nasdou > 0.001 ? 'up' : nasdou < -0.001 ? 'down' : 'flat';
   const sign = nasdou > 0.001 ? '+' : '';
-  badge.innerHTML = `📈 NASDOU <span class="nasdou-change ${trendClass}">${sign}${(nasdou * 100).toFixed(1)}%</span>`;
+  renderHtml(badge, `📈 NASDOU <span class="nasdou-change ${trendClass}">${sign}${(nasdou * 100).toFixed(1)}%</span>`);
 }
 
 function renderMegaEventBadgeLabel(badge) {

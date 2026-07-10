@@ -2,7 +2,7 @@ import { byId, fmt, fmtPct, seasonEmoji, seasonName } from '../domain/helpers.js
 import { loanInterest } from '../domain/loans.js';
 import { createFinancialReportSnapshot } from '../domain/report.js';
 import { calcNasdouIndex } from '../domain/stocks.js';
-import { escapeHtml } from './html.js';
+import { escapeHtml, renderHtml } from './html.js';
 import { renderModalRoot, showModal } from './modal.js';
 
 const NEWSPAPER_CATEGORY_LABELS = {
@@ -291,12 +291,11 @@ export function showDeliveryPopup(state) {
     html += `<div class="report-row"><span class="delivery-plane-name">${escapeHtml(plane.name)}</span><span class="delivery-ready">✓ 已就绪</span></div>`;
   });
   html += '</div><div class="delivery-actions"><button class="btn btn-primary btn-dialog-primary" data-action="close-delivery-popup">知道了</button></div></div></div>';
-  byId('delivery-root').innerHTML = html;
+  renderHtml(byId('delivery-root'), html);
 }
 
 export function closeDeliveryPopup() {
-  const root = byId('delivery-root');
-  if (root) root.innerHTML = '';
+  renderHtml(byId('delivery-root'), '');
 }
 
 export function showGameOver(state) {

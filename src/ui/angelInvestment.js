@@ -1,5 +1,6 @@
 import { angelInvestmentAmounts, pickAngelInvestmentAmount } from '../domain/angelInvestment.js';
 import { byId, fmt } from '../domain/helpers.js';
+import { renderHtml } from './html.js';
 
 let phaseTimer = null;
 let slotTimer = null;
@@ -9,7 +10,7 @@ let slotLocked = false;
 export function showAngelInvestment(state) {
   clearAngelTimers();
   const root = byId('modal-root');
-  root.innerHTML = `
+  renderHtml(root, `
     <div class="angel-overlay angel-crisis-overlay">
       <div class="angel-crisis-content">
         <div class="angel-crisis-icon">!</div>
@@ -18,7 +19,7 @@ export function showAngelInvestment(state) {
         <p class="angel-crisis-amount">当前资金：<span class="angel-crisis-cash">${fmt(state.cash)}</span></p>
       </div>
     </div>
-  `;
+  `);
   phaseTimer = window.setTimeout(showAngelIntroPhase, 1800);
 }
 
@@ -28,7 +29,7 @@ export function showAngelSlotPhase(state) {
   finalAmount = pickAngelInvestmentAmount(state);
   const amounts = angelInvestmentAmounts();
   const root = byId('modal-root');
-  root.innerHTML = `
+  renderHtml(root, `
     <div class="angel-overlay angel-slot-overlay">
       <div class="angel-slot-content">
         <h2 class="angel-slot-title">天使投资抽取</h2>
@@ -46,7 +47,7 @@ export function showAngelSlotPhase(state) {
         <p class="angel-slot-hint" id="angel-slot-hint">数字滚动中，点击按钮锁定</p>
       </div>
     </div>
-  `;
+  `);
   startSlotRoll(amounts);
 }
 
@@ -77,7 +78,7 @@ export function clearAngelTimers() {
 function showAngelIntroPhase() {
   phaseTimer = null;
   const root = byId('modal-root');
-  root.innerHTML = `
+  renderHtml(root, `
     <div class="angel-overlay angel-descend-overlay">
       <div class="angel-descend-content">
         <div class="angel-logo">
@@ -92,7 +93,7 @@ function showAngelIntroPhase() {
         <button class="btn angel-start-btn" type="button" data-action="start-angel-slot">开始抽取</button>
       </div>
     </div>
-  `;
+  `);
 }
 
 function startSlotRoll(amounts) {
@@ -140,7 +141,7 @@ function slowDownToTarget(amounts, amount, startIndex) {
 
 function revealAngelResult(amount) {
   const root = byId('modal-root');
-  root.innerHTML = `
+  renderHtml(root, `
     <div class="angel-overlay angel-result-overlay">
       <div class="angel-result-content">
         <div class="angel-result-glow"></div>
@@ -152,5 +153,5 @@ function revealAngelResult(amount) {
         <p class="angel-result-warning">下次破产将无法再获援助，请谨慎经营</p>
       </div>
     </div>
-  `;
+  `);
 }

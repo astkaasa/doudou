@@ -5,7 +5,7 @@ import { GAME_VERSION, VERSION_LOG } from '../data/version.js';
 import { DEFAULT_COMPANY_NAME } from '../domain/constants.js';
 import { byId, fmt } from '../domain/helpers.js';
 import { getSaveSummaries } from '../domain/save.js';
-import { escapeAttr, escapeHtml } from './html.js';
+import { escapeAttr, escapeHtml, renderHtml } from './html.js';
 import { hasCompletedOnboarding } from './onboarding.js';
 
 let companyNameDraft = DEFAULT_COMPANY_NAME;
@@ -22,7 +22,7 @@ export function showMainMenu() {
   const box = byId('menu-box');
   if (!box) return;
   const hasSave = hasStoredSave();
-  box.innerHTML = `
+  renderHtml(box, `
     <div class="menu-panel">
       <button class="menu-btn menu-btn-start" type="button" data-action="show-era-menu">
         <span class="menu-btn-title">开始游戏</span>
@@ -38,7 +38,7 @@ export function showMainMenu() {
       </button>
       ${renderVersionBadge()}
     </div>
-  `;
+  `);
 }
 
 export function showEraMenu(selectedEra) {
@@ -47,7 +47,7 @@ export function showEraMenu(selectedEra) {
   const box = byId('menu-box');
   if (!box) return;
   const onboardDone = hasCompletedOnboarding();
-  box.innerHTML = `
+  renderHtml(box, `
     <button class="menu-back-btn" type="button" data-action="show-main-menu">← 主菜单</button>
     <div class="menu-section-title">选择时代</div>
     <div class="era-select" id="era-select">
@@ -63,7 +63,7 @@ export function showEraMenu(selectedEra) {
     </div>
     <button class="btn btn-success menu-confirm-btn" type="button" data-action="tutorial-next-step" id="era-next-btn">选择总部</button>
     ${renderVersionBadge()}
-  `;
+  `);
 }
 
 export function showSaveMenu() {
@@ -72,21 +72,21 @@ export function showSaveMenu() {
   const box = byId('menu-box');
   if (!box) return;
   const saves = getSaveSummaries();
-  box.innerHTML = `
+  renderHtml(box, `
     <button class="menu-back-btn" type="button" data-action="show-main-menu">← 主菜单</button>
     <div class="menu-section-title">继续游戏</div>
     <div class="save-list">
       ${saves.length ? saves.map(renderSaveCard).join('') : '<div class="save-empty">没有找到可读取的存档。</div>'}
     </div>
     ${renderVersionBadge()}
-  `;
+  `);
 }
 
 export function showCreditsMenu() {
   showTutorial();
   const box = byId('menu-box');
   if (!box) return;
-  box.innerHTML = `
+  renderHtml(box, `
     <button class="menu-back-btn" type="button" data-action="show-main-menu">← 主菜单</button>
     <div class="menu-section-title">制作人员</div>
     <div class="credits-scroll" id="credits-scroll">
@@ -116,7 +116,7 @@ export function showCreditsMenu() {
       </section>
     </div>
     ${renderVersionBadge()}
-  `;
+  `);
   startCreditsScroll();
 }
 
@@ -156,7 +156,7 @@ export function showHQBanner() {
   if (old) old.remove();
   const banner = document.createElement('div');
   banner.id = 'hq-banner';
-  banner.innerHTML = `
+  renderHtml(banner, `
     <div class="hq-title">📍 选择总部城市</div>
     <div class="hq-hint">点击左侧地图上的城市选择你的航空公司总部</div>
     <div id="hq-selected-info" class="hq-selected" hidden>已选择: <span id="hq-selected-name" class="hq-name"></span></div>
@@ -164,7 +164,7 @@ export function showHQBanner() {
       <button class="btn btn-secondary selection-cancel" type="button" data-action="cancel-hq-select">← 返回</button>
       <button class="btn btn-success selection-confirm" type="button" id="hq-confirm-btn" data-action="confirm-hq-start" hidden>确认起飞！</button>
     </div>
-  `;
+  `);
   document.body.appendChild(banner);
 }
 
