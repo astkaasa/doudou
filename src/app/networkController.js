@@ -295,13 +295,13 @@ export function createNetworkController(app) {
     if (!game) return;
     const result = suspendRoute(game, target.dataset.from, target.dataset.to);
     if (!result.ok) {
-      showBanner(result.message, BANNER_TONES.warning);
       showRouteList(game);
+      showBanner(result.message, BANNER_TONES.warning);
       return;
     }
     app.renderGame();
-    showBanner(`航线已停飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, BANNER_TONES.warning);
     showRouteList(game);
+    showBanner(`航线已停飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, BANNER_TONES.warning);
   }
 
   function confirmResumeRoute(target) {
@@ -309,13 +309,13 @@ export function createNetworkController(app) {
     if (!game) return;
     const result = resumeRoute(game, target.dataset.from, target.dataset.to);
     if (!result.ok) {
-      showBanner(result.message, BANNER_TONES.warning);
       showRouteList(game);
+      showBanner(result.message, BANNER_TONES.warning);
       return;
     }
     app.renderGame();
-    showBanner(`航线已复飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, BANNER_TONES.success);
     showRouteList(game);
+    showBanner(`航线已复飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, BANNER_TONES.success);
   }
 
   function changeSelectedRoutePlane(target) {
@@ -323,13 +323,13 @@ export function createNetworkController(app) {
     if (!game) return;
     const result = changeRoutePlane(game, target.dataset.from, target.dataset.to, target.dataset.uid);
     if (!result.ok) {
-      showBanner(result.message, BANNER_TONES.danger);
       showRouteList(game);
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     app.renderGame();
-    showBanner(`${getCity(result.route.from).name}→${getCity(result.route.to).name} 已更换执飞机型`, BANNER_TONES.warning);
     showRouteList(game);
+    showBanner(`${getCity(result.route.from).name}→${getCity(result.route.to).name} 已更换执飞机型`, BANNER_TONES.warning);
   }
 
   const clickActions = {

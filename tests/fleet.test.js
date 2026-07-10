@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { availablePlaneTemplates, buyPlane, quotePlaneAcquisition, returnLease, sellPlane } from '../src/domain/fleet.js';
+import { advanceFleetAge, availablePlaneTemplates, buyPlane, quotePlaneAcquisition, returnLease, sellPlane } from '../src/domain/fleet.js';
 import { initState } from '../src/domain/state.js';
 
 describe('fleet operations', () => {
@@ -47,5 +47,25 @@ describe('fleet operations', () => {
     const returned = returnLease(state, leasedUid);
     expect(returned.plane.uid).toBe(leasedUid);
     expect(state.fleet.some((plane) => plane.uid === leasedUid)).toBe(false);
+  });
+
+  it('records lease expiry and age retirement before clearing route assignments', () => {
+    const state = initState('beijing', 'era3');
+    const template = availablePlaneTemplates(state)[0];
+    state.fleet = [
+      { ...template, uid: 1, name: 'Owned 25', age: 24.75, isLease: false, delivering: false },
+      { ...template, uid: 2, name: 'Lease 40', age: 8, isLease: true, leaseTurns: 39, maxLeaseTurns: 40, delivering: false },
+      { ...template, uid: 3, name: 'Active', age: 10, isLease: false, delivering: false },
+    ];
+    state.routes = [{ from: 'beijing', to: 'shanghai', assignedPlanes: [1, 2, 3] }];
+
+    const departures = advanceFleetAge(state);
+
+    expect(departures).toEqual([
+      { uid: 1, name: 'Owned 25', reason: 'retired', affectedRouteCount: 1 },
+      { uid: 2, name: 'Lease 40', reason: 'lease_expired', affectedRouteCount: 1 },
+    ]);
+    expect(state.fleet.map((plane) => plane.uid)).toEqual([3]);
+    expect(state.routes[0].assignedPlanes).toEqual([3]);
   });
 });

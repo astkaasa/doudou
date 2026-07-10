@@ -7,10 +7,9 @@ import { createSetupState, initState, seedInitialFleet } from '../domain/state.j
 import { removeBranchBanner } from '../ui/branches.js';
 import { showEraRetirement, showEraSettlement } from '../ui/eraSettlement.js';
 import { focusMapOnCity } from '../ui/map.js';
-import { closeMainQuestOverlay, continueFromVictory, showMainQuestPanel, showVictoryEnding } from '../ui/mainQuest.js';
+import { continueFromVictory, showMainQuestPanel, showVictoryEnding } from '../ui/mainQuest.js';
 import { showMilestoneList } from '../ui/milestones.js';
 import { BANNER_TONES, closeModalRoot, showBanner } from '../ui/modal.js';
-import { closeDeliveryPopup } from '../ui/modals.js';
 import {
   acknowledgeOnboarding,
   checkFirstTimePopups,
@@ -46,7 +45,6 @@ export function createSessionController(app) {
     const game = state();
     const wasTurnSummary = Boolean(document.querySelector('[data-turn-summary="true"]'));
     closeModalRoot();
-    closeDeliveryPopup();
     if (wasTurnSummary && game && !game._onboardReportShown) {
       game._onboardReportShown = true;
       completeOnboardingStep(game, 3);
@@ -182,8 +180,8 @@ export function createSessionController(app) {
     const trait = normalizePlayerTrait(target.dataset.trait);
     const isPendingChoice = !Array.isArray(game.pendingTraitChoices) || game.pendingTraitChoices.includes(trait);
     if (!trait || !isPendingChoice) {
-      showBanner('特质选择无效，请重新选择', BANNER_TONES.danger);
       showTraitEnvelope(game);
+      showBanner('特质选择无效，请重新选择', BANNER_TONES.danger);
       return;
     }
     game.playerTrait = trait;
@@ -239,13 +237,12 @@ export function createSessionController(app) {
     },
     'close-modal': closeModal,
     'modal-backdrop': closeModal,
-    'close-main-quest-overlay': ({ target }) => closeMainQuestOverlay(target.closest('.main-quest-overlay')),
     'continue-victory-game': continueFromVictory,
-    'end-victory-game': ({ target }) => {
+    'end-victory-game': () => {
       const game = state();
       if (!game) return;
       game.gameOver = true;
-      closeMainQuestOverlay(target.closest('.main-quest-overlay'));
+      closeModalRoot();
       app.renderGame();
       showVictoryEnding(game);
     },

@@ -1,9 +1,10 @@
 import { byId, fmt, fmtPct, seasonEmoji, seasonName } from '../domain/helpers.js';
+import { AIRCRAFT_RETIREMENT_AGE_YEARS } from '../domain/fleet.js';
 import { loanInterest } from '../domain/loans.js';
 import { createFinancialReportSnapshot } from '../domain/report.js';
 import { calcNasdouIndex } from '../domain/stocks.js';
-import { escapeHtml, renderHtml } from './html.js';
-import { renderModalRoot, showModal } from './modal.js';
+import { escapeHtml } from './html.js';
+import { closeModalRoot, renderModalRoot, showModal } from './modal.js';
 
 const NEWSPAPER_CATEGORY_LABELS = {
   politics: '时政',
@@ -121,19 +122,23 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
   const opsClass = snapshot.opsEfficiency >= 1 ? 'positive' : snapshot.opsEfficiency >= 0.7 ? 'warning' : 'negative';
   const interest = reportInterest;
   const stockDividend = snapshot.stockDividend || 0;
+  const subsidiaryNet = snapshot.subsidiaries?.net || 0;
+  const nonOperatingNet = stockDividend + subsidiaryNet;
+  const breakdown = snapshot.financialBreakdown;
   let html = `<h2>上季财报 — ${reportPeriod.year} Q${reportPeriod.quarter} ${seasonEmoji(reportPeriod.quarter)}${seasonName(reportPeriod.quarter)}</h2>
     <div class="report-section">
-      <div class="report-row"><span>营业收入</span><span class="positive">${fmt(rev)}</span></div>
+      <div class="report-row"><span>航空经营收入</span><span class="positive">${fmt(rev)}</span></div>
+      ${breakdown ? `<div class="report-row report-breakdown-row"><span>其中航线收入</span><span>${fmt(breakdown.routeRevenue)}</span></div>` : ''}
       ${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span class="positive">+${fmt(snapshot.traitFund)}</span></div>` : ''}
-      ${stockDividend > 0 ? `<div class="report-row"><span>证券分红(Q4)</span><span class="warning">+${fmt(stockDividend)}</span></div>` : ''}
       ${snapshot.airportContractIncome > 0 ? `<div class="report-row"><span>机场合同收入</span><span class="positive">+${fmt(snapshot.airportContractIncome)}</span></div>` : ''}
-      <div class="report-row"><span>运营成本</span><span class="negative">-${fmt(cost)}</span></div>
-      ${snapshot.opsCost > 0 ? `<div class="report-row"><span>其中运营预算</span><span class="negative">-${fmt(snapshot.opsCost)}</span></div>` : ''}
-      ${snapshot.faultLoss > 0 ? `<div class="report-row"><span>其中故障损失</span><span class="negative">-${fmt(snapshot.faultLoss)}</span></div>` : ''}
-      ${snapshot.airportContractPenalty > 0 ? `<div class="report-row"><span>其中机场合同违约</span><span class="negative">-${fmt(snapshot.airportContractPenalty)}</span></div>` : ''}
-      ${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span class="negative">-${fmt(interest)}</span></div>` : ''}
+      ${nonOperatingNet !== 0 ? `<div class="report-row"><span>证券与子公司净收益</span><span class="${valueClass(nonOperatingNet)}">${nonOperatingNet >= 0 ? '+' : ''}${fmt(nonOperatingNet)}</span></div>` : ''}
+      ${stockDividend > 0 ? `<div class="report-row report-breakdown-row"><span>证券分红(Q4)</span><span class="positive">+${fmt(stockDividend)}</span></div>` : ''}
+      ${subsidiaryNet !== 0 ? `<div class="report-row report-breakdown-row"><span>子公司净收益</span><span class="${valueClass(subsidiaryNet)}">${subsidiaryNet >= 0 ? '+' : ''}${fmt(subsidiaryNet)}</span></div>` : ''}
+      <div class="report-row"><span>经营支出</span><span class="negative">-${fmt(cost)}</span></div>
+      ${renderCostBreakdown(snapshot, breakdown, interest)}
       <div class="report-total ${profitClass}">净利润: ${fmt(profit)}</div>
     </div>
+    ${renderQuarterEvents(snapshot.quarterEvents)}
     <div class="report-section">
       <div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>
       ${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span class="negative">${fmt(snapshot.loan)}</span></div>` : ''}
@@ -265,20 +270,100 @@ export function showFinancialReport(state, rev, cost, profit, period = null, int
 }
 
 export function showTurnSummary(state, report) {
-  const snapshot = createFinancialReportSnapshot(state);
+  const snapshot = createFinancialReportSnapshot(state, report);
   const newsPeriod = report.nextPeriod || null;
   state.lastReportData = { ...report, newsPeriod, snapshot };
   const newsHtml = buildNewspaperHtml(state, false, newsPeriod);
   const reportHtml = buildFinancialReportHtml(state, report.rev, report.cost, report.profit, report.period, report.interest, snapshot);
   const isEraSettlement = Boolean(report.eraSettlement);
-  const overlayAction = isEraSettlement ? '' : ' data-action="modal-backdrop"';
-  const buttonAction = isEraSettlement ? 'open-era-settlement' : 'close-modal';
-  const buttonLabel = isEraSettlement ? '查看时代结算' : '知道了，继续经营';
+  const isMainQuestVictory = !isEraSettlement && report.mainQuestUpdate?.type === 'victory';
+  const overlayAction = isEraSettlement || isMainQuestVictory ? '' : ' data-action="modal-backdrop"';
+  const buttonAction = isEraSettlement ? 'open-era-settlement' : isMainQuestVictory ? 'show-main-quest-victory' : 'close-modal';
+  const buttonLabel = isEraSettlement ? '查看时代结算' : isMainQuestVictory ? '查看通关结算' : '知道了，继续经营';
   renderModalRoot(`<div class="modal-overlay"${overlayAction} data-turn-summary="true"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary turn-summary-action" type="button" data-action="${buttonAction}">${buttonLabel}</button></div></div></div></div>`);
   const newsBtn = byId('reread-news-btn');
   const reportBtn = byId('reread-report-btn');
   if (newsBtn) newsBtn.hidden = false;
   if (reportBtn) reportBtn.hidden = false;
+}
+
+function renderCostBreakdown(snapshot, breakdown, interest) {
+  const rows = breakdown
+    ? [
+        ['其中航线直接成本', breakdown.routeCost],
+        ['其中机队与总部固定成本', breakdown.overhead],
+        ['其中飞机租赁', breakdown.leaseCost],
+        ['其中运营预算', breakdown.opsCost],
+        ['其中故障损失', breakdown.faultLoss],
+        ['其中机场合同违约', breakdown.airportContractPenalty],
+        ['其中贷款利息', breakdown.interest],
+      ]
+    : [
+        ['其中运营预算', snapshot.opsCost],
+        ['其中故障损失', snapshot.faultLoss],
+        ['其中机场合同违约', snapshot.airportContractPenalty],
+        ['其中贷款利息', interest],
+      ];
+  return rows
+    .filter(([, value]) => value > 0)
+    .map(([label, value]) => `<div class="report-row report-breakdown-row"><span>${label}</span><span class="negative">-${fmt(value)}</span></div>`)
+    .join('');
+}
+
+function renderQuarterEvents(events) {
+  if (!events) return '';
+  const notices = [];
+  const actionMessages = {
+    emergencyLoan: '急救贷款已发放',
+    forceSellStocks: '已强制出售证券资产',
+    forceSellSubsidiaries: '已强制出售子公司',
+    forceSellPlanes: '已变卖自有飞机',
+  };
+  if (events.bankruptcyAction && actionMessages[events.bankruptcyAction.action]) {
+    notices.push(['report-notice-warning', '财务应急', `${actionMessages[events.bankruptcyAction.action]}：${fmt(events.bankruptcyAction.amount)}`]);
+  }
+  const branchCompleted = Array.isArray(events.branchCompleted) ? events.branchCompleted : [];
+  if (branchCompleted.length > 0) {
+    notices.push(['report-notice-positive', '分部完工', branchCompleted.join('、')]);
+  }
+  if (events.airportContractsCompleted > 0) {
+    notices.push(['report-notice-positive', '机场合同', `完成 ${events.airportContractsCompleted} 份开发合同`]);
+  }
+  if (events.airportContractsBreached > 0) {
+    notices.push(['report-notice-danger', '合同违约', `${events.airportContractsBreached} 份开发合同未达标`]);
+  }
+  if (events.newAirportRelocations > 0) {
+    notices.push(['report-notice-warning', '机场迁移', `${events.newAirportRelocations} 项事项进入待处理队列`]);
+  }
+  if (events.angelInvestmentAmount > 0) {
+    notices.push(['report-notice-warning', '天使救助', `辣豆基金注资 ${fmt(events.angelInvestmentAmount)}`]);
+  }
+  const fleetDepartures = Array.isArray(events.fleetDepartures) ? events.fleetDepartures : [];
+  const leaseExpired = fleetDepartures.filter((plane) => plane.reason === 'lease_expired');
+  const retired = fleetDepartures.filter((plane) => plane.reason === 'retired');
+  if (leaseExpired.length > 0) {
+    notices.push(['report-notice-warning', '租约到期', fleetDepartureDetail(leaseExpired, '已按合同退租')]);
+  }
+  if (retired.length > 0) {
+    notices.push(['report-notice-warning', '机龄退役', fleetDepartureDetail(retired, `已达到 ${AIRCRAFT_RETIREMENT_AGE_YEARS} 年机龄并退役`)]);
+  }
+  if ((events.milestonesUnlocked || []).length > 0) {
+    notices.push(['report-notice-milestone', '里程碑达成', events.milestonesUnlocked.map((milestone) => milestone.title).join('、')]);
+  }
+  if (events.mainQuestUpdate?.type === 'stage_complete') {
+    const next = events.mainQuestUpdate.nextTitle ? ` · 下一阶段：${events.mainQuestUpdate.nextTitle}` : '';
+    notices.push(['report-notice-main-quest', '苍穹之路', `${events.mainQuestUpdate.title || '阶段达成'}${next}`]);
+  } else if (events.mainQuestUpdate?.type === 'victory') {
+    notices.push(['report-notice-main-quest', '苍穹之巅', `主线通关 · 评级 ${events.mainQuestUpdate.grade || 'C'}`]);
+  }
+  return notices.map(([className, title, detail]) => `<div class="report-notice ${className}"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(detail)}</span></div>`).join('');
+}
+
+function fleetDepartureDetail(planes, action) {
+  const names = planes.map((plane) => plane.name || '未命名飞机').join('、');
+  const affectedRouteCount = planes.reduce((sum, plane) => sum + (plane.affectedRouteCount || 0), 0);
+  const routeNotice = affectedRouteCount > 0 ? `；${affectedRouteCount} 条航线已解除飞机分配` : '';
+  return `${names}${action}${routeNotice}`;
 }
 
 export function showReportAlone(state) {
@@ -290,20 +375,19 @@ export function showReportAlone(state) {
 export function showDeliveryPopup(state) {
   const items = state?.lastReportData?.snapshot?.deliveredThisTurn || state.deliveredThisTurn || [];
   if (items.length === 0) return;
-  let html = `<div class="delivery-overlay" data-action="delivery-backdrop">
-    <div class="delivery-modal">
+  let html = `<div class="delivery-modal">
       <h2 class="delivery-title">✈ 飞机交付通知</h2>
       <p class="delivery-intro">以下飞机已完成交付，可以分配到航线运营。</p>
       <div class="delivery-list">`;
   items.forEach((plane) => {
     html += `<div class="report-row"><span class="delivery-plane-name">${escapeHtml(plane.name)}</span><span class="delivery-ready">✓ 已就绪</span></div>`;
   });
-  html += '</div><div class="delivery-actions"><button class="btn btn-primary btn-dialog-primary" type="button" data-action="close-delivery-popup">知道了</button></div></div></div>';
-  renderHtml(byId('delivery-root'), html);
+  html += '</div><div class="delivery-actions"><button class="btn btn-secondary" type="button" data-action="show-report">返回财报</button><button class="btn btn-primary btn-dialog-primary" type="button" data-action="close-delivery-popup">继续经营</button></div></div>';
+  showModal(html);
 }
 
 export function closeDeliveryPopup() {
-  renderHtml(byId('delivery-root'), '');
+  closeModalRoot();
 }
 
 export function showGameOver(state) {

@@ -1,7 +1,7 @@
 import { byId } from '../domain/helpers.js';
 import { renderHtml } from './html.js';
 
-const MODAL_BACKGROUND_IDS = ['app', 'contract-zone', 'delivery-root', 'onboard-hint', 'tutorial'];
+const MODAL_BACKGROUND_IDS = ['app', 'contract-zone', 'onboard-hint', 'tutorial'];
 const VALID_BANNER_TONES = new Set(['accent', 'danger', 'info', 'success', 'warning']);
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -29,6 +29,7 @@ export function showRouteModal(html) {
 export function renderModalRoot(html) {
   const root = byId('modal-root');
   if (!root) return;
+  hideBanner();
   if (!root.hasChildNodes()) modalReturnFocus = document.activeElement;
   renderHtml(root, html);
   lockModalBackground();
@@ -99,6 +100,15 @@ export function showBanner(text, tone = BANNER_TONES.info) {
     b.hidden = true;
     bannerHideTimer = null;
   }, 3000);
+}
+
+export function hideBanner() {
+  const banner = byId('event-banner');
+  if (banner) banner.hidden = true;
+  if (bannerHideTimer) {
+    clearTimeout(bannerHideTimer);
+    bannerHideTimer = null;
+  }
 }
 
 function lockModalBackground() {

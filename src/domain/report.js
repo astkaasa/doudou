@@ -3,7 +3,7 @@ import { getCity } from './helpers.js';
 import { calcPortfolioValue } from './stocks.js';
 import { calcCompanyValue, getAllSubsidiaries, getTotalSubValue } from './subsidiaries.js';
 
-export function createFinancialReportSnapshot(state) {
+export function createFinancialReportSnapshot(state, report = null) {
   const routes = Array.isArray(state.routes) ? state.routes : [];
   const fleet = Array.isArray(state.fleet) ? state.fleet : [];
   const deliveredThisTurn = Array.isArray(state.deliveredThisTurn) ? state.deliveredThisTurn : [];
@@ -47,6 +47,8 @@ export function createFinancialReportSnapshot(state) {
       valueChange: state._subValueChangeThisTurn || 0,
     },
     companyValue,
+    financialBreakdown: createFinancialBreakdown(report),
+    quarterEvents: createQuarterEvents(report),
     deliveredThisTurn: deliveredThisTurn.map((plane) => ({ ...plane })),
     routes: routes.map((route) => ({
       from: route.from,
@@ -60,4 +62,55 @@ export function createFinancialReportSnapshot(state) {
       suspended: Boolean(route.suspended),
     })),
   };
+}
+
+function createFinancialBreakdown(report) {
+  if (!report) return null;
+  return {
+    routeRevenue: finiteNumber(report.routeRevenue),
+    routeCost: finiteNumber(report.routeCost),
+    overhead: finiteNumber(report.overhead),
+    leaseCost: finiteNumber(report.leaseCost),
+    interest: finiteNumber(report.interest),
+    opsCost: finiteNumber(report.opsCost),
+    faultLoss: finiteNumber(report.faultLoss),
+    airportContractIncome: finiteNumber(report.airportContractIncome),
+    airportContractPenalty: finiteNumber(report.airportContractPenalty),
+  };
+}
+
+function createQuarterEvents(report) {
+  if (!report) return null;
+  const action = report.bankruptcyAction;
+  return {
+    bankruptcyAction: action && !action.angelRescue && !action.gameOver
+      ? { action: action.action, amount: finiteNumber(action.amount) }
+      : null,
+    branchCompleted: (report.branchCompleted || []).map((cityId) => getCity(cityId)?.name || cityId),
+    airportContractsCompleted: (report.airportContractsCompleted || []).length,
+    airportContractsBreached: (report.airportContractsBreached || []).length,
+    newAirportRelocations: (report.newAirportRelocations || []).length,
+    angelInvestmentAmount: Math.max(0, finiteNumber(report.angelInvestmentAmount)),
+    fleetDepartures: (report.fleetDepartures || []).map((plane) => ({
+      uid: plane.uid,
+      name: plane.name || '未命名飞机',
+      reason: plane.reason === 'lease_expired' ? 'lease_expired' : 'retired',
+      affectedRouteCount: Math.max(0, Math.floor(finiteNumber(plane.affectedRouteCount))),
+    })),
+    milestonesUnlocked: (report.milestonesUnlocked || []).map((milestone) => ({
+      id: milestone.id,
+      title: milestone.title,
+      description: milestone.description,
+    })),
+    mainQuestUpdate: report.mainQuestUpdate ? {
+      type: report.mainQuestUpdate.type,
+      title: report.mainQuestUpdate.title,
+      nextTitle: report.mainQuestUpdate.nextTitle,
+      grade: report.mainQuestUpdate.grade,
+    } : null,
+  };
+}
+
+function finiteNumber(value) {
+  return Number.isFinite(Number(value)) ? Number(value) : 0;
 }

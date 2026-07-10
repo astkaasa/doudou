@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
 import { getDefaultAirportId, virtualAirportId } from '../src/domain/airports.js';
-import { baseDemand, calcLoadFactor, distanceServiceMultiplier, PASSENGER_SERVICE_COST_PER_PAX_1000KM, populationAviationPropensity, populationDemandScore, ROUTE_REVENUE_DIVISOR, routeCost, routeRevenue, routeSeatCapacity, routeYieldPremium, suggestedPrice } from '../src/domain/economy.js';
+import { baseDemand, calcLoadFactor, calcNetworkLoadFactor, distanceServiceMultiplier, PASSENGER_SERVICE_COST_PER_PAX_1000KM, populationAviationPropensity, populationDemandScore, ROUTE_REVENUE_DIVISOR, routeCost, routeRevenue, routeSeatCapacity, routeYieldPremium, suggestedPrice } from '../src/domain/economy.js';
 import { cityDist, getCity } from '../src/domain/helpers.js';
 import { addSuspensionModifier, routeServiceMultiplier } from '../src/domain/modifiers.js';
 import { calcOpsBudgetCost } from '../src/domain/operations.js';
@@ -57,6 +57,24 @@ describe('economy model', () => {
     expect(route.loadFactor).toBeLessThanOrEqual(1);
     expect(routeRevenue(state, route).total).toBeGreaterThan(0);
     expect(routeCost(state, route).total).toBeGreaterThan(0);
+  });
+
+  it('weights network load factor by active effective seat capacity', () => {
+    const state = initState('beijing', 'era3');
+    state.fleet = [
+      { uid: 1, seats: 100 },
+      { uid: 2, seats: 300 },
+      { uid: 3, seats: 500 },
+    ];
+    state.routes = [
+      { assignedPlanes: [1], loadFactor: 0.8 },
+      { assignedPlanes: [2], loadFactor: 0.4 },
+      { assignedPlanes: [3], loadFactor: 1, suspended: true },
+      { assignedPlanes: [], loadFactor: 1 },
+    ];
+
+    expect(calcNetworkLoadFactor(state)).toBeCloseTo(0.5);
+    expect(calcNetworkLoadFactor({ routes: [], fleet: [] })).toBe(0);
   });
 
   it('applies distance-based service multiplier to passenger revenue', () => {

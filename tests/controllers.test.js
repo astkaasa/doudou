@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createFinanceController } from '../src/app/financeController.js';
@@ -5,6 +7,8 @@ import { createNetworkController } from '../src/app/networkController.js';
 import { createSessionController } from '../src/app/sessionController.js';
 import { createSettingsController, loadAppSettings } from '../src/app/settingsController.js';
 import { createTurnController } from '../src/app/turnController.js';
+
+const ROOT = path.resolve(import.meta.dirname, '..');
 
 function createMemoryStorage(initialValue = null) {
   const values = new Map(initialValue === null ? [] : [['doudou.appSettings', initialValue]]);
@@ -60,7 +64,6 @@ describe('application controllers', () => {
       'close-delivery-popup',
       'confirm-advance-without-routes',
       'continue-era-sandbox',
-      'delivery-backdrop',
       'lock-angel-slot',
       'open-contract-from-panel',
       'open-era-settlement',
@@ -70,6 +73,7 @@ describe('application controllers', () => {
       'select-contract-option',
       'set-ops-tier',
       'show-delivery-popup',
+      'show-main-quest-victory',
       'show-newspaper',
       'show-report',
       'sign-contract',
@@ -152,7 +156,6 @@ describe('application controllers', () => {
       'acknowledge-onboarding',
       'cancel-hq-select',
       'close-ftp-card',
-      'close-main-quest-overlay',
       'close-modal',
       'confirm-hq-start',
       'confirm-trait',
@@ -229,4 +232,44 @@ describe('application controllers', () => {
 
     expect(new Set(actions).size).toBe(actions.length);
   });
+
+  it('handles every literal action rendered by source templates', () => {
+    const app = {
+      getState: () => null,
+      setState: vi.fn(),
+      uiState: {},
+      renderGame: vi.fn(),
+      renderMapOnly: vi.fn(),
+      setBottomHint: vi.fn(),
+      scrollPanelToTop: vi.fn(),
+      updateMilestones: vi.fn(),
+      closeModal: vi.fn(),
+      cancelBranchSelect: vi.fn(),
+    };
+    const controllers = [
+      createSessionController(app),
+      createSettingsController({ ...app, settings: {} }, createMemoryStorage()),
+      createFinanceController(app),
+      createTurnController(app),
+      createNetworkController(app),
+    ];
+    const handled = new Set(controllers.flatMap((controller) => [
+      ...Object.keys(controller.clickActions || {}),
+      ...Object.keys(controller.inputActions || {}),
+    ]));
+    const sourceFiles = [path.join(ROOT, 'index.html'), ...listSourceFiles(path.join(ROOT, 'src'))];
+    const renderedActions = new Set(sourceFiles.flatMap((file) => [
+      ...fs.readFileSync(file, 'utf8').matchAll(/data-action=["']([a-z0-9-]+)["']/g),
+    ].map((match) => match[1])));
+
+    expect([...renderedActions].filter((action) => !handled.has(action)).sort()).toEqual([]);
+  });
 });
+
+function listSourceFiles(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) return listSourceFiles(fullPath);
+    return entry.name.endsWith('.js') ? [fullPath] : [];
+  });
+}

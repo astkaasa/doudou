@@ -89,6 +89,7 @@ export function createFinanceController(app) {
     app.renderGame();
     const city = getCity(target.dataset.cityId);
     const action = target.dataset.subMode === 'acquire' ? '收购' : target.dataset.subType === 'airport' ? '投资' : '新设';
+    showSubsidiaryOverview(game, target.dataset.cityId);
     showBanner(`${action}完成：${city?.name || target.dataset.cityId}，花费 ${fmt(result.totalCost)}`, BANNER_TONES.success);
     checkFirstTimePopups(game);
     app.updateMilestones();
@@ -104,6 +105,7 @@ export function createFinanceController(app) {
     }
     app.renderGame();
     const city = getCity(target.dataset.cityId);
+    showSubsidiaryOverview(game, target.dataset.cityId);
     showBanner(`已出售：${city?.name || target.dataset.cityId}，到账 ${fmt(result.sellPrice)}`, BANNER_TONES.warning);
     app.updateMilestones();
   }
@@ -154,8 +156,8 @@ export function createFinanceController(app) {
         const select = byId(`contract-plane-${target.dataset.contractId}`);
         const result = acceptAirportContract(game, target.dataset.contractId, Number(select?.value));
         if (!result.ok) {
-          showBanner(result.message, BANNER_TONES.danger);
           showAirportProgramModal(game);
+          showBanner(result.message, BANNER_TONES.danger);
           return;
         }
         app.renderGame();

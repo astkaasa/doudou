@@ -196,6 +196,22 @@ export function routeSeatCapacity(state, route, assignedPlanes = getRouteAssigne
   ), 0);
 }
 
+export function calcNetworkLoadFactor(state) {
+  const routes = Array.isArray(state?.routes) ? state.routes : [];
+  const fleet = Array.isArray(state?.fleet) ? state.fleet : [];
+  const fleetByUid = new Map(fleet.map((plane) => [plane.uid, plane]));
+  const totals = routes.reduce((result, route) => {
+    if (route?.suspended) return result;
+    const assignedPlanes = getRouteAssignedPlanes(state, route, fleetByUid);
+    const capacity = routeSeatCapacity(state, route, assignedPlanes);
+    if (!(capacity > 0)) return result;
+    result.seats += capacity;
+    result.occupied += capacity * clamp(Number(route.loadFactor) || 0, 0, 1);
+    return result;
+  }, { seats: 0, occupied: 0 });
+  return totals.seats > 0 ? totals.occupied / totals.seats : 0;
+}
+
 export function getRouteAssignedPlanes(state, route, fleetByUid = new Map(state.fleet.map((plane) => [plane.uid, plane]))) {
   return (route.assignedPlanes || []).map((uid) => fleetByUid.get(uid)).filter(Boolean);
 }

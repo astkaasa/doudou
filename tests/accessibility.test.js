@@ -7,13 +7,13 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 describe('static accessibility contracts', () => {
   it('gives every static button an explicit type', () => {
     const html = read('index.html');
-    expect(html.match(/<button(?![^>]*\btype=)/g) || []).toEqual([]);
+    expect(buttonsWithoutType(html)).toEqual([]);
   });
 
   it('gives every rendered template button an explicit type', () => {
     listJavaScriptFiles(path.join(ROOT, 'src')).forEach((file) => {
       const relative = path.relative(ROOT, file);
-      expect(read(relative).match(/<button(?![^>]*\btype=)/g) || [], relative).toEqual([]);
+      expect(buttonsWithoutType(read(relative)), relative).toEqual([]);
     });
   });
 
@@ -32,6 +32,10 @@ describe('static accessibility contracts', () => {
 
 function read(relativePath) {
   return fs.readFileSync(path.join(ROOT, relativePath), 'utf8');
+}
+
+function buttonsWithoutType(source) {
+  return (source.match(/<button\b[^>]*>/g) || []).filter((tag) => !/\stype\s*=/.test(tag));
 }
 
 function listJavaScriptFiles(directory) {

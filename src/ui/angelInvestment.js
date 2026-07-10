@@ -1,6 +1,6 @@
 import { angelInvestmentAmounts, pickAngelInvestmentAmount } from '../domain/angelInvestment.js';
 import { byId, fmt } from '../domain/helpers.js';
-import { renderHtml } from './html.js';
+import { renderModalRoot } from './modal.js';
 
 let phaseTimer = null;
 let slotTimer = null;
@@ -9,9 +9,8 @@ let slotLocked = false;
 
 export function showAngelInvestment(state) {
   clearAngelTimers();
-  const root = byId('modal-root');
-  renderHtml(root, `
-    <div class="angel-overlay angel-crisis-overlay">
+  renderModalRoot(`
+    <div class="angel-overlay angel-crisis-overlay" role="dialog" aria-modal="true" aria-label="资金告急" tabindex="-1">
       <div class="angel-crisis-content">
         <div class="angel-crisis-icon">!</div>
         <h1 class="angel-crisis-title">资金告急</h1>
@@ -28,9 +27,8 @@ export function showAngelSlotPhase(state) {
   slotLocked = false;
   finalAmount = pickAngelInvestmentAmount(state);
   const amounts = angelInvestmentAmounts();
-  const root = byId('modal-root');
-  renderHtml(root, `
-    <div class="angel-overlay angel-slot-overlay">
+  renderModalRoot(`
+    <div class="angel-overlay angel-slot-overlay" role="dialog" aria-modal="true" aria-label="天使投资抽取" tabindex="-1">
       <div class="angel-slot-content">
         <h2 class="angel-slot-title">天使投资抽取</h2>
         <div class="angel-slot-machine">
@@ -77,9 +75,8 @@ export function clearAngelTimers() {
 
 function showAngelIntroPhase() {
   phaseTimer = null;
-  const root = byId('modal-root');
-  renderHtml(root, `
-    <div class="angel-overlay angel-descend-overlay">
+  renderModalRoot(`
+    <div class="angel-overlay angel-descend-overlay" role="dialog" aria-modal="true" aria-label="辣豆基金天使投资" tabindex="-1">
       <div class="angel-descend-content">
         <div class="angel-logo">
           <div class="angel-logo-coin"><span class="angel-logo-text">辣</span></div>
@@ -140,9 +137,8 @@ function slowDownToTarget(amounts, amount, startIndex) {
 }
 
 function revealAngelResult(amount) {
-  const root = byId('modal-root');
-  renderHtml(root, `
-    <div class="angel-overlay angel-result-overlay">
+  renderModalRoot(`
+    <div class="angel-overlay angel-result-overlay" role="dialog" aria-modal="true" aria-label="天使投资到账" tabindex="-1">
       <div class="angel-result-content">
         <div class="angel-result-glow"></div>
         <h2 class="angel-result-title">天使投资到账</h2>

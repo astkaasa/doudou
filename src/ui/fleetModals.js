@@ -1,4 +1,4 @@
-import { availablePlaneTemplates, countBoughtPlanes, countLeasedPlanes, maxLeasedPlanes, quotePlaneAcquisition } from '../domain/fleet.js';
+import { AIRCRAFT_RETIREMENT_AGE_YEARS, LEASE_TERM_QUARTERS, availablePlaneTemplates, countBoughtPlanes, countLeasedPlanes, maxLeasedPlanes, quotePlaneAcquisition } from '../domain/fleet.js';
 import { fmt, getCity } from '../domain/helpers.js';
 import { escapeAttr, escapeHtml } from './html.js';
 import { showModal } from './modal.js';
@@ -9,6 +9,7 @@ export function showBuyPlaneModal(state) {
   const leaseMax = maxLeasedPlanes(state);
   const planes = availablePlaneTemplates(state);
   const groups = groupPlanesByMaker(planes);
+  const defaultOpenGroup = Math.max(0, groups.findIndex((group) => groupHasAffordablePlane(group.planes, state)));
   let html = `<div class="plane-market-head">
     <div><h2>飞机市场</h2><p>购买机型需 2 季交付；租赁立即可用，但首期包含机价 10% 手续费。</p></div>
     <div class="plane-market-cash"><span>可用资金</span><strong>${fmt(state.cash)}</strong></div>
@@ -23,7 +24,7 @@ export function showBuyPlaneModal(state) {
     html += '<p class="plane-market-empty">当前年份没有可购买机型。</p>';
   }
   groups.forEach(({ maker, planes: makerPlanes }, index) => {
-    const shouldOpen = groupHasAffordablePlane(makerPlanes, state) || (index === 0 && !groups.some((group) => groupHasAffordablePlane(group.planes, state)));
+    const shouldOpen = index === defaultOpenGroup;
     html += `<details class="plane-maker-group"${shouldOpen ? ' open' : ''}><summary><span>${escapeHtml(maker)}</span><small>${makerPlanes.length}</small></summary>`;
     makerPlanes.forEach((p) => {
       html += renderPlanePurchaseCard(state, p, maker);
@@ -63,7 +64,7 @@ function renderPlanePurchaseCard(state, plane, maker) {
     </div>
     <div class="plane-acquisition-notes">
       <span><b>购买</b> 2 季后交付</span>
-      <span><b>租赁</b> 立即可用，之后 ${fmt(plane.leasePrice)}/季</span>
+      <span><b>租赁</b> 立即可用，租期 ${LEASE_TERM_QUARTERS} 季，每季 ${fmt(plane.leasePrice)}</span>
     </div>
     <div class="plane-purchase-actions">
       <label for="buy-qty-${escapeAttr(plane.id)}">数量
@@ -89,7 +90,7 @@ function acquisitionButtonLabel(quote) {
 }
 
 function acquisitionTitle(quote) {
-  if (quote.isLease) return `首期含 ${fmt(quote.leaseFee)} 手续费，之后每季 ${fmt(quote.recurringCost)}`;
+  if (quote.isLease) return `租期 ${LEASE_TERM_QUARTERS} 季；首期含 ${fmt(quote.leaseFee)} 手续费，此后每季 ${fmt(quote.recurringCost)}`;
   return `预计 ${quote.deliveryTurns} 季后交付，操作后现金 ${fmt(quote.cashAfter)}`;
 }
 
@@ -138,12 +139,26 @@ export function showFleetPanel(state) {
       const assignedRoute = routeByPlaneUid.get(p.uid);
       const status = p.delivering ? `交付中 (${p.deliverIn}回合)` : assignedRoute ? `${getCity(assignedRoute.from).name}→${getCity(assignedRoute.to).name}` : '空闲';
       const statusClass = p.delivering ? 'status-delivering' : assignedRoute ? 'status-assigned' : 'status-idle';
-      const leaseTag = p.isLease ? `<span class="lease-badge">R</span><span class="fleet-lease-meta">租${p.leaseTurns || 0}/${p.maxLeaseTurns || 40}季</span>` : '';
+      const lifecycleMeta = fleetLifecycleMeta(p);
       const action = p.isLease ? 'return-lease' : 'sell-plane';
       const actionLabel = p.isLease ? '退租' : '出售';
-      html += `<div class="fleet-item"><div class="fleet-item-main"><span class="name">${escapeHtml(p.name)}</span>${leaseTag}<span class="fleet-age">机龄${p.age.toFixed(1)}年</span></div><div class="fleet-item-side"><span class="status ${statusClass}">${escapeHtml(status)}</span>${!p.delivering && !assignedRoute ? `<button class="btn btn-danger btn-sm" type="button" data-action="${action}" data-uid="${escapeAttr(p.uid)}">${actionLabel}</button>` : ''}</div></div>`;
+      html += `<div class="fleet-item"><div class="fleet-item-main"><span class="name">${escapeHtml(p.name)}</span>${lifecycleMeta}<span class="fleet-age">机龄${p.age.toFixed(1)}年</span></div><div class="fleet-item-side"><span class="status ${statusClass}">${escapeHtml(status)}</span>${!p.delivering && !assignedRoute ? `<button class="btn btn-danger btn-sm" type="button" data-action="${action}" data-uid="${escapeAttr(p.uid)}">${actionLabel}</button>` : ''}</div></div>`;
     });
   }
   html += '<div class="modal-actions"><button class="btn btn-secondary" type="button" data-action="close-modal">关闭</button></div>';
   showModal(html);
+}
+
+function fleetLifecycleMeta(plane) {
+  if (plane.isLease) {
+    const leaseTurns = Math.max(0, Number(plane.leaseTurns) || 0);
+    const maxLeaseTurns = Math.max(1, Number(plane.maxLeaseTurns) || LEASE_TERM_QUARTERS);
+    const remainingTurns = Math.max(0, maxLeaseTurns - leaseTurns);
+    const warningClass = remainingTurns <= 4 ? ' fleet-lifecycle-warning' : '';
+    const label = remainingTurns <= 4 ? `剩余${remainingTurns}季` : `租${leaseTurns}/${maxLeaseTurns}季`;
+    return `<span class="lease-badge">R</span><span class="fleet-lease-meta${warningClass}">${label}</span>`;
+  }
+  const age = Math.max(0, Number(plane.age) || 0);
+  if (age < AIRCRAFT_RETIREMENT_AGE_YEARS - 2) return '';
+  return `<span class="fleet-lifecycle-warning">距退役${Math.max(0, AIRCRAFT_RETIREMENT_AGE_YEARS - age).toFixed(1)}年</span>`;
 }

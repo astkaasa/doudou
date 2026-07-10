@@ -1,12 +1,15 @@
 import {
+  AD_MULTIPLIER,
   calcOpsBudgetCost,
   calcOpsEfficiency,
   calcStaffNeeded,
   getBonusOptions,
   getRecruitOptions,
   hasPendingContracts,
+  MAINT_FAULT_MULT,
   moraleStars,
   pendingContractLabels,
+  SERVICE_MULTIPLIER,
 } from '../domain/operations.js';
 import { byId, fmt } from '../domain/helpers.js';
 import { estimateTurnFinancials } from '../domain/turn.js';
@@ -35,9 +38,9 @@ export function showOperationsPanel(state) {
       <div class="ops-row"><span>士气</span><strong class="warning">${moraleStars(state.staffMorale)}</strong></div>
       <div class="ops-row"><span>运营效能</span><strong class="${state.opsEfficiency >= 1 ? 'positive' : state.opsEfficiency >= 0.7 ? 'warning' : 'negative'}">${opsPct}</strong></div>
     </div>
-    ${renderBudgetSection('服务预算', 'serviceTier', state.serviceTier, { low: '经济', mid: '标准', high: '豪华' }, budget.serviceCost)}
-    ${renderBudgetSection('维修预算', 'maintTier', state.maintTier, { low: '基础', mid: '标准', high: '深度' }, budget.maintCost)}
-    ${renderBudgetSection('广告预算', 'adTier', state.adTier, { low: '口碑', mid: '标准', high: '饱和' }, budget.adCost)}`;
+    ${renderBudgetSection('服务预算', 'serviceTier', state.serviceTier, { low: '经济', mid: '标准', high: '豪华' }, demandEffectLabels(SERVICE_MULTIPLIER), budget.serviceCost)}
+    ${renderBudgetSection('维修预算', 'maintTier', state.maintTier, { low: '基础', mid: '标准', high: '深度' }, multiplierEffectLabels(MAINT_FAULT_MULT, '故障'), budget.maintCost)}
+    ${renderBudgetSection('广告预算', 'adTier', state.adTier, { low: '口碑', mid: '标准', high: '饱和' }, demandEffectLabels(AD_MULTIPLIER), budget.adCost)}`;
 
   if (state.accidentPenalty < 0) {
     html += `<div class="ops-section ops-warning-section">
@@ -52,8 +55,8 @@ export function showOperationsPanel(state) {
       <div class="ops-section-title">待签署合同</div>
       <p>${pendingContractLabels(state).join('、')}尚待签署</p>
       <div class="ops-contract-actions">
-        ${state._pendingRecruit ? '<button class="btn btn-warning btn-sm" data-action="open-contract-from-panel" data-contract-type="recruit">签署招聘</button>' : ''}
-        ${state._pendingBonus ? '<button class="btn btn-warning btn-sm" data-action="open-contract-from-panel" data-contract-type="bonus">签署奖金</button>' : ''}
+        ${state._pendingRecruit ? '<button class="btn btn-warning btn-sm" type="button" data-action="open-contract-from-panel" data-contract-type="recruit">签署招聘</button>' : ''}
+        ${state._pendingBonus ? '<button class="btn btn-warning btn-sm" type="button" data-action="open-contract-from-panel" data-contract-type="bonus">签署奖金</button>' : ''}
       </div>
     </div>`;
   }
@@ -137,7 +140,7 @@ function updateTurnForecast(state, forecast, button) {
   const estimate = estimateTurnFinancials(state);
   forecast.textContent = `季度预估 ${estimate.profit >= 0 ? '+' : ''}${fmt(estimate.profit)}`;
   forecast.classList.add(estimate.profit >= 0 ? 'positive' : 'negative');
-  button.title = `不含随机事件和故障，预计收入 ${fmt(estimate.totalRev)}，成本 ${fmt(estimate.totalCost)}`;
+  button.title = `静态预估，不含随机事件、故障、合同结算、证券和子公司；预计收入 ${fmt(estimate.totalRev)}，成本 ${fmt(estimate.totalCost)}`;
 }
 
 export function showAdvanceContractGuide(state) {
@@ -203,14 +206,25 @@ export function focusContractFromPanel(state, type) {
   }, 700);
 }
 
-function renderBudgetSection(title, field, currentTier, labels, cost) {
+function renderBudgetSection(title, field, currentTier, labels, effects, cost) {
   return `<div class="ops-section">
     <div class="ops-section-title">${title}</div>
     <div class="ops-tier-row">
-      ${Object.entries(labels).map(([tier, label]) => `<button type="button" class="ops-tier-btn${currentTier === tier ? ' active' : ''}" data-action="set-ops-tier" data-field="${field}" data-tier="${tier}">${label}</button>`).join('')}
+      ${Object.entries(labels).map(([tier, label]) => `<button type="button" class="ops-tier-btn${currentTier === tier ? ' active' : ''}" data-action="set-ops-tier" data-field="${field}" data-tier="${tier}"><span>${label}</span><small>${effects[tier]}</small></button>`).join('')}
     </div>
     <div class="ops-row"><span>本季费用</span><strong class="negative">${fmt(cost)}</strong></div>
   </div>`;
+}
+
+function demandEffectLabels(multipliers) {
+  return Object.fromEntries(Object.entries(multipliers).map(([tier, multiplier]) => {
+    const percent = Math.round((multiplier - 1) * 100);
+    return [tier, percent === 0 ? '需求基准' : `需求 ${percent > 0 ? '+' : ''}${percent}%`];
+  }));
+}
+
+function multiplierEffectLabels(multipliers, label) {
+  return Object.fromEntries(Object.entries(multipliers).map(([tier, multiplier]) => [tier, `${label} ×${multiplier.toFixed(1)}`]));
 }
 
 function renderContractCard(state, type) {

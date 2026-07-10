@@ -51,11 +51,12 @@ function renderMapOnly() {
   if (G) renderMap(G, uiState);
 }
 
-function updateMilestones() {
-  if (!G) return;
+function updateMilestones(options = {}) {
+  if (!G) return [];
   const newlyUnlocked = checkMilestones(G);
   updateHUD(G);
-  showMilestoneNotification(newlyUnlocked);
+  if (options.notify !== false) showMilestoneNotification(newlyUnlocked);
+  return newlyUnlocked;
 }
 
 function setBottomHint(message = '') {
@@ -129,7 +130,7 @@ const inputActions = {
 const knownActions = actionNames(clickActions, inputActions);
 const handleClick = createDelegatedActionHandler(clickActions, {
   knownActions,
-  selfOnlyActions: ['modal-backdrop', 'delivery-backdrop'],
+  selfOnlyActions: ['modal-backdrop'],
 });
 const handleInput = createDelegatedActionHandler(inputActions, { knownActions });
 

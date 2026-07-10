@@ -23,7 +23,7 @@ export function advanceTurnState(state) {
   const period = { year: state.year, quarter: state.quarter };
 
   const branchCompleted = advanceBranchConstruction(state);
-  advanceFleetAge(state);
+  const fleetDepartures = advanceFleetAge(state);
   growCityStates(state, randomSource(state));
   prepareQuarterOperations(state);
   updateRouteMetrics(state);
@@ -127,6 +127,7 @@ export function advanceTurnState(state) {
     opsCost: state._opsCostThisTurn || 0,
     faultLoss,
     branchCompleted,
+    fleetDepartures,
     gameOver: state.gameOver,
     angelRescue,
     bankruptcyAction,

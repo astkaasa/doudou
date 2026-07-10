@@ -1,14 +1,14 @@
 import { applyAngelInvestment } from '../domain/angelInvestment.js';
 import { continueEraInSandbox, hasPendingEraSettlement, retireAtEraEnd } from '../domain/eraSettlement.js';
 import { getPendingAirportRelocations, hasPendingAirportRelocation, resolveAirportRelocation, syncAirportRelocations } from '../domain/airportRelocations.js';
-import { fmt, getCity } from '../domain/helpers.js';
+import { fmt } from '../domain/helpers.js';
 import { hasPendingContracts, setOpsTier, signBonusContract, signRecruitContract } from '../domain/operations.js';
 import { updateRouteMetrics } from '../domain/routes.js';
 import { saveGameState } from '../domain/save.js';
 import { advanceTurnState } from '../domain/turn.js';
 import { clearAngelTimers, lockAngelSlot, showAngelInvestment, showAngelSlotPhase } from '../ui/angelInvestment.js';
 import { showEraRetirement, showEraSettlement } from '../ui/eraSettlement.js';
-import { showMainQuestStageNotification, showMainQuestVictory } from '../ui/mainQuest.js';
+import { showMainQuestVictory } from '../ui/mainQuest.js';
 import { BANNER_TONES, closeModalRoot, showBanner, showModal } from '../ui/modal.js';
 import {
   closeDeliveryPopup,
@@ -38,17 +38,32 @@ import {
 
 export function createTurnController(app) {
   const state = () => app.getState();
+  let pendingAngelReport = null;
 
-  function showBankruptcyAction(report) {
-    const action = report?.bankruptcyAction;
-    if (!action || action.angelRescue || action.gameOver) return;
-    const messages = {
-      emergencyLoan: `急救贷款已发放：${fmt(action.amount)}`,
-      forceSellStocks: `已强制出售证券资产：${fmt(action.amount)}`,
-      forceSellSubsidiaries: `已强制出售子公司：${fmt(action.amount)}`,
-      forceSellPlanes: `已变卖自有飞机：${fmt(action.amount)}`,
+  function presentQuarterReport(game, report, options = {}) {
+    app.renderGame();
+    resetBranchDismiss();
+    if (game.turnsPlayed === 1) {
+      completeOnboardingStep(game, 2);
+      updateOnboarding(game, app.uiState);
+    }
+    const newlyUnlocked = app.updateMilestones({ notify: false }) || [];
+    report.milestonesUnlocked = newlyUnlocked.map((milestone) => ({
+      id: milestone.id,
+      title: milestone.title,
+      description: milestone.description,
+    }));
+    const showQuarterSummary = () => {
+      showTurnSummary(game, report);
+      checkFirstTimePopups(game);
+      options.afterShow?.();
     };
-    if (messages[action.action]) showBanner(messages[action.action], BANNER_TONES.warning);
+    const isReportOnboarding = game.turnsPlayed === 1
+      && !game._onboardReportShown
+      && game.onboardStep <= 3
+      && game.onboardStep < 99;
+    if (isReportOnboarding) window.setTimeout(showQuarterSummary, 400);
+    else showQuarterSummary();
   }
 
   function applyAngelRescue(target) {
@@ -61,6 +76,15 @@ export function createTurnController(app) {
     }
     clearAngelTimers();
     closeModalRoot();
+    const report = pendingAngelReport;
+    pendingAngelReport = null;
+    if (report) {
+      report.angelInvestmentAmount = result.amount;
+      presentQuarterReport(game, report, {
+        afterShow: () => showBanner(`辣豆基金注资 ${fmt(result.amount)}，重振旗鼓`, BANNER_TONES.warning),
+      });
+      return;
+    }
     app.renderGame();
     if (hasPendingEraSettlement(game)) {
       showEraSettlement(game);
@@ -126,6 +150,7 @@ export function createTurnController(app) {
     const report = advanceTurnState(game);
     if (!report) return;
     if (report.angelRescue) {
+      pendingAngelReport = report;
       app.renderGame();
       showAngelInvestment(game);
       return;
@@ -134,41 +159,7 @@ export function createTurnController(app) {
       showGameOver(game);
       return;
     }
-    app.renderGame();
-    showBankruptcyAction(report);
-    resetBranchDismiss();
-    if (game.turnsPlayed === 1) {
-      completeOnboardingStep(game, 2);
-      updateOnboarding(game, app.uiState);
-    }
-    if (report.branchCompleted.length > 0) {
-      showBanner(`分部完工：${report.branchCompleted.map((cityId) => getCity(cityId)?.name || cityId).join('、')}`, BANNER_TONES.accent);
-    }
-    if (report.airportContractsCompleted?.length > 0) {
-      showBanner(`完成 ${report.airportContractsCompleted.length} 份机场开发合同`, BANNER_TONES.success);
-    } else if (report.airportContractsBreached?.length > 0) {
-      showBanner(`${report.airportContractsBreached.length} 份机场开发合同违约`, BANNER_TONES.danger);
-    }
-    if (report.newAirportRelocations?.length > 0) {
-      showBanner('新的机场迁移事项已进入待处理队列', BANNER_TONES.warning);
-    }
-    const showQuarterSummary = () => {
-      showTurnSummary(game, report);
-      checkFirstTimePopups(game);
-    };
-    const isReportOnboarding = game.turnsPlayed === 1
-      && !game._onboardReportShown
-      && game.onboardStep <= 3
-      && game.onboardStep < 99;
-    if (isReportOnboarding) window.setTimeout(showQuarterSummary, 400);
-    else showQuarterSummary();
-    app.updateMilestones();
-    if (report.eraSettlement) return;
-    if (report.mainQuestUpdate?.type === 'stage_complete') {
-      showMainQuestStageNotification(report.mainQuestUpdate);
-    } else if (report.mainQuestUpdate?.type === 'victory') {
-      showMainQuestVictory(report.mainQuestUpdate);
-    }
+    presentQuarterReport(game, report);
   }
 
   function updateOpsTier(target) {
@@ -248,8 +239,8 @@ export function createTurnController(app) {
         if (!game) return;
         const result = resolveAirportRelocation(game, target.dataset.relocationId, target.dataset.resolution);
         if (!result.ok) {
-          showBanner(result.message, BANNER_TONES.danger);
           showAirportRelocationModal(game);
+          showBanner(result.message, BANNER_TONES.danger);
           return;
         }
         app.renderGame();
@@ -261,6 +252,13 @@ export function createTurnController(app) {
         }
       },
       'open-era-settlement': openEraSettlement,
+      'show-main-quest-victory': () => {
+        const game = state();
+        const update = game?.lastReportData?.mainQuestUpdate;
+        if (!game || update?.type !== 'victory') return;
+        app.closeModal();
+        showMainQuestVictory(update);
+      },
       'continue-era-sandbox': continueEra,
       'retire-era': retireEra,
       'confirm-advance-without-routes': () => {
@@ -280,7 +278,6 @@ export function createTurnController(app) {
         if (game) showDeliveryPopup(game);
       },
       'close-delivery-popup': closeDeliveryPopup,
-      'delivery-backdrop': closeDeliveryPopup,
     },
   };
 }

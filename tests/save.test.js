@@ -78,6 +78,27 @@ describe('save migration', () => {
     expect(JSON.parse(storage.getItem('skyline_save_backup')).g.cash).toBe(100);
   });
 
+  it('preserves quarterly fleet departures in the rereadable report snapshot', () => {
+    const storage = writableStorage();
+    const state = initState('beijing', 'era3');
+    state.lastReportData = {
+      period: { year: 2000, quarter: 1 },
+      snapshot: {
+        quarterEvents: {
+          fleetDepartures: [{ uid: 7, name: 'A320', reason: 'lease_expired', affectedRouteCount: 2 }],
+        },
+      },
+    };
+
+    saveGameState(state, storage);
+    const result = loadGameState(storage);
+
+    expect(result.ok).toBe(true);
+    expect(result.state.lastReportData.snapshot.quarterEvents.fleetDepartures).toEqual([
+      { uid: 7, name: 'A320', reason: 'lease_expired', affectedRouteCount: 2 },
+    ]);
+  });
+
   it('recovers a readable backup when the primary save is corrupt', () => {
     const storage = writableStorage();
     const state = initState('beijing', 'era3');

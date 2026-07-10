@@ -5,7 +5,7 @@ import { DEFAULT_COMPANY_NAME } from './constants.js';
 import { createEraSettlementState } from './eraSettlement.js';
 import { createAirportManagementState } from './airportManagement.js';
 import { createAirportRelocationState } from './airportRelocations.js';
-import { availablePlaneTemplates } from './fleet.js';
+import { LEASE_TERM_QUARTERS, availablePlaneTemplates } from './fleet.js';
 import { createMainQuestState } from './mainQuest.js';
 import { STAFF_HQ_BASE, calcStaffNeeded, syncStaffToNeeded } from './operations.js';
 import { initStockState } from './stocks.js';
@@ -129,8 +129,8 @@ function findEra(eraId) {
 export function seedInitialFleet(state) {
   const availablePlanes = availablePlaneTemplates(state);
   const starterPlane = availablePlanes.find((p) => p.type === 'narrow') || availablePlanes[0];
-  state.fleet.push({ ...starterPlane, uid: state.planeIdCounter++, age: 0, isLease: false, leasePrice: 0, leaseTurns: 0, maxLeaseTurns: 40, delivering: false, deliverIn: 0 });
-  state.fleet.push({ ...starterPlane, uid: state.planeIdCounter++, age: 2, isLease: false, leasePrice: 0, leaseTurns: 0, maxLeaseTurns: 40, delivering: false, deliverIn: 0 });
+  state.fleet.push({ ...starterPlane, uid: state.planeIdCounter++, age: 0, isLease: false, leasePrice: 0, leaseTurns: 0, maxLeaseTurns: LEASE_TERM_QUARTERS, delivering: false, deliverIn: 0 });
+  state.fleet.push({ ...starterPlane, uid: state.planeIdCounter++, age: 2, isLease: false, leasePrice: 0, leaseTurns: 0, maxLeaseTurns: LEASE_TERM_QUARTERS, delivering: false, deliverIn: 0 });
   syncStaffToNeeded(state, 0.9);
   state.ai.forEach((ai) => {
     for (let i = 0; i < 3; i++) {

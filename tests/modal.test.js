@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { BANNER_TONES, showBanner, trapModalFocus } from '../src/ui/modal.js';
+import { BANNER_TONES, hideBanner, showBanner, trapModalFocus } from '../src/ui/modal.js';
 
 const originalDocument = globalThis.document;
 
@@ -81,6 +81,19 @@ describe('event banner', () => {
 
     expect(banner.className).toBe('event-banner event-banner-info');
     vi.advanceTimersByTime(3000);
+  });
+
+  it('dismisses an active banner and cancels its stale timer', () => {
+    vi.useFakeTimers();
+    const banner = createBanner();
+    globalThis.document = documentWithBanner(banner);
+
+    showBanner('即将打开弹窗', BANNER_TONES.info);
+    hideBanner();
+
+    expect(banner.hidden).toBe(true);
+    vi.advanceTimersByTime(3000);
+    expect(banner.hidden).toBe(true);
   });
 });
 

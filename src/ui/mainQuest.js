@@ -1,8 +1,8 @@
 import { MAIN_QUEST_DIMS, MAIN_QUEST_STAGES, VICTORY_GRADES } from '../data/mainQuest.js';
 import { fmt } from '../domain/helpers.js';
 import { getMainQuestStats } from '../domain/mainQuest.js';
-import { escapeAttr, escapeHtml, renderHtml } from './html.js';
-import { BANNER_TONES, showBanner, showModal } from './modal.js';
+import { escapeAttr, escapeHtml } from './html.js';
+import { BANNER_TONES, closeModalRoot, renderModalRoot, showBanner, showModal } from './modal.js';
 
 export function showMainQuestPanel(state) {
   if (!state) return;
@@ -34,26 +34,10 @@ export function showMainQuestPanel(state) {
   </div>`, { wide: false });
 }
 
-export function showMainQuestStageNotification(data) {
-  const stage = MAIN_QUEST_STAGES.find((item) => item.stage === data.stage);
-  const overlay = document.createElement('div');
-  overlay.className = 'main-quest-overlay main-quest-notify';
-  renderHtml(overlay, `<div class="main-quest-notify-box">
-    <div class="main-quest-notify-icon">${escapeHtml(stage?.icon || '★')}</div>
-    <h2>${escapeHtml(data.title || '阶段达成')}</h2>
-    <p>${escapeHtml(data.subtitle || '')}</p>
-    ${data.nextTitle ? `<small>下一阶段：${escapeHtml(data.nextTitle)}</small>` : ''}
-    <button class="btn btn-primary" type="button" data-action="close-main-quest-overlay">继续</button>
-  </div>`);
-  document.body.appendChild(overlay);
-  window.setTimeout(() => closeMainQuestOverlay(overlay), 5000);
-}
-
 export function showMainQuestVictory(data) {
-  const overlay = document.createElement('div');
-  overlay.className = 'main-quest-overlay main-quest-victory';
   const grade = VICTORY_GRADES.find((item) => item.grade === data.grade) || VICTORY_GRADES[VICTORY_GRADES.length - 1];
-  renderHtml(overlay, `<div class="main-quest-victory-box">
+  renderModalRoot(`<div class="main-quest-overlay main-quest-victory">
+    <div class="main-quest-victory-box" role="dialog" aria-modal="true" aria-label="苍穹之巅通关结算" tabindex="-1">
     <h2>苍穹之巅</h2>
     <p>航空帝国已成</p>
     <div class="main-quest-victory-dims">${MAIN_QUEST_DIMS.map((meta) => renderVictoryDimension(data.dimensions?.[meta.key], meta)).join('')}</div>
@@ -64,15 +48,7 @@ export function showMainQuestVictory(data) {
       <button class="btn btn-primary" type="button" data-action="end-victory-game">庆功收官</button>
       <button class="btn" type="button" data-action="continue-victory-game">继续经营</button>
     </div>
-  </div>`);
-  document.body.appendChild(overlay);
-}
-
-export function closeMainQuestOverlay(overlay = null) {
-  const target = overlay || document.querySelector('.main-quest-overlay');
-  if (!target) return;
-  target.classList.add('closing');
-  window.setTimeout(() => target.remove(), 180);
+  </div></div>`);
 }
 
 export function showVictoryEnding(state) {
@@ -90,7 +66,7 @@ export function showVictoryEnding(state) {
 }
 
 export function continueFromVictory() {
-  closeMainQuestOverlay();
+  closeModalRoot();
   showBanner('沙箱模式 · 继续经营', BANNER_TONES.success);
 }
 

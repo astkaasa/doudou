@@ -1,4 +1,5 @@
 import { PLAYER_TRAITS } from '../data/playerTraits.js';
+import { calcNetworkLoadFactor } from '../domain/economy.js';
 import { byId, fmt, fmtPct, getCity } from '../domain/helpers.js';
 import { getMainQuestStats } from '../domain/mainQuest.js';
 import { getMilestoneStats } from '../domain/milestones.js';
@@ -51,8 +52,9 @@ export function updateHUD(state) {
   const boughtPlanes = state.fleet.filter((f) => !f.isLease).length;
   const leasedPlanes = state.fleet.filter((f) => f.isLease).length;
   byId('hud-fleet').textContent = `购${boughtPlanes}/租${leasedPlanes}`;
-  const avgLF = state.routes.length > 0 ? state.routes.reduce((s, r) => s + r.loadFactor, 0) / state.routes.length : 0;
-  byId('hud-load').textContent = fmtPct(avgLF * 100);
+  const loadEl = byId('hud-load');
+  loadEl.textContent = fmtPct(calcNetworkLoadFactor(state) * 100);
+  loadEl.title = '按运营航线有效座位加权';
   const opsEl = byId('hud-ops-eff');
   if (opsEl) {
     const efficiency = state.opsEfficiency || 0;

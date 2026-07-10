@@ -7,6 +7,7 @@ import { normalizeRouteAlternateState } from './airportResilience.js';
 import { normalizeCityStates } from '../data/cityEraData.js';
 import { suggestedPrice } from './economy.js';
 import { normalizeEraSettlementState } from './eraSettlement.js';
+import { LEASE_TERM_QUARTERS } from './fleet.js';
 import { syncMegaEventState } from './megaEvents.js';
 import { normalizeMainQuestState } from './mainQuest.js';
 import { normalizeMilestoneState } from './milestones.js';
@@ -367,7 +368,7 @@ function normalizeUpstreamStateFields(state) {
   normalizeAirportContractState(state);
   state.fleet.forEach((plane) => {
     if (plane.leaseTurns === undefined) plane.leaseTurns = 0;
-    if (plane.maxLeaseTurns === undefined) plane.maxLeaseTurns = 40;
+    if (plane.maxLeaseTurns === undefined) plane.maxLeaseTurns = LEASE_TERM_QUARTERS;
     if (plane.delivering === undefined) plane.delivering = false;
     if (plane.deliverIn === undefined) plane.deliverIn = 0;
     if (!plane.airportPerformance || typeof plane.airportPerformance !== 'object') {

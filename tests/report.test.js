@@ -97,4 +97,65 @@ describe('financial report snapshots', () => {
     expect(html).toContain('员工退休');
     expect(html).toContain('严重故障');
   });
+
+  it('keeps a reconcilable cost breakdown and quarterly events for report rereads', () => {
+    const state = initState('beijing', 'era3');
+    state._lastStockDividend = 0.4;
+    state._subReturnThisTurn = 0.8;
+    state._subMaintThisTurn = 0.3;
+    const report = {
+      routeRevenue: 9,
+      routeCost: 2,
+      overhead: 1.6,
+      leaseCost: 1.5,
+      interest: 0.4,
+      opsCost: 0.5,
+      faultLoss: 0,
+      airportContractIncome: 1,
+      airportContractPenalty: 0.2,
+      bankruptcyAction: { action: 'emergencyLoan', amount: 6 },
+      branchCompleted: ['shanghai'],
+      airportContractsCompleted: ['contract-1'],
+      airportContractsBreached: [],
+      newAirportRelocations: ['relocation-1'],
+      angelInvestmentAmount: 75,
+      fleetDepartures: [
+        { uid: 3, name: 'A320', reason: 'lease_expired', affectedRouteCount: 1 },
+        { uid: 4, name: 'DC-8', reason: 'retired', affectedRouteCount: 2 },
+      ],
+      milestonesUnlocked: [{ id: 'first_route', title: '初次启航', description: '开通第 1 条航线' }],
+      mainQuestUpdate: { type: 'stage_complete', title: '区域航司', nextTitle: '洲际网络' },
+    };
+
+    const snapshot = createFinancialReportSnapshot(state, report);
+    const html = buildFinancialReportHtml(state, 10, 6.2, 4.7, { year: 2000, quarter: 2 }, 0.4, snapshot);
+
+    expect(snapshot.financialBreakdown).toMatchObject({ routeCost: 2, overhead: 1.6, leaseCost: 1.5 });
+    expect(snapshot.quarterEvents).toMatchObject({
+      branchCompleted: ['上海'],
+      airportContractsCompleted: 1,
+      newAirportRelocations: 1,
+      angelInvestmentAmount: 75,
+      fleetDepartures: [
+        { uid: 3, name: 'A320', reason: 'lease_expired', affectedRouteCount: 1 },
+        { uid: 4, name: 'DC-8', reason: 'retired', affectedRouteCount: 2 },
+      ],
+    });
+    expect(html).toContain('航空经营收入');
+    expect(html).toContain('其中航线直接成本');
+    expect(html).toContain('其中机队与总部固定成本');
+    expect(html).toContain('其中飞机租赁');
+    expect(html).toContain('证券与子公司净收益');
+    expect(html).toContain('急救贷款已发放');
+    expect(html).toContain('分部完工');
+    expect(html).toContain('机场迁移');
+    expect(html).toContain('天使救助');
+    expect(html).toContain('辣豆基金注资 $75.0M');
+    expect(html).toContain('租约到期');
+    expect(html).toContain('A320已按合同退租；1 条航线已解除飞机分配');
+    expect(html).toContain('机龄退役');
+    expect(html).toContain('DC-8已达到 25 年机龄并退役；2 条航线已解除飞机分配');
+    expect(html).toContain('里程碑达成');
+    expect(html).toContain('下一阶段：洲际网络');
+  });
 });

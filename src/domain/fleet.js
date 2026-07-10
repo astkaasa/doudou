@@ -3,6 +3,9 @@ import { clamp } from './helpers.js';
 import { syncStaffToNeeded } from './operations.js';
 import { randomInt } from './random.js';
 
+export const LEASE_TERM_QUARTERS = 40;
+export const AIRCRAFT_RETIREMENT_AGE_YEARS = 25;
+
 export function availablePlaneTemplates(state) {
   if (!state) return PLANES;
   // Legacy service fields define the gameplay purchase window, not literal fleet retirement.
@@ -76,7 +79,7 @@ export function buyPlane(state, planeId, isLease, count = 1) {
       isLease,
       leasePrice: isLease ? template.leasePrice : 0,
       leaseTurns: 0,
-      maxLeaseTurns: 40,
+      maxLeaseTurns: LEASE_TERM_QUARTERS,
       delivering: !isLease,
       deliverIn: isLease ? 0 : 2,
     };
@@ -114,24 +117,46 @@ export function returnLease(state, uid) {
 
 export function advanceFleetAge(state) {
   state.deliveredThisTurn = [];
+  const departures = [];
   state.fleet.forEach((p) => {
     if (p.delivering) {
-      p.deliverIn--;
+      p.deliverIn = (Number(p.deliverIn) || 0) - 1;
       if (p.deliverIn <= 0) {
         p.delivering = false;
         state.deliveredThisTurn.push({ name: p.name, uid: p.uid });
       }
     }
     if (p.isLease) {
-      p.leaseTurns = (p.leaseTurns || 0) + 1;
-      if (p.leaseTurns >= (p.maxLeaseTurns || 40)) p._leaseExpired = true;
+      p.leaseTurns = Math.max(0, Number(p.leaseTurns) || 0) + 1;
     }
-    p.age += 0.25;
+    p.age = Math.max(0, Number(p.age) || 0) + 0.25;
   });
-  const activeUids = new Set(state.fleet.filter((p) => p.age < 25 && !p._leaseExpired).map((p) => p.uid));
+
+  state.fleet.forEach((plane) => {
+    const maxLeaseTurns = Math.max(1, Number(plane.maxLeaseTurns) || LEASE_TERM_QUARTERS);
+    const reason = plane.isLease && plane.leaseTurns >= maxLeaseTurns
+      ? 'lease_expired'
+      : plane.age >= AIRCRAFT_RETIREMENT_AGE_YEARS
+        ? 'retired'
+        : null;
+    if (!reason) return;
+    const affectedRouteCount = state.routes.filter((route) => (
+      Array.isArray(route.assignedPlanes) && route.assignedPlanes.includes(plane.uid)
+    )).length;
+    departures.push({
+      uid: plane.uid,
+      name: plane.name,
+      reason,
+      affectedRouteCount,
+    });
+  });
+
+  const departingUids = new Set(departures.map((plane) => plane.uid));
+  const activeUids = new Set(state.fleet.filter((plane) => !departingUids.has(plane.uid)).map((plane) => plane.uid));
   state.fleet = state.fleet.filter((p) => activeUids.has(p.uid));
   state.routes.forEach((route) => {
     route.assignedPlanes = route.assignedPlanes.filter((uid) => activeUids.has(uid));
   });
   syncStaffToNeeded(state, 0);
+  return departures;
 }
