@@ -71,6 +71,8 @@ The full simulator is deterministic, so every outlier can be reproduced from its
 
 The simulator now reports quarterly contributions for route revenue and cost, fleet overhead, leases, operations, faults, loan interest, trait income, stock dividends, subsidiary returns and maintenance, emergency borrowing, forced-liquidation proceeds, and rescue capital. It also records reserve-pressure turns, negative-cash turns, and peak-to-trough cash drawdown.
 
+Simulation policies now use restrained contracts and operating budgets while a company is starting up or has less than twice its target cash reserve. This keeps the automated policies economically competent enough for parameter comparison; it does not change player rules or remove each policy's long-run operating profile.
+
 Regional headquarters can be sampled with:
 
 ```bash

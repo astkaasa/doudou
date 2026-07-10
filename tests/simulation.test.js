@@ -47,6 +47,24 @@ describe('balance simulation', () => {
     expect(result.cashPressureRate).toBeLessThanOrEqual(1);
   });
 
+  it('uses restrained operating tiers while an aggressive company is starting up', () => {
+    const observedTiers = [];
+
+    simulateGame({
+      eraId: 'era1',
+      policyId: 'aggressive',
+      seed: 'startup-tiers',
+      maxTurns: 1,
+      onTurn: ({ state }) => observedTiers.push({
+        serviceTier: state.serviceTier,
+        maintTier: state.maintTier,
+        adTier: state.adTier,
+      }),
+    });
+
+    expect(observedTiers).toEqual([{ serviceTier: 'mid', maintTier: 'mid', adTier: 'low' }]);
+  });
+
   it('runs and aggregates headquarters independently', () => {
     const results = simulateBatch({
       eras: 'era1',

@@ -250,18 +250,24 @@ export function aggregateSimulationResults(results) {
 }
 
 function settleContracts(state, policy, actions) {
+  const underPressure = state.cash < policy.reserveCash * 2;
   if (state._pendingRecruit) {
-    signRecruitContract(state, policy.recruit);
+    signRecruitContract(state, underPressure ? 'tight' : policy.recruit);
     actions.contracts += 1;
   }
   if (state._pendingBonus) {
-    signBonusContract(state, policy.bonus);
+    signBonusContract(state, underPressure ? 'low' : policy.bonus);
     actions.contracts += 1;
   }
 }
 
 function applyOperatingPolicy(state, policy) {
-  Object.entries(policy.tiers).forEach(([field, tier]) => setOpsTier(state, field, tier));
+  const startup = state.routes.length < 6;
+  const underPressure = state.cash < policy.reserveCash * 2;
+  const tiers = startup || underPressure
+    ? { serviceTier: 'mid', maintTier: 'mid', adTier: 'low' }
+    : policy.tiers;
+  Object.entries(tiers).forEach(([field, tier]) => setOpsTier(state, field, tier));
 }
 
 function manageExistingRoutes(state, policy, context) {
