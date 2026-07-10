@@ -41,10 +41,10 @@ export function getCurrentStageTargets(state) {
     subtitle: stageData.subtitle,
     icon: stageData.icon,
     dimensions: {
-      cash: { current: Math.max(0, calcCompanyValue(state).totalNetWorth), target: stageData.targets.cash[eraKey] || stageData.targets.cash.era2 },
-      routes: { current: Array.isArray(state.routes) ? state.routes.length : 0, target: stageData.targets.routes[eraKey] || stageData.targets.routes.era2 },
-      branch: { current: branchType === 'subRegion' ? countBaseSubRegions(state) : countBaseRegions(state), target: stageData.targets.branch.min, type: branchType },
-      profit: { current: Math.max(0, Number(state.consecutiveProfit) || 0), target: stageData.targets.profit.consecutive },
+      cash: { current: Math.max(0, calcCompanyValue(state).totalNetWorth), target: resolveEraTarget(stageData.targets.cash, eraKey) },
+      routes: { current: Array.isArray(state.routes) ? state.routes.length : 0, target: resolveEraTarget(stageData.targets.routes, eraKey) },
+      branch: { current: branchType === 'subRegion' ? countBaseSubRegions(state) : countBaseRegions(state), target: resolveEraTarget(stageData.targets.branch.min, eraKey), type: branchType },
+      profit: { current: Math.max(0, Number(state.consecutiveProfit) || 0), target: resolveEraTarget(stageData.targets.profit.consecutive, eraKey) },
     },
   };
 }
@@ -81,8 +81,8 @@ export function getMainQuestStats(state) {
   };
 }
 
-export function calcVictoryGrade(turnsPlayed) {
-  return VICTORY_GRADES.find((grade) => turnsPlayed <= grade.maxTurns) || VICTORY_GRADES[VICTORY_GRADES.length - 1];
+export function calcVictoryGrade(turnsPlayed, eraId = 'era2') {
+  return VICTORY_GRADES.find((grade) => turnsPlayed <= resolveEraTarget(grade.maxTurns, eraId)) || VICTORY_GRADES[VICTORY_GRADES.length - 1];
 }
 
 export function updateMainQuest(state) {
@@ -93,7 +93,7 @@ export function updateMainQuest(state) {
   if (!progress?.allMet) return null;
 
   if (mainQuest.currentStage === 3) {
-    const grade = calcVictoryGrade(state.turnsPlayed || 0);
+    const grade = calcVictoryGrade(state.turnsPlayed || 0, state.era);
     mainQuest.victoryGrade = grade.grade;
     mainQuest.victoryTurn = state.turnsPlayed || 0;
     if (!mainQuest.stageCompleted.includes(3)) mainQuest.stageCompleted.push(3);
@@ -122,6 +122,11 @@ export function updateMainQuest(state) {
     subtitle: progress.subtitle,
     nextTitle: nextStage?.title || '',
   };
+}
+
+function resolveEraTarget(target, eraKey) {
+  if (typeof target === 'number') return target;
+  return target?.[eraKey] ?? target?.era2 ?? 0;
 }
 
 function countBaseRegions(state) {

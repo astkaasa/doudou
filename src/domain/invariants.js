@@ -1,6 +1,7 @@
 import { AI_PROFILES } from '../data/aiProfiles.js';
 import { CITIES, HQ_RECOMMENDED_CITY_IDS } from '../data/cities.js';
 import { ERAS } from '../data/eras.js';
+import { MAIN_QUEST_STAGES, VICTORY_GRADES } from '../data/mainQuest.js';
 import { MEGA_EVENTS } from '../data/megaEvents.js';
 import { PLANES } from '../data/planes.js';
 import { STOCKS, STOCK_SECTORS } from '../data/stocks.js';
@@ -39,6 +40,8 @@ export function validateStaticData() {
     requirePositive(issues, `${path}.startOil`, era.startOil);
     requirePositive(issues, `${path}.cabinCostMultiplier`, era.cabinCostMultiplier);
   });
+
+  validateMainQuestData(issues);
 
   validateUniqueIds(issues, 'planes', PLANES);
   PLANES.forEach((plane, index) => {
@@ -83,6 +86,34 @@ export function validateStaticData() {
   });
 
   return issues;
+}
+
+function validateMainQuestData(issues) {
+  validateUniqueValues(issues, 'mainQuestStages.stage', MAIN_QUEST_STAGES.map((stage) => stage.stage));
+  MAIN_QUEST_STAGES.forEach((stage, index) => {
+    const path = `mainQuestStages[${index}]`;
+    requirePositiveInteger(issues, `${path}.stage`, stage.stage);
+    requireText(issues, `${path}.title`, stage.title);
+    requireText(issues, `${path}.targets.branch.type`, stage.targets?.branch?.type);
+    ERAS.forEach((era) => {
+      requirePositive(issues, `${path}.targets.cash.${era.id}`, stage.targets?.cash?.[era.id]);
+      requirePositiveInteger(issues, `${path}.targets.routes.${era.id}`, stage.targets?.routes?.[era.id]);
+      requirePositiveInteger(issues, `${path}.targets.branch.min.${era.id}`, stage.targets?.branch?.min?.[era.id]);
+      requirePositiveInteger(issues, `${path}.targets.profit.consecutive.${era.id}`, stage.targets?.profit?.consecutive?.[era.id]);
+    });
+  });
+
+  validateUniqueValues(issues, 'victoryGrades.grade', VICTORY_GRADES.map((grade) => grade.grade));
+  VICTORY_GRADES.forEach((grade, index) => {
+    const path = `victoryGrades[${index}]`;
+    requireText(issues, `${path}.grade`, grade.grade);
+    requireText(issues, `${path}.title`, grade.title);
+    if (index === VICTORY_GRADES.length - 1) {
+      if (grade.maxTurns !== Infinity) issues.push(`${path}.maxTurns must be Infinity`);
+      return;
+    }
+    ERAS.forEach((era) => requirePositiveInteger(issues, `${path}.maxTurns.${era.id}`, grade.maxTurns?.[era.id]));
+  });
 }
 
 export function validateGameState(state, options = {}) {

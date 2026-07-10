@@ -29,6 +29,18 @@ describe('main quest progression', () => {
     expect(progress.dimensions.branch).toMatchObject({ current: 2, target: 2, type: 'region', met: true });
   });
 
+  it('does not require an early cross-region branch in the first era', () => {
+    const state = initState('beijing', 'era1');
+    addRoutePlaceholders(state, 8);
+    state.cash = 150;
+    state.consecutiveProfit = 4;
+
+    const progress = checkMainQuestProgress(state);
+
+    expect(progress.allMet).toBe(true);
+    expect(progress.dimensions.branch).toMatchObject({ current: 1, target: 1, met: true });
+  });
+
   it('uses company value instead of cash for the wealth dimension', () => {
     const state = initState('beijing', 'era2');
     state.cash = 100;
@@ -66,9 +78,9 @@ describe('main quest progression', () => {
   it('records victory and grade after the final stage', () => {
     const state = initState('beijing', 'era2');
     state.mainQuest.currentStage = 3;
-    state.turnsPlayed = 40;
+    state.turnsPlayed = 48;
     state.cash = 5000;
-    addRoutePlaceholders(state, 70);
+    addRoutePlaceholders(state, 68);
     state.branches = ['london', 'cairo', 'newyork', 'rio', 'sydney'];
     state.consecutiveProfit = 12;
     state.totalProfit = 1234;
@@ -79,16 +91,21 @@ describe('main quest progression', () => {
       type: 'victory',
       grade: 'S',
       gradeTitle: '苍穹领航者',
-      routes: 70,
+      routes: 68,
       totalProfit: 1234,
     });
-    expect(state.mainQuest).toMatchObject({ victoryGrade: 'S', victoryTurn: 40, stageCompleted: [3] });
+    expect(state.mainQuest).toMatchObject({ victoryGrade: 'S', victoryTurn: 48, stageCompleted: [3] });
     expect(updateMainQuest(state)).toBeNull();
   });
 
-  it('calculates lower victory grades for slower completions', () => {
-    expect(calcVictoryGrade(41).grade).toBe('A');
-    expect(calcVictoryGrade(56).grade).toBe('B');
-    expect(calcVictoryGrade(71).grade).toBe('C');
+  it('calculates victory grades against each era horizon', () => {
+    expect(calcVictoryGrade(52, 'era1').grade).toBe('S');
+    expect(calcVictoryGrade(64, 'era1').grade).toBe('A');
+    expect(calcVictoryGrade(76, 'era1').grade).toBe('B');
+    expect(calcVictoryGrade(77, 'era1').grade).toBe('C');
+    expect(calcVictoryGrade(144, 'era4').grade).toBe('S');
+    expect(calcVictoryGrade(176, 'era4').grade).toBe('A');
+    expect(calcVictoryGrade(208, 'era4').grade).toBe('B');
+    expect(calcVictoryGrade(209, 'era4').grade).toBe('C');
   });
 });

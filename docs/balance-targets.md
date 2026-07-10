@@ -49,6 +49,16 @@ Grades are calibrated by era instead of sharing one absolute threshold:
 
 An S grade represents an optimized run rather than the expected first success. The B threshold sits near the upper edge of the target victory window; completing later is still a valid campaign victory.
 
+## Quest calibration
+
+Each cell lists company value / routes / represented base regions / consecutive profitable quarters. These are the current tuning values pending the full regional matrix.
+
+| Stage | era1 | era2 | era3 | era4 |
+| --- | --- | --- | --- | --- |
+| 1 | 150M / 8 / 1 / 4 | 500M / 10 / 2 / 4 | 800M / 12 / 2 / 4 | 500M / 10 / 2 / 4 |
+| 2 | 400M / 22 / 2 / 6 | 2,000M / 40 / 3 / 8 | 3,000M / 45 / 3 / 8 | 2,000M / 40 / 3 / 8 |
+| 3 | 700M / 38 / 3 / 8 | 5,000M / 68 / 6 / 12 | 4,500M / 68 / 6 / 6 | 5,000M / 70 / 6 / 12 |
+
 ## Change order
 
 1. Remove cash-proportional recurring income.

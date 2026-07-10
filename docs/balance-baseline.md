@@ -111,3 +111,18 @@ A three-seed Beijing diagnostic of the aggressive policy produced:
 | era4 | 66.7% | 66.7% | 180.0 | 23.5% | 26.4% | 27.5% |
 
 All route operating margins now fall within or on the edge of their acceptance bands. Era 1 and era 3 quest completion rates remain out of band even though their operating economics are viable, so the next calibration step is era-specific quest requirements and victory-grade thresholds rather than another route-cost increase. This diagnostic is still too small and geographically narrow for final acceptance.
+
+## Third balance change: era-specific campaigns
+
+Main-quest dimensions and victory-grade deadlines now resolve by era. Era 1 no longer requires a cross-region branch in its opening stage, era 2 and era 3 retain global endgame coverage with achievable scale targets, and era 4 keeps its longer campaign requirements. Consecutive-profit requirements are also lower where short scenarios or volatile expansion otherwise reset a viable run too easily.
+
+The same three-seed Beijing aggressive-policy diagnostic now produces:
+
+| Era | Survival | Victory | Average victory turn | Target victory band | Target turn band |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| era1 | 100.0% | 33.3% | 78.0 | 30%-65% | 62-78 |
+| era2 | 100.0% | 66.7% | 72.5 | 50%-85% | 58-75 |
+| era3 | 100.0% | 100.0% | 66.3 | 75%-100% | 50-70 |
+| era4 | 66.7% | 66.7% | 180.0 | 35%-70% | 140-215 |
+
+This small Beijing sample now sits inside every victory and timing band. It is a tuning checkpoint, not final acceptance; M2.4 must still test all policies, five headquarters, and at least 20 seeds.
