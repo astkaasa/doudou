@@ -256,6 +256,7 @@ export function showRouteChangePlaneModal(state, from, to) {
 }
 
 function buildRouteRows(state) {
+  const fleetByUid = new Map(state.fleet.map((plane) => [plane.uid, plane]));
   return state.routes.flatMap((route) => {
     const a = getCity(route.from);
     const b = getCity(route.to);
@@ -264,12 +265,11 @@ function buildRouteRows(state) {
     const routeSuggestedPrice = route.suggestedPrice || suggestedPrice(route.from, route.to);
     const routePrice = Number.isFinite(route.price) ? route.price : routeSuggestedPrice;
     const assignedPlanes = route.assignedPlanes || [];
-    const planeInfo = assignedPlanes.map((uid) => {
-      const plane = state.fleet.find((f) => f.uid === uid);
+    const assignedPlaneRecords = assignedPlanes.map((uid) => fleetByUid.get(uid));
+    const planeInfo = assignedPlaneRecords.map((plane) => {
       return plane ? `${escapeHtml(plane.name)}${plane.isLease ? '<span class="route-plane-lease"> [R]</span>' : ''}` : '?';
     }).join(', ');
-    const planeInfoPlain = assignedPlanes.map((uid) => {
-      const plane = state.fleet.find((f) => f.uid === uid);
+    const planeInfoPlain = assignedPlaneRecords.map((plane) => {
       return plane ? `${plane.name}${plane.isLease ? ' [R]' : ''}` : '?';
     }).join(', ');
     const priceCoeff = (routePrice / routeSuggestedPrice * 100 - 100);

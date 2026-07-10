@@ -1,5 +1,7 @@
 import { CITIES } from '../data/cities.js';
 
+const CITY_BY_ID = new Map(CITIES.map((city) => [city.id, city]));
+
 export const STORAGE_KEYS = {
   save: 'skyline_save',
   backup: 'skyline_save_backup',
@@ -27,7 +29,7 @@ export function cityDist(a, b) {
 }
 
 export function getCity(id) {
-  return CITIES.find((c) => c.id === id);
+  return CITY_BY_ID.get(id);
 }
 
 export function clamp(v, lo, hi) {

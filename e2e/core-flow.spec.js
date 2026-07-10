@@ -19,6 +19,7 @@ test.beforeEach(async ({ page }) => {
 test('new company completes its first operating quarter', async ({ page, pageErrors }, testInfo) => {
   await startCompany(page);
   await assertStableShell(page);
+  if (testInfo.project.name === 'desktop') await assertMapZoomRerenders(page);
 
   await page.getByRole('button', { name: '开通航线' }).click();
   await selectCity(page, '北京', testInfo.project.name);
@@ -46,6 +47,13 @@ test('new company completes its first operating quarter', async ({ page, pageErr
   }
   await page.keyboard.press('Escape');
   await expect(routeListButton).toBeFocused();
+
+  const fleetButton = page.getByRole('button', { name: '机队管理' });
+  await fleetButton.click();
+  const fleetDialog = page.getByRole('dialog', { name: '机队管理' });
+  await expect(fleetDialog).toContainText('北京→上海');
+  await page.keyboard.press('Escape');
+  await expect(fleetButton).toBeFocused();
 
   const helpButton = page.getByRole('button', { name: '帮助与机制速查' });
   await helpButton.click();
@@ -91,6 +99,16 @@ async function selectCity(page, cityName, projectName) {
   const box = await target.boundingBox();
   expect(box).not.toBeNull();
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+}
+
+async function assertMapZoomRerenders(page) {
+  const map = page.locator('#map-svg');
+  const initialViewBox = await map.getAttribute('viewBox');
+  await page.locator('#zoom15').click();
+  await expect(page.locator('#zoom15')).toHaveClass(/active/);
+  await expect(map).not.toHaveAttribute('viewBox', initialViewBox);
+  await page.locator('#zoom1').click();
+  await expect(page.locator('#zoom1')).toHaveClass(/active/);
 }
 
 async function assertStableShell(page) {

@@ -1,5 +1,7 @@
 import { CITIES } from "./cities.js";
 
+const CITY_BY_ID = new Map(CITIES.map((city) => [city.id, city]));
+
 export const CITY_ERA_DATA = {
   "beijing": [
     [
@@ -2151,7 +2153,7 @@ export function normalizeCityStates(state) {
 }
 
 export function getCityMarketState(state, cityId) {
-  const city = CITIES.find((item) => item.id === cityId);
+  const city = CITY_BY_ID.get(cityId);
   if (!city) return { pop: 0, biz: DEFAULT_BIZ, tour: DEFAULT_TOUR };
   const market = state?.cityStates?.[cityId];
   if (!market || typeof market !== "object") return fallbackCityState(city);

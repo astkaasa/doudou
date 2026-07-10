@@ -30,6 +30,8 @@ const REGION_NAMES = {
   oceania: '大洋洲',
 };
 const HQ_RECOMMENDED = new Set(HQ_RECOMMENDED_CITY_IDS);
+const MAP_RENDER_SIGNATURES = new WeakMap();
+const ROUTE_POINT_CACHE = new WeakMap();
 
 const ZOOM_BUTTONS = {
   1: 'zoom1',
@@ -56,7 +58,10 @@ export function renderMap(state, uiState) {
   const panX = state.mapPanX || 0;
   const panY = state.mapPanY || 0;
   const container = byId('map-container');
-  const { vw, vh, ox, oy } = viewportFor(container.getBoundingClientRect(), zoom, panX, panY);
+  const containerRect = container.getBoundingClientRect();
+  const signature = mapRenderSignature(state, uiState, containerRect);
+  if (MAP_RENDER_SIGNATURES.get(container) === signature && hasRenderedMap(container)) return false;
+  const { vw, vh, ox, oy } = viewportFor(containerRect, zoom, panX, panY);
   const worldOffsets = visibleWorldOffsets(ox, vw);
   let svg = `<svg viewBox="${ox} ${oy} ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg" id="map-svg" role="img" aria-label="航空经营世界地图">`;
 
@@ -135,6 +140,51 @@ export function renderMap(state, uiState) {
   svg += cityLabels;
   svg += '</svg>';
   renderHtml(container, `<div class="map-stage">${svg}${cityTouchTargets}<div class="map-tooltip" hidden></div></div>`);
+  MAP_RENDER_SIGNATURES.set(container, signature);
+  return true;
+}
+
+function hasRenderedMap(container) {
+  if (typeof container.querySelector === 'function') return Boolean(container.querySelector('.map-stage'));
+  return String(container.innerHTML || '').includes('class="map-stage"');
+}
+
+function mapRenderSignature(state, uiState, rect) {
+  const routes = (state.routes || []).map((route) => [route.from, route.to, visualRouteProfit(route.profit)]);
+  const competitors = (state.ai || []).map((airline) => [
+    airline.color,
+    (airline.routes || []).map((route) => [route.from, route.to]),
+  ]);
+  const subsidiaryCities = Object.entries(state.subsidiaries || {})
+    .filter(([, subsidiaries]) => subsidiaries?.length)
+    .map(([cityId]) => cityId)
+    .sort();
+  return JSON.stringify({
+    viewport: [rect.width, rect.height],
+    camera: [state.mapZoom || 1, state.mapPanX || 0, state.mapPanY || 0],
+    network: [
+      state.hq,
+      state.selectedCity,
+      state.branches || [],
+      (state.branchesConstructing || []).map((branch) => branch.cityId),
+      routes,
+      competitors,
+    ],
+    events: (state.activeMegaEvents || []).filter((event) => event.currentBoost > 0).map((event) => event.cityId),
+    subsidiaries: subsidiaryCities,
+    selection: [
+      Boolean(uiState.hqSelectMode),
+      uiState.selectedHQ,
+      Boolean(uiState.branchSelectMode),
+      uiState.selectedBranch,
+    ],
+    settings: [uiState.showBoundaries !== false, uiState.mapStyle || 'classic'],
+  });
+}
+
+function visualRouteProfit(profit) {
+  const value = Number(profit);
+  return Number.isFinite(value) ? value.toFixed(1) : String(value);
 }
 
 function renderBaseMap(worldOffsets, showBoundaries, mapStyle) {
@@ -813,14 +863,36 @@ function isPointNearViewport(x, y, ox, oy, vw, vh) {
 }
 
 function routePoints(a, b, offset = 0) {
+  const cached = cachedRoutePoints(a, b, offset);
+  if (cached) return cached;
   const samples = greatCircleSamples(a, b, routeArcSegmentCount(a, b));
   const points = projectedRoutePoints(samples, offset);
   const labelPoint = points[Math.floor(points.length / 2)] || points[0] || { x: cityX(a) + offset, y: cityY(a) };
-  return {
+  const result = {
     d: pointsToPath(points),
     mx: labelPoint.x,
     my: labelPoint.y,
   };
+  cacheRoutePoints(a, b, offset, result);
+  return result;
+}
+
+function cachedRoutePoints(a, b, offset) {
+  return ROUTE_POINT_CACHE.get(a)?.get(b)?.get(offset);
+}
+
+function cacheRoutePoints(a, b, offset, points) {
+  let destinations = ROUTE_POINT_CACHE.get(a);
+  if (!destinations) {
+    destinations = new WeakMap();
+    ROUTE_POINT_CACHE.set(a, destinations);
+  }
+  let offsets = destinations.get(b);
+  if (!offsets) {
+    offsets = new Map();
+    destinations.set(b, offsets);
+  }
+  offsets.set(offset, points);
 }
 
 function renderRouteLine(a, b, offset, color, className, points = routePoints(a, b, offset)) {

@@ -84,4 +84,38 @@ describe('map rendering', () => {
     expect(html).toContain('东京 &amp; 羽田');
     expect(html).not.toContain('style=');
   });
+
+  it('skips map DOM replacement until visual state changes', () => {
+    let html = '';
+    let writes = 0;
+    let rect = { width: 1000, height: 500 };
+    const container = {
+      get innerHTML() {
+        return html;
+      },
+      set innerHTML(value) {
+        html = value;
+        writes += 1;
+      },
+      getBoundingClientRect: () => rect,
+    };
+    globalThis.document = {
+      getElementById: (id) => (id === 'map-container' ? container : null),
+    };
+    const state = initState('beijing', 'era1');
+    const uiState = { showBoundaries: true, mapStyle: 'classic' };
+
+    expect(renderMap(state, uiState)).toBe(true);
+    state.cash += 10;
+    expect(renderMap(state, uiState)).toBe(false);
+    expect(writes).toBe(1);
+
+    state.selectedCity = 'shanghai';
+    expect(renderMap(state, uiState)).toBe(true);
+    expect(writes).toBe(2);
+
+    rect = { width: 800, height: 500 };
+    expect(renderMap(state, uiState)).toBe(true);
+    expect(writes).toBe(3);
+  });
 });

@@ -128,8 +128,14 @@ export function showFleetPanel(state) {
   if (state.fleet.length === 0) {
     html += '<p class="modal-empty modal-empty-compact">尚未拥有飞机，请先购买。</p>';
   } else {
+    const routeByPlaneUid = new Map();
+    state.routes.forEach((route) => {
+      (route.assignedPlanes || []).forEach((uid) => {
+        if (!routeByPlaneUid.has(uid)) routeByPlaneUid.set(uid, route);
+      });
+    });
     state.fleet.forEach((p) => {
-      const assignedRoute = state.routes.find((r) => (r.assignedPlanes || []).includes(p.uid));
+      const assignedRoute = routeByPlaneUid.get(p.uid);
       const status = p.delivering ? `交付中 (${p.deliverIn}回合)` : assignedRoute ? `${getCity(assignedRoute.from).name}→${getCity(assignedRoute.to).name}` : '空闲';
       const statusClass = p.delivering ? 'status-delivering' : assignedRoute ? 'status-assigned' : 'status-idle';
       const leaseTag = p.isLease ? `<span class="lease-badge">R</span><span class="fleet-lease-meta">租${p.leaseTurns || 0}/${p.maxLeaseTurns || 40}季</span>` : '';
