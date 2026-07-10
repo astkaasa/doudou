@@ -5,6 +5,7 @@ coverage/
 playwright-report/
 test-results/
 blob-report/
+upstream-report.json
 .env
 .env.*
 *.log

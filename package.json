@@ -13,11 +13,16 @@
     "test:e2e:headed": "playwright test --headed",
     "balance": "node scripts/simulate-balance.mjs",
     "balance:acceptance": "node scripts/accept-balance.mjs",
+    "upstream:check": "node scripts/sync-upstream.mjs",
+    "upstream:sync": "node scripts/sync-upstream.mjs --write",
+    "security:audit": "npm audit --audit-level=moderate",
     "check": "npm run test && npm run build && node scripts/verify-release.mjs",
     "release:verify": "npm run check && npm run balance:acceptance -- --strict && npm run test:e2e && node scripts/verify-standalone-browser.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
+    "acorn": "^8.17.0",
+    "parse5": "^8.0.1",
     "vite": "^7.0.0",
     "vitest": "^3.2.0"
   }

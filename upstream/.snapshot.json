@@ -1,0 +1,358 @@
+{
+  "schemaVersion": 1,
+  "entryUrl": "https://paratranz.cn/doudou/",
+  "resources": [
+    {
+      "url": "https://paratranz.cn/doudou/assets/world-map.png",
+      "path": "assets/world-map.png",
+      "contentType": "image/png",
+      "bytes": 2146374,
+      "sha256": "bf0f61af30d7c39e232f63383ebae6ff56762cf6cb9c54f709e96a4217474503"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/ai.js",
+      "path": "core/ai.js",
+      "contentType": "application/javascript",
+      "bytes": 2037,
+      "sha256": "97b4166048bcf19bcf99dba6a2f4f72759fb978aa2803960a7884d0da046dcc2"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/economics.js",
+      "path": "core/economics.js",
+      "contentType": "application/javascript",
+      "bytes": 8904,
+      "sha256": "0987f6ba8b6474dc99293f6152b3fa1603caeb23bf3b1507b23ea5bc351e2143"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/engine.js",
+      "path": "core/engine.js",
+      "contentType": "application/javascript",
+      "bytes": 10710,
+      "sha256": "009714d711b32ec5a5625e523b36c5fbb4891c5b4b4c22f3fdb094144fb865f5"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/event-bus.js",
+      "path": "core/event-bus.js",
+      "contentType": "application/javascript",
+      "bytes": 360,
+      "sha256": "39c813caa2014c03ef29a97a597c5e4995735a334a54ab37e8a68f7f21b9e570"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/events.js",
+      "path": "core/events.js",
+      "contentType": "application/javascript",
+      "bytes": 8450,
+      "sha256": "df7a2258bb3989d2d4b6d8c2406b31e9b9944b386b3617f996702d732c974d51"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/fleet.js",
+      "path": "core/fleet.js",
+      "contentType": "application/javascript",
+      "bytes": 1768,
+      "sha256": "7ed55b8097c842b7b0def666a239bb463cd7679996dfcbf8fe43e3b2012f4754"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/main-quest-engine.js",
+      "path": "core/main-quest-engine.js",
+      "contentType": "application/javascript",
+      "bytes": 4716,
+      "sha256": "350fd6f6909b2d73fedc6629ad1da1200f3be3c391a0040245aa1672ef95c85e"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/milestone-engine.js",
+      "path": "core/milestone-engine.js",
+      "contentType": "application/javascript",
+      "bytes": 1177,
+      "sha256": "9b15c2fc6a6f2133e5eb44dc56a87cca35285b840e74a8edef9e1809e17f6b61"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/routes.js",
+      "path": "core/routes.js",
+      "contentType": "application/javascript",
+      "bytes": 608,
+      "sha256": "40f0dcddfaf8aa0f5917433f435712b37b27f613d83770f134a2664daf4ebe48"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/state.js",
+      "path": "core/state.js",
+      "contentType": "application/javascript",
+      "bytes": 8980,
+      "sha256": "93afcc7a842ed70aeaf3f2ccdd40258faae2fcf368b9696b05b191db587ed144"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/stock.js",
+      "path": "core/stock.js",
+      "contentType": "application/javascript",
+      "bytes": 8408,
+      "sha256": "26fe04e458aba00e395eb593a97fbeb9deafa7e912377a72a8d42d4deb7169de"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/subsidiary.js",
+      "path": "core/subsidiary.js",
+      "contentType": "application/javascript",
+      "bytes": 21147,
+      "sha256": "6353d658bbd13db0c53b48dda0c6b4de5ee968e82fdd0fa3c77aa3eb38c085e2"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/core/utils.js",
+      "path": "core/utils.js",
+      "contentType": "application/javascript",
+      "bytes": 2032,
+      "sha256": "1a820dc847637d5891f488646aa5d4340314def499628427ef709a28283722c2"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/css/main.css",
+      "path": "css/main.css",
+      "contentType": "text/css",
+      "bytes": 51307,
+      "sha256": "6d1cd145d586d4589ffa73d16426af792a38b310234355f8fc61bad8535d6506"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/balance.js",
+      "path": "data/balance.js",
+      "contentType": "application/javascript",
+      "bytes": 8965,
+      "sha256": "051c41183c36be0a0d7890c53efaee8cd1a26b2c407ece0e20dd96278b5a0711"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/cities.js",
+      "path": "data/cities.js",
+      "contentType": "application/javascript",
+      "bytes": 12636,
+      "sha256": "670819ad1cfaeaab071cdacede3f13e539d53226d51a5688f6feedd90b37c08f"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/city-era-data.js",
+      "path": "data/city-era-data.js",
+      "contentType": "application/javascript",
+      "bytes": 11899,
+      "sha256": "4fff6f7eb622ed76f9d265847d179eb6f8db5640629101fc99c28a4fbc0722ac"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/constants.js",
+      "path": "data/constants.js",
+      "contentType": "application/javascript",
+      "bytes": 9096,
+      "sha256": "8c80722e07379e619cc36a14cdc7be657546d3866cac26dba39151d7a3f41cdf"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/credits.js",
+      "path": "data/credits.js",
+      "contentType": "application/javascript",
+      "bytes": 846,
+      "sha256": "d836c8ff6a5235560e9c6ffd075e2023baa12d8fd05e82649a929bd05a74f666"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/icons.js",
+      "path": "data/icons.js",
+      "contentType": "application/javascript",
+      "bytes": 2760,
+      "sha256": "ad7aa5d762d6b53a6eaec382df14af0882c72dcac8ad18fa95d015defc1fb02b"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/main-quest.js",
+      "path": "data/main-quest.js",
+      "contentType": "application/javascript",
+      "bytes": 2159,
+      "sha256": "ece0ed541e1a7ec5e3a66bd319964afb55c86d351c9fb732c487f0aa8af23d18"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/mega-events.js",
+      "path": "data/mega-events.js",
+      "contentType": "application/javascript",
+      "bytes": 7067,
+      "sha256": "592dd10b7f1bb8a5f36e5ad04e3c1d3d0d43b372ac773a8619aab5f8a3116d83"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/milestones.js",
+      "path": "data/milestones.js",
+      "contentType": "application/javascript",
+      "bytes": 6090,
+      "sha256": "e257b9529a1033459375d23996d0fc25468eadfa8c458ce96d3d1136f9d9d23a"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/news-pool.js",
+      "path": "data/news-pool.js",
+      "contentType": "application/javascript",
+      "bytes": 22037,
+      "sha256": "3453a5d3b7ad3805bd1f5608809f8570dfd554ac0d2e5e7c57f269dece74e39d"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/planes.js",
+      "path": "data/planes.js",
+      "contentType": "application/javascript",
+      "bytes": 7908,
+      "sha256": "57667f0a67579c9a5d8e5687027b40fde22f2efbfabc658470ae57d0f6271ff2"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/stocks.js",
+      "path": "data/stocks.js",
+      "contentType": "application/javascript",
+      "bytes": 4100,
+      "sha256": "dc7267f9148f866ccc12010a0d8c6267a4d5c43abfe5cbb393aa8443022097a1"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/subsidiary-data.js",
+      "path": "data/subsidiary-data.js",
+      "contentType": "application/javascript",
+      "bytes": 5108,
+      "sha256": "5eb03d89de12511d7d5ee2e71c34bf19f89dc350a7ce2c15d95b31409358710d"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/data/version.js",
+      "path": "data/version.js",
+      "contentType": "application/javascript",
+      "bytes": 27616,
+      "sha256": "f0bdd2ff198486ee4cd4d6ab5ceb2d2c542391c7399970fe51ea4233f3a3859b"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/",
+      "path": "index.html",
+      "contentType": "text/html",
+      "bytes": 13308,
+      "sha256": "149b2db69eeab0ced99238cbb2a6266984890f7a208c935c830492d84132f6ce"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/angel-invest.js",
+      "path": "ui/angel-invest.js",
+      "contentType": "application/javascript",
+      "bytes": 7824,
+      "sha256": "2ff9cb657f156f52bb6d8977e289bd2b7123727c83a03b92ec5056b6e4eaa912"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/branch.js",
+      "path": "ui/branch.js",
+      "contentType": "application/javascript",
+      "bytes": 8895,
+      "sha256": "ddeb238112ae56ea61aa7e0cd7795db3f6a147e36fab4c2d4e0ba7df592e59bd"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/buy-plane.js",
+      "path": "ui/buy-plane.js",
+      "contentType": "application/javascript",
+      "bytes": 6383,
+      "sha256": "9c383f940603f64017b6d289b1c515e3d0847d92b62d749e6c78771bf0a7f651"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/contract-ui.js",
+      "path": "ui/contract-ui.js",
+      "contentType": "application/javascript",
+      "bytes": 13910,
+      "sha256": "b781a77aa7d6a99026b1f7ab3257f0e5844217b7168d54f24aa68169f57dbb09"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/fleet-panel.js",
+      "path": "ui/fleet-panel.js",
+      "contentType": "application/javascript",
+      "bytes": 11042,
+      "sha256": "648c01824584f01a54f75b8134d7b1d8b052a734e67949c5effc896188f99d32"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/hud.js",
+      "path": "ui/hud.js",
+      "contentType": "application/javascript",
+      "bytes": 4894,
+      "sha256": "f264c84366d3504464a49b0994b51f2271284e2b5ddd80b4e567030002983cd4"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/loan.js",
+      "path": "ui/loan.js",
+      "contentType": "application/javascript",
+      "bytes": 6266,
+      "sha256": "9289ada5063dcd6d5c24a15b33103c80f54d79e4cd84a83a578b31e28d24dbe9"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/main-quest-ui.js",
+      "path": "ui/main-quest-ui.js",
+      "contentType": "application/javascript",
+      "bytes": 12907,
+      "sha256": "cb25362e554ae64c0ebc403ad3d42556d55017ec21f8c6559f4ab4ed0d630e58"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/map.js",
+      "path": "ui/map.js",
+      "contentType": "application/javascript",
+      "bytes": 17154,
+      "sha256": "79f8e9e95deece5927b6c3da9b3667e833bb8a671091b9c511163e2f6b40d3e1"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/milestone-ui.js",
+      "path": "ui/milestone-ui.js",
+      "contentType": "application/javascript",
+      "bytes": 10646,
+      "sha256": "d49bc61b1e254cae8489e55bee8412260084eda29e8d1ee81bee03d6a5bc094c"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/modals.js",
+      "path": "ui/modals.js",
+      "contentType": "application/javascript",
+      "bytes": 1166,
+      "sha256": "454fe99f13c911cf99d489639394c87583ef47dcc9917e55b8f787cfc6c449a5"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/newspaper.js",
+      "path": "ui/newspaper.js",
+      "contentType": "application/javascript",
+      "bytes": 7119,
+      "sha256": "d8a4c8fa12f4f71d5de0e9c5cb1f6bbec9dc44a15fcdf5beeabc35ca1a632bea"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/operations.js",
+      "path": "ui/operations.js",
+      "contentType": "application/javascript",
+      "bytes": 14651,
+      "sha256": "53d4806dd336ebd0fa1ecf5738ce70a207cc3fb9f7706810a44308922c51dbba"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/panel.js",
+      "path": "ui/panel.js",
+      "contentType": "application/javascript",
+      "bytes": 8363,
+      "sha256": "c8599a154b2ff59527d4d0d80e83ae3b96267104413db2387eab934fcb74ac10"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/report.js",
+      "path": "ui/report.js",
+      "contentType": "application/javascript",
+      "bytes": 11136,
+      "sha256": "014d6b0d366a94ba4f719ab0f18bbd9936139bed30f7d4b008fbf1419654fdde"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/route-panel.js",
+      "path": "ui/route-panel.js",
+      "contentType": "application/javascript",
+      "bytes": 30558,
+      "sha256": "496e09a05f35eba6d99f99b8b7f1312f6271ccbd8f710b790af0a94714b54be3"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/stock.js",
+      "path": "ui/stock.js",
+      "contentType": "application/javascript",
+      "bytes": 13050,
+      "sha256": "ab66329bebc3a164fa1547d64d3e3ae5165583d23eec5b2cc3def0b25293dbf1"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/subsidiary.js",
+      "path": "ui/subsidiary.js",
+      "contentType": "application/javascript",
+      "bytes": 23742,
+      "sha256": "401df48fc063329194e3dc21ffad86dde6732fede733a9e8d2828638634bc9f0"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/trait.js",
+      "path": "ui/trait.js",
+      "contentType": "application/javascript",
+      "bytes": 3724,
+      "sha256": "34638c46dafc41e1b53642aca38cb11e02bb83e5281c88544012e5dba6a5d107"
+    },
+    {
+      "url": "https://paratranz.cn/doudou/ui/tutorial.js",
+      "path": "ui/tutorial.js",
+      "contentType": "application/javascript",
+      "bytes": 40006,
+      "sha256": "93c7dda069c6c996a7aa1d054a3f247e9f37f4cfcb6b7727d2efbda824dfb7bd"
+    }
+  ],
+  "externalReferences": [],
+  "warnings": []
+}

@@ -1,13 +1,17 @@
-name: Check
+name: Upstream Drift
 
 on:
-  push:
-  pull_request:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -21,22 +25,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Audit dependencies
-        run: npm run security:audit
-
-      - name: Test and build
-        run: npm run check
-
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run browser tests
-        run: npm run test:e2e
+      - name: Check upstream drift
+        run: npm run upstream:check -- --report upstream-report.json
 
-      - name: Upload browser test report
-        if: ${{ !cancelled() }}
+      - name: Upload drift report
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
-          path: playwright-report/
+          name: upstream-report
+          path: upstream-report.json
           retention-days: 14
