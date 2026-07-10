@@ -1,4 +1,5 @@
 import { getCityMarketState } from '../data/cityEraData.js';
+import { ERAS } from '../data/eras.js';
 import { cityDist, clamp, getCity } from './helpers.js';
 import { YIELD_CROSS_SUB_LONG, YIELD_INTERCONT_LONG, YIELD_INTERCONT_MID, YIELD_INTERCONT_SHORT } from './constants.js';
 import { routeCostMultiplier, routeDemandMultiplier, routeServiceMultiplier } from './modifiers.js';
@@ -6,6 +7,7 @@ import { operationDemandMultiplier } from './operations.js';
 import { getSubLandingDiscount, getSubLFBonus } from './subsidiaries.js';
 
 export const ROUTE_REVENUE_DIVISOR = 28000;
+export const PASSENGER_SERVICE_COST_PER_PAX_1000KM = 0.0012;
 
 const POP_SCALE = 5;
 const HUB_FACTOR = 0.12;
@@ -18,7 +20,6 @@ const CROSS_REGION_BONUS = 1.1;
 const LANDING_BASE = 0.2;
 const LANDING_PER_LEVEL = 0.10;
 const LANDING_DIST_REF = 3000;
-const CATERING_PER_FLIGHT = 0.03;
 const SERVICE_COST_SCALE = 0.3;
 
 export function baseDemand(cityA, cityB, state = null) {
@@ -110,14 +111,16 @@ export function routeCost(state, route, assignedPlanes = getRouteAssignedPlanes(
   const serviceCostScale = 1 + (serviceMultiplier - 1) * SERVICE_COST_SCALE;
   let fuelCost = 0;
   let landingFee = 0;
-  let catering = 0;
   for (const plane of assignedPlanes) {
     const fuelRate = state.playerTrait === '豆' ? plane.fuel * 0.9 : plane.fuel;
     fuelCost += fuelRate * (state.oilPrice / 80) * (d / 5000);
     const landingDiscount = (1 - getSubLandingDiscount(state, route.from)) * (1 - getSubLandingDiscount(state, route.to));
     landingFee += (LANDING_BASE + (cityA.level + cityB.level) * LANDING_PER_LEVEL * Math.sqrt(d / LANDING_DIST_REF)) * landingDiscount * serviceCostScale;
-    catering += CATERING_PER_FLIGHT * serviceCostScale;
   }
+  const totalSeats = routeSeatCapacity(state, route, assignedPlanes);
+  const passengers = Math.round(totalSeats * Math.max(0, Number(route.loadFactor) || 0)) * serviceMultiplier;
+  const eraCostMultiplier = ERAS.find((era) => era.id === state.era)?.cabinCostMultiplier || 1;
+  const catering = passengers * (d / 1000) * PASSENGER_SERVICE_COST_PER_PAX_1000KM * eraCostMultiplier;
   const subtotal = fuelCost + landingFee + catering;
   const costMultiplier = routeCostMultiplier(state, route);
   return {

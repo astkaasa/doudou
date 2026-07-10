@@ -37,6 +37,7 @@ export function validateStaticData() {
     }
     requirePositive(issues, `${path}.cash`, era.cash);
     requirePositive(issues, `${path}.startOil`, era.startOil);
+    requirePositive(issues, `${path}.cabinCostMultiplier`, era.cabinCostMultiplier);
   });
 
   validateUniqueIds(issues, 'planes', PLANES);

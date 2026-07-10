@@ -186,15 +186,15 @@ describe('turn progression', () => {
 
   it('emits main quest stage updates after profitable quarterly settlement', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const state = initState('beijing', 'era1');
+    const state = initState('beijing', 'era3');
     const plane = { ...PLANES.find((item) => item.id === 'b777'), uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 };
     const price = suggestedPrice('beijing', 'shanghai');
     state.ai = [];
-    state.cash = 300;
+    state.cash = 800;
     state.branches = ['london'];
     state.fleet = [plane];
     state.consecutiveProfit = 3;
-    state.routes = Array.from({ length: 8 }, () => ({
+    state.routes = Array.from({ length: 12 }, () => ({
       from: 'beijing',
       to: 'shanghai',
       price,

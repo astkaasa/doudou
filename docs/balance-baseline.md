@@ -96,3 +96,18 @@ The game now settles each scenario once at its advertised horizon. The final-qua
 The spicy trait now pays a fixed 0.5M plus 2.5% of route operating revenue instead of 2.5% of accumulated cash. On the comparable `balance-v1`, era 4, aggressive, Beijing seed, end cash fell from about 225,695M to 56,911M and non-route income share fell from 55.7% to 2.5%.
 
 This removes the independent exponential income source, but does not finish the economy pass: route operating margin remained about 59.5%, still well above the 15%-35% target band. Route economics are therefore the next subsystem to calibrate.
+
+## Second balance change: cabin service cost
+
+Cabin service cost now scales with carried passengers and route distance instead of charging a nearly fixed amount per assigned aircraft. Era-specific multipliers represent the different service-cost environments while keeping one shared passenger-distance formula.
+
+A three-seed Beijing diagnostic of the aggressive policy produced:
+
+| Era | Survival | Victory | Average victory turn | Route operating margin | Profit margin | Cash pressure |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| era1 | 100.0% | 0.0% | - | 15.2% | 17.7% | 2.9% |
+| era2 | 100.0% | 33.3% | 73.0 | 34.6% | 36.3% | 0.4% |
+| era3 | 100.0% | 0.0% | - | 39.6% | 41.1% | 0.8% |
+| era4 | 66.7% | 66.7% | 180.0 | 23.5% | 26.4% | 27.5% |
+
+All route operating margins now fall within or on the edge of their acceptance bands. Era 1 and era 3 quest completion rates remain out of band even though their operating economics are viable, so the next calibration step is era-specific quest requirements and victory-grade thresholds rather than another route-cost increase. This diagnostic is still too small and geographically narrow for final acceptance.

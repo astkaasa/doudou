@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
-import { baseDemand, calcLoadFactor, distanceServiceMultiplier, routeCost, routeRevenue, routeSeatCapacity, routeYieldPremium, suggestedPrice } from '../src/domain/economy.js';
+import { baseDemand, calcLoadFactor, distanceServiceMultiplier, PASSENGER_SERVICE_COST_PER_PAX_1000KM, routeCost, routeRevenue, routeSeatCapacity, routeYieldPremium, suggestedPrice } from '../src/domain/economy.js';
 import { cityDist, getCity } from '../src/domain/helpers.js';
 import { addSuspensionModifier, routeServiceMultiplier } from '../src/domain/modifiers.js';
 import { calcOpsBudgetCost } from '../src/domain/operations.js';
@@ -61,6 +61,45 @@ describe('economy model', () => {
     expect(serviceMultiplier).toBe(4);
     expect(revenue.pax).toBe(pax);
     expect(revenue.rev).toBeCloseTo(pax * route.price / 28000);
+  });
+
+  it('scales cabin service cost with carried passengers and distance', () => {
+    const state = initState('beijing', 'era3');
+    const plane = { ...PLANES[0], uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 };
+    state.fleet.push(plane);
+    const route = {
+      from: 'beijing',
+      to: 'shanghai',
+      price: suggestedPrice('beijing', 'shanghai'),
+      suggestedPrice: suggestedPrice('beijing', 'shanghai'),
+      serviceMultiplier: 1,
+      assignedPlanes: [1],
+      loadFactor: 0.5,
+    };
+    const distance = cityDist(getCity(route.from), getCity(route.to));
+    const passengers = Math.round(plane.seats * route.loadFactor) * distanceServiceMultiplier(distance);
+
+    expect(routeCost(state, route).catering).toBeCloseTo(
+      passengers * (distance / 1000) * PASSENGER_SERVICE_COST_PER_PAX_1000KM * 1.35,
+    );
+  });
+
+  it('applies explicit era cabin-cost calibration', () => {
+    const earlyState = initState('beijing', 'era1');
+    const epicState = initState('beijing', 'era4');
+    const plane = { ...PLANES[0], uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 };
+    [earlyState, epicState].forEach((state) => state.fleet.push({ ...plane }));
+    const route = {
+      from: 'beijing',
+      to: 'shanghai',
+      price: suggestedPrice('beijing', 'shanghai'),
+      suggestedPrice: suggestedPrice('beijing', 'shanghai'),
+      serviceMultiplier: 1,
+      assignedPlanes: [1],
+      loadFactor: 0.5,
+    };
+
+    expect(routeCost(earlyState, route).catering).toBeCloseTo(routeCost(epicState, route).catering * 0.5);
   });
 
   it('adds yield premiums for cross-region and cross-subregion long routes', () => {
