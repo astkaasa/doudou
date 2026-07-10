@@ -1,4 +1,4 @@
-import { aggregateSimulationResults, BALANCE_POLICIES, simulateBatch } from '../src/simulation/balance.js';
+import { aggregateSimulationResults, BALANCE_POLICIES, REGIONAL_HQ_IDS, simulateBatch } from '../src/simulation/balance.js';
 
 const options = parseArgs(process.argv.slice(2));
 const startedAt = Date.now();
@@ -11,6 +11,7 @@ if (options.json) {
   console.table(summary.map((row) => ({
     era: row.eraId,
     policy: row.policyId,
+    hq: row.hq,
     runs: row.runs,
     survival: percent(row.survivalRate),
     victory: percent(row.victoryRate),
@@ -25,6 +26,9 @@ if (options.json) {
     regions: fixed(row.avgBaseRegions),
     subs: fixed(row.avgSubsidiaries),
     margin: percent(row.avgProfitMargin),
+    routeMargin: percent(row.avgRouteOperatingMargin),
+    nonRoute: percent(row.avgNonRouteIncomeShare),
+    cashPressure: percent(row.avgCashPressureRate),
     profitable: percent(row.avgProfitableTurnRate),
     liquidations: fixed(row.avgForcedLiquidations),
   })));
@@ -41,11 +45,16 @@ function parseArgs(args) {
       options.json = true;
       continue;
     }
+    if (key === '--regional') {
+      options.hqs = REGIONAL_HQ_IDS;
+      continue;
+    }
     if (key === '--runs') options.runs = Number(value);
     else if (key === '--turns') options.maxTurns = Number(value);
     else if (key === '--era') options.eras = value;
     else if (key === '--policy') options.policies = value;
     else if (key === '--seed') options.seedBase = value;
+    else if (key === '--hq') options.hqs = value;
     else if (key === '--list-policies') {
       console.log(Object.values(BALANCE_POLICIES).map((policy) => `${policy.id}: ${policy.label}`).join('\n'));
       process.exit(0);

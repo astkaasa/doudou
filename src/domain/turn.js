@@ -24,7 +24,8 @@ export function advanceTurnState(state) {
   updateRouteMetrics(state);
   const faultLoss = settleOperationalFaultLosses(state);
   const traitFund = rollTraitFund(state);
-  const { totalRev, totalCost, profit, interest } = calculateTurnFinancials(state, traitFund);
+  const financials = calculateTurnFinancials(state, traitFund);
+  const { totalRev, totalCost, profit, interest } = financials;
   const stockDividend = calcStockDividend(state);
   const subsidiarySettlement = settleSubsidiaryQuarter(state);
   const netProfit = profit + stockDividend + subsidiarySettlement.subNet;
@@ -59,6 +60,10 @@ export function advanceTurnState(state) {
     profit: netProfit,
     rev: totalRev,
     cost: totalCost,
+    routeRevenue: financials.routeRevenue,
+    routeCost: financials.routeCost,
+    overhead: financials.overhead,
+    leaseCost: financials.leaseCost,
     interest,
     traitFund,
     stockDividend,
@@ -86,7 +91,28 @@ export function advanceTurnState(state) {
     angelRescue = Boolean(bankruptcyAction.angelRescue);
   }
   const mainQuestUpdate = state.gameOver || angelRescue ? null : updateMainQuest(state);
-  return { period, nextPeriod, rev: totalRev, cost: totalCost, profit: netProfit, interest, traitFund, stockDividend, ...subsidiarySettlement, opsCost: state._opsCostThisTurn || 0, faultLoss, branchCompleted, gameOver: state.gameOver, angelRescue, bankruptcyAction, mainQuestUpdate };
+  return {
+    period,
+    nextPeriod,
+    rev: totalRev,
+    cost: totalCost,
+    profit: netProfit,
+    routeRevenue: financials.routeRevenue,
+    routeCost: financials.routeCost,
+    overhead: financials.overhead,
+    leaseCost: financials.leaseCost,
+    interest,
+    traitFund,
+    stockDividend,
+    ...subsidiarySettlement,
+    opsCost: state._opsCostThisTurn || 0,
+    faultLoss,
+    branchCompleted,
+    gameOver: state.gameOver,
+    angelRescue,
+    bankruptcyAction,
+    mainQuestUpdate,
+  };
 }
 
 export function calculateTurnFinancials(state, extraRevenue = 0) {
@@ -125,6 +151,8 @@ function buildTurnFinancials(state, extraRevenue, options) {
     totalRev,
     totalCost,
     profit: totalRev - totalCost,
+    routeRevenue: routeTotals.totalRev,
+    routeCost: routeTotals.totalCost,
     interest,
     traitFund: extraRevenue,
     overhead,

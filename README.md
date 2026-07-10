@@ -36,7 +36,7 @@ npm run balance -- --runs 20
 ```
 
 `npm run build` 会生成普通静态产物和单文件产物；`npm run check` 会先测试再构建。
-`npm run balance` 会用固定种子批量运行四时代和多种经营策略；可使用 `--era era3`、`--policy balanced`、`--turns 40` 或 `--json` 缩小范围或输出明细。
+`npm run balance` 会用固定种子批量运行四时代和多种经营策略；可使用 `--era era3`、`--policy balanced`、`--turns 40` 或 `--json` 缩小范围或输出明细。使用 `--hq beijing,london` 可对比指定总部，`--regional` 会覆盖北京、迪拜、伦敦、纽约和悉尼五个区域样本。
 
 ## 文件角色
 

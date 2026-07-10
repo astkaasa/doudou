@@ -33,6 +33,10 @@ describe('turn progression', () => {
 
     const result = calculateTurnFinancials(state);
     expect(result.totalRev).toBe(2);
+    expect(result.routeRevenue).toBe(2);
+    expect(result.routeCost).toBe(0.75);
+    expect(result.overhead).toBeCloseTo(1.6);
+    expect(result.leaseCost).toBe(1.5);
     expect(result.opsCost).toBeCloseTo(0.45);
     expect(result.totalCost).toBeCloseTo(4.3);
     expect(result.profit).toBeCloseTo(-2.3);
@@ -78,6 +82,12 @@ describe('turn progression', () => {
     expect(state._lastTraitFund).toBe(3);
     expect(state.turnRevenue).toBe(3);
     expect(state.history[0].traitFund).toBe(3);
+    expect(state.history[0]).toMatchObject({
+      routeRevenue: 0,
+      routeCost: 0,
+      overhead: 1.2,
+      leaseCost: 0,
+    });
   });
 
   it('settles stock dividends in Q4 profit without inflating operating revenue', () => {

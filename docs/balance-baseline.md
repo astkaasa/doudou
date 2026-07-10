@@ -58,12 +58,30 @@ The quest-focused policy averages turn 62 in era 2, turn 68 in era 3, and turn 1
 
 ## Next measurements
 
+Per-system contribution metrics and multi-headquarters sampling support are now in place. A preliminary regional run has identified geography and trait compounding as material variables, but final calibration still requires multiple seeds per headquarters.
+
 Before changing economy constants:
 
-1. Add per-system contribution metrics for route revenue, route cost, operations, traits, stocks, subsidiaries, interest, and forced liquidation.
-2. Add regional headquarters samples so Beijing geography does not dominate route and branch conclusions.
-3. Define era-end settlement behavior; the simulator currently enforces the advertised horizon because the game itself does not.
-4. Establish target bands for survival, victory timing, mature margin, cash trough, and strategy spread.
-5. Run sensitivity sweeps, then change one economic subsystem per commit.
+1. Define era-end settlement behavior; the simulator currently enforces the advertised horizon because the game itself does not.
+2. Establish target bands for survival, victory timing, mature margin, cash trough, and strategy spread.
+3. Run multi-seed sensitivity sweeps, then change one economic subsystem per commit.
 
 The full simulator is deterministic, so every outlier can be reproduced from its era, policy, and seed.
+
+## Instrumentation update
+
+The simulator now reports quarterly contributions for route revenue and cost, fleet overhead, leases, operations, faults, loan interest, trait income, stock dividends, subsidiary returns and maintenance, emergency borrowing, forced-liquidation proceeds, and rescue capital. It also records reserve-pressure turns, negative-cash turns, and peak-to-trough cash drawdown.
+
+Regional headquarters can be sampled with:
+
+```bash
+npm run balance -- --policy aggressive --regional --runs 1
+```
+
+The first five-headquarters diagnostic run is intentionally only a one-seed sensitivity check, not a replacement baseline. It established three useful signals:
+
+- Era 1 survival ranged from failure at Dubai to strong growth at New York, while no headquarters completed the quest. Early aircraft range and the local city graph materially affect campaign difficulty.
+- Era 2 victory occurred at three of five headquarters and era 3 at all five. Mature route operating margins were typically 46%-68%, confirming that route economics are already generous before non-route income.
+- In surviving era 4 runs, non-route income contributed roughly 40%-61% of all inflows. The aggressive policy uses the spicy trait, so its cash-proportional trait fund is the primary candidate behind late-game exponential growth.
+
+The earlier `forcedLiquidations` metric also counted emergency loans. It now counts only forced stock, subsidiary, or aircraft sales; emergency borrowing is reported separately.

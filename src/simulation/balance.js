@@ -15,6 +15,8 @@ import { branchCost, openBranch } from '../domain/bases.js';
 import { calcCompanyValue, calcSubOpenCost, getAvailableSubTypes, getAllSubsidiaries, openSubsidiary } from '../domain/subsidiaries.js';
 import { advanceTurnState } from '../domain/turn.js';
 
+export const REGIONAL_HQ_IDS = Object.freeze(['beijing', 'dubai', 'london', 'newyork', 'sydney']);
+
 export const BALANCE_POLICIES = Object.freeze({
   conservative: Object.freeze({
     id: 'conservative',
@@ -108,9 +110,11 @@ export function simulateGame(options = {}) {
   if (!era) throw new Error(`Unknown era: ${String(options.eraId)}`);
   const policy = BALANCE_POLICIES[options.policyId || 'balanced'];
   if (!policy) throw new Error(`Unknown balance policy: ${String(options.policyId)}`);
+  const hq = options.hq || 'beijing';
+  if (!getCity(hq)) throw new Error(`Unknown headquarters: ${String(hq)}`);
   const seed = options.seed ?? `${era.id}|${policy.id}|0`;
   const maxTurns = positiveInteger(options.maxTurns) || (era.endYear - era.startYear) * 4;
-  const state = initState(options.hq || 'beijing', era.id, { seed });
+  const state = initState(hq, era.id, { seed });
   state.playerTrait = policy.trait;
   state.traitChosen = true;
   state.pendingTraitChoices = null;
@@ -124,8 +128,13 @@ export function simulateGame(options = {}) {
     profitableTurns: 0,
     totalRevenue: 0,
     totalProfit: 0,
+    contributions: createEconomicContributions(),
     rescues: 0,
     forcedLiquidations: 0,
+    belowReserveTurns: 0,
+    negativeCashTurns: 0,
+    peakCash: state.cash,
+    maxCashDrawdown: 0,
   };
   assertGameState(state);
 
@@ -141,15 +150,22 @@ export function simulateGame(options = {}) {
     const report = advanceTurnState(state);
     if (!report) break;
     if (report.angelRescue) {
-      applyAngelInvestment(state, pickAngelInvestmentAmount(state));
+      const rescue = applyAngelInvestment(state, pickAngelInvestmentAmount(state));
+      context.contributions.rescueCapital += rescue.ok ? rescue.amount : 0;
       context.rescues += 1;
     }
     if (report.bankruptcyAction && !report.angelRescue && report.bankruptcyAction.action !== 'gameOver') {
-      context.forcedLiquidations += 1;
+      accumulateBankruptcyContribution(context.contributions, report.bankruptcyAction);
+      if (report.bankruptcyAction.action?.startsWith('forceSell')) context.forcedLiquidations += 1;
     }
+    accumulateEconomicContributions(context.contributions, report);
     context.minCash = Math.min(context.minCash, state.cash);
     context.maxCash = Math.max(context.maxCash, state.cash);
-    context.totalRevenue += report.rev;
+    context.peakCash = Math.max(context.peakCash, state.cash);
+    context.maxCashDrawdown = Math.max(context.maxCashDrawdown, context.peakCash - state.cash);
+    if (state.cash < policy.reserveCash) context.belowReserveTurns += 1;
+    if (state.cash < 0) context.negativeCashTurns += 1;
+    context.totalRevenue += grossInflows(report);
     context.totalProfit += report.profit;
     if (report.profit > 0) context.profitableTurns += 1;
     assertGameState(state);
@@ -163,18 +179,21 @@ export function simulateBatch(options = {}) {
   const runs = positiveInteger(options.runs) || 1;
   const eras = normalizeSelection(options.eras, ERAS.map((era) => era.id));
   const policies = normalizeSelection(options.policies, Object.keys(BALANCE_POLICIES));
+  const hqs = normalizeSelection(options.hqs || options.hq, ['beijing']);
   const results = [];
   eras.forEach((eraId) => {
     policies.forEach((policyId) => {
-      for (let run = 0; run < runs; run++) {
-        results.push(simulateGame({
-          eraId,
-          policyId,
-          seed: `${options.seedBase || 'balance'}|${eraId}|${policyId}|${run}`,
-          maxTurns: options.maxTurns,
-          hq: options.hq,
-        }));
-      }
+      hqs.forEach((hq) => {
+        for (let run = 0; run < runs; run++) {
+          results.push(simulateGame({
+            eraId,
+            policyId,
+            seed: `${options.seedBase || 'balance'}|${eraId}|${policyId}|${hq}|${run}`,
+            maxTurns: options.maxTurns,
+            hq,
+          }));
+        }
+      });
     });
   });
   return results;
@@ -183,7 +202,7 @@ export function simulateBatch(options = {}) {
 export function aggregateSimulationResults(results) {
   const groups = new Map();
   results.forEach((result) => {
-    const key = `${result.eraId}|${result.policyId}`;
+    const key = `${result.eraId}|${result.policyId}|${result.hq}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(result);
   });
@@ -195,6 +214,8 @@ export function aggregateSimulationResults(results) {
       era: first.era,
       policyId: first.policyId,
       policy: first.policy,
+      hq: first.hq,
+      hqName: first.hqName,
       runs: group.length,
       survivalRate: mean(group.map((result) => Number(result.survived))),
       victoryRate: mean(group.map((result) => Number(Boolean(result.victoryTurn)))),
@@ -212,8 +233,16 @@ export function aggregateSimulationResults(results) {
       avgLoan: mean(group.map((result) => result.loan)),
       avgLoadFactor: mean(group.map((result) => result.avgLoadFactor)),
       avgProfitMargin: mean(group.map((result) => result.profitMargin)),
+      avgRouteOperatingMargin: mean(group.map((result) => result.routeOperatingMargin)),
+      avgTraitIncomeShare: mean(group.map((result) => result.traitIncomeShare)),
+      avgNonRouteIncomeShare: mean(group.map((result) => result.nonRouteIncomeShare)),
       avgProfitableTurnRate: mean(group.map((result) => result.profitableTurnRate)),
+      avgCashPressureRate: mean(group.map((result) => result.cashPressureRate)),
+      avgNegativeCashTurnRate: mean(group.map((result) => result.negativeCashTurnRate)),
+      avgMaxCashDrawdown: mean(group.map((result) => result.maxCashDrawdown)),
       avgForcedLiquidations: mean(group.map((result) => result.forcedLiquidations)),
+      avgLiquidationProceeds: mean(group.map((result) => result.contributions.forcedLiquidationProceeds)),
+      avgContributionsPerTurn: aggregateContributions(group),
     };
   });
 }
@@ -466,6 +495,17 @@ function repayExcessDebt(state, policy, actions) {
 function buildSimulationResult(state, era, policy, seed, maxTurns, context) {
   const turns = state.turnsPlayed || 0;
   const quest = getMainQuestStats(state);
+  const contributions = roundObject(context.contributions);
+  const routeOperatingCosts = contributions.routeCost
+    + contributions.fleetOverhead
+    + contributions.leaseCost
+    + contributions.loanInterest
+    + contributions.operations
+    + contributions.faults;
+  const nonRouteIncome = contributions.traitFund
+    + contributions.stockDividends
+    + contributions.subsidiaryReturns;
+  const totalInflows = contributions.routeRevenue + nonRouteIncome;
   const avgLoadFactor = state.routes.length > 0
     ? mean(state.routes.map((route) => Number(route.loadFactor) || 0))
     : 0;
@@ -474,6 +514,8 @@ function buildSimulationResult(state, era, policy, seed, maxTurns, context) {
     era: era.name,
     policyId: policy.id,
     policy: policy.label,
+    hq: state.hq,
+    hqName: getCity(state.hq)?.name || state.hq,
     seed: String(seed),
     horizonTurns: maxTurns,
     turnsPlayed: turns,
@@ -489,7 +531,15 @@ function buildSimulationResult(state, era, policy, seed, maxTurns, context) {
     companyValue: round(calcCompanyValue(state).totalNetWorth),
     totalProfit: round(context.totalProfit),
     profitMargin: context.totalRevenue > 0 ? context.totalProfit / context.totalRevenue : 0,
+    routeOperatingMargin: contributions.routeRevenue > 0
+      ? (contributions.routeRevenue - routeOperatingCosts) / contributions.routeRevenue
+      : 0,
+    traitIncomeShare: totalInflows > 0 ? contributions.traitFund / totalInflows : 0,
+    nonRouteIncomeShare: totalInflows > 0 ? nonRouteIncome / totalInflows : 0,
     profitableTurnRate: turns > 0 ? context.profitableTurns / turns : 0,
+    cashPressureRate: turns > 0 ? context.belowReserveTurns / turns : 0,
+    negativeCashTurnRate: turns > 0 ? context.negativeCashTurns / turns : 0,
+    maxCashDrawdown: round(context.maxCashDrawdown),
     routes: state.routes.length,
     fleet: state.fleet.length,
     branches: state.branches.length,
@@ -500,6 +550,7 @@ function buildSimulationResult(state, era, policy, seed, maxTurns, context) {
     avgLoadFactor,
     rescues: context.rescues,
     forcedLiquidations: context.forcedLiquidations,
+    contributions,
     randomDraws: state.rng.draws,
     actions: context.actions,
   };
@@ -520,6 +571,70 @@ function createActionCounts() {
     repayments: 0,
     contracts: 0,
   };
+}
+
+function createEconomicContributions() {
+  return {
+    routeRevenue: 0,
+    traitFund: 0,
+    stockDividends: 0,
+    subsidiaryReturns: 0,
+    routeCost: 0,
+    fleetOverhead: 0,
+    leaseCost: 0,
+    loanInterest: 0,
+    operations: 0,
+    faults: 0,
+    subsidiaryMaintenance: 0,
+    subsidiaryValueChange: 0,
+    emergencyBorrowing: 0,
+    forcedLiquidationProceeds: 0,
+    rescueCapital: 0,
+  };
+}
+
+function accumulateEconomicContributions(contributions, report) {
+  contributions.routeRevenue += number(report.routeRevenue);
+  contributions.traitFund += number(report.traitFund);
+  contributions.stockDividends += number(report.stockDividend);
+  contributions.subsidiaryReturns += number(report.subReturn);
+  contributions.routeCost += number(report.routeCost);
+  contributions.fleetOverhead += number(report.overhead);
+  contributions.leaseCost += number(report.leaseCost);
+  contributions.loanInterest += number(report.interest);
+  contributions.operations += number(report.opsCost);
+  contributions.faults += number(report.faultLoss);
+  contributions.subsidiaryMaintenance += number(report.subMaint);
+  contributions.subsidiaryValueChange += number(report.subValueChange);
+}
+
+function accumulateBankruptcyContribution(contributions, action) {
+  const amount = number(action.amount);
+  if (action.action === 'emergencyLoan') contributions.emergencyBorrowing += amount;
+  else if (action.action?.startsWith('forceSell')) contributions.forcedLiquidationProceeds += amount;
+}
+
+function grossInflows(report) {
+  return number(report.routeRevenue)
+    + number(report.traitFund)
+    + number(report.stockDividend)
+    + number(report.subReturn);
+}
+
+function aggregateContributions(group) {
+  const keys = Object.keys(group[0]?.contributions || {});
+  return Object.fromEntries(keys.map((key) => [
+    key,
+    mean(group.map((result) => result.turnsPlayed > 0 ? number(result.contributions[key]) / result.turnsPlayed : 0)),
+  ]));
+}
+
+function roundObject(value) {
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, round(item)]));
+}
+
+function number(value) {
+  return Number.isFinite(Number(value)) ? Number(value) : 0;
 }
 
 function normalizeSelection(selection, defaults) {

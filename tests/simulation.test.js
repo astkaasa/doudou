@@ -32,4 +32,39 @@ describe('balance simulation', () => {
       }),
     ]);
   });
+
+  it('reports per-system contributions and cash pressure', () => {
+    const result = simulateGame({ eraId: 'era2', policyId: 'aggressive', seed: 'metrics', maxTurns: 12 });
+
+    expect(result.contributions.routeRevenue).toBeGreaterThan(0);
+    expect(result.contributions.routeCost).toBeGreaterThan(0);
+    expect(result.contributions.fleetOverhead).toBeGreaterThan(0);
+    expect(result.contributions.operations).toBeGreaterThan(0);
+    expect(result.contributions.traitFund).toBeGreaterThan(0);
+    expect(result.routeOperatingMargin).toBeTypeOf('number');
+    expect(result.nonRouteIncomeShare).toBeGreaterThan(0);
+    expect(result.cashPressureRate).toBeGreaterThanOrEqual(0);
+    expect(result.cashPressureRate).toBeLessThanOrEqual(1);
+  });
+
+  it('runs and aggregates headquarters independently', () => {
+    const results = simulateBatch({
+      eras: 'era1',
+      policies: 'conservative',
+      hqs: 'beijing,london',
+      runs: 2,
+      maxTurns: 2,
+      seedBase: 'regional',
+    });
+    const summary = aggregateSimulationResults(results);
+
+    expect(results).toHaveLength(4);
+    expect(new Set(results.map((result) => result.hq))).toEqual(new Set(['beijing', 'london']));
+    expect(summary.map((row) => row.hq).sort()).toEqual(['beijing', 'london']);
+    expect(summary.every((row) => row.avgContributionsPerTurn.fleetOverhead > 0)).toBe(true);
+  });
+
+  it('rejects unknown headquarters explicitly', () => {
+    expect(() => simulateGame({ hq: 'missing-city', maxTurns: 1 })).toThrow('Unknown headquarters');
+  });
 });
