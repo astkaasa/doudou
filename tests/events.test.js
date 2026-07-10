@@ -3,9 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { MEGA_EVENTS } from '../src/data/megaEvents.js';
 import { NEWS_POOL } from '../src/data/news.js';
 import { PLANES } from '../src/data/planes.js';
-import { advanceTemporaryModifiers, eligibleNewsPool, generateEvents, isNewsAvailableInPeriod } from '../src/domain/events.js';
+import { WORLD_CUP_EVENTS } from '../src/data/worldCups.js';
+import { aircraftMarketNewsForPeriod } from '../src/domain/aircraftNews.js';
+import { airportDisplayCode, getAirport } from '../src/domain/airports.js';
+import { advanceTemporaryModifiers, eligibleNewsPool, eligibleNewsPoolForState, generateEvents, isNewsAvailableInPeriod } from '../src/domain/events.js';
 import { clamp, getCity } from '../src/domain/helpers.js';
-import { megaEventNewsFor, syncMegaEventState } from '../src/domain/megaEvents.js';
+import { megaEventBoostCurve, megaEventNewsFor, syncMegaEventState } from '../src/domain/megaEvents.js';
 import { addCostModifier, addDemandModifier, addDisasterDemandModifier, addSuspensionModifier, routeCostMultiplier, routeDemandMultiplier, selectRouteKeys } from '../src/domain/modifiers.js';
 import { openRoute, updateRouteMetrics } from '../src/domain/routes.js';
 import { initState } from '../src/domain/state.js';
@@ -21,17 +24,14 @@ describe('news event effects', () => {
   it('filters random news by historical availability', () => {
     const findNews = (title) => Object.values(NEWS_POOL).flat().find((item) => item.title === title);
     const euCarbon = findNews('欧盟通过新的航空碳排放法规');
-    const worldCup = findNews('世界杯带动举办地客流增长');
     const firstSupersonicWave = findNews('超音速客机试飞引发全球关注');
     const saf = findNews('可持续航空燃料进入商业试用');
     const vaccineRecovery = findNews('全球疫苗接种率创新高，出行信心恢复');
     const palmBeachRename = findNews('棕榈滩机场启用特朗普国际机场新名');
+    const alliance = findNews('航空联盟扩大跨洲联程合作');
 
     expect(isNewsAvailableInPeriod(euCarbon, 2007, 1)).toBe(false);
     expect(isNewsAvailableInPeriod(euCarbon, 2008, 1)).toBe(true);
-    expect(isNewsAvailableInPeriod(worldCup, 1966, 3)).toBe(true);
-    expect(isNewsAvailableInPeriod(worldCup, 1966, 4)).toBe(false);
-    expect(isNewsAvailableInPeriod(worldCup, 1967, 3)).toBe(false);
     expect(isNewsAvailableInPeriod(firstSupersonicWave, 1968, 1)).toBe(true);
     expect(isNewsAvailableInPeriod(firstSupersonicWave, 1976, 1)).toBe(false);
     expect(isNewsAvailableInPeriod(saf, 2010, 1)).toBe(false);
@@ -41,9 +41,12 @@ describe('news event effects', () => {
     expect(isNewsAvailableInPeriod(palmBeachRename, 2026, 2)).toBe(false);
     expect(isNewsAvailableInPeriod(palmBeachRename, 2026, 3)).toBe(true);
     expect(isNewsAvailableInPeriod(palmBeachRename, 2027, 3)).toBe(false);
+    expect(isNewsAvailableInPeriod(alliance, 1996, 1)).toBe(false);
+    expect(isNewsAvailableInPeriod(alliance, 1997, 1)).toBe(true);
 
     const titlesIn1960 = Object.values(eligibleNewsPool(1960, 1)).flat().map((item) => item.title);
     expect(titlesIn1960).toContain('新一代航空电子设备投入使用');
+    expect(titlesIn1960).toContain('喷气客运网络进入扩张期');
     expect(titlesIn1960).not.toEqual(expect.arrayContaining([
       '欧盟通过新的航空碳排放法规',
       '国际电子竞技总决赛吸引全球观众',
@@ -63,7 +66,7 @@ describe('news event effects', () => {
       generateEvents(state);
 
       state.newsItems.forEach((item) => {
-        const source = sourceByTitle.get(item.title);
+        const source = sourceByTitle.get(item._randomNewsSourceTitle);
         if (!source) return;
         checked++;
         expect(isNewsAvailableInPeriod(source, state.year, state.quarter)).toBe(true);
@@ -74,21 +77,53 @@ describe('news event effects', () => {
   });
 
   it('describes plane availability as a market window and labels fictional aircraft', () => {
-    const fictionalYear = initState('beijing', 'era3', { seed: 'fictional-aircraft-news' });
-    fictionalYear.year = 2007;
-    generateEvents(fictionalYear);
-    const fictionalNews = fictionalYear.newsItems.find((item) => item.category === 'aviation');
+    const news = aircraftMarketNewsForPeriod(2008, 1);
+    const entry = news.find((item) => item._aircraftMarket === 'entry');
+    const exit = news.find((item) => item._aircraftMarket === 'exit');
 
-    expect(fictionalNews).toMatchObject({ title: '架空机型进入采购市场' });
-    expect(fictionalNews.desc).toContain('B2000HC作为架空科技线机型开放采购');
+    expect(entry).toMatchObject({ title: '架空科技线更新采购目录' });
+    expect(entry.desc).toContain('B2001SST作为架空科技线方案开放采购');
+    expect(entry.desc).toContain('2200 米跑道和 3 级基础设施');
+    expect(exit.desc).toContain('A300-600、A310退出新机采购目录');
+    expect(exit.desc).toContain('现有机队仍可继续运营和转售');
+    expect(aircraftMarketNewsForPeriod(2008, 2)).toEqual([]);
+    expect(aircraftMarketNewsForPeriod(2007, 1)
+      .find((item) => item._aircraftMarket === 'exit')?.desc || '').not.toContain('A300-600');
+  });
 
-    const marketExitYear = initState('beijing', 'era1', { seed: 'aircraft-market-exit-news' });
-    marketExitYear.year = 1969;
-    generateEvents(marketExitYear);
-    const marketExitNews = marketExitYear.newsItems.find((item) => item.category === 'aviation');
+  it('filters route-dependent news, guarantees scheduled news, and avoids consecutive repeats', () => {
+    const noRouteState = initState('beijing', 'era3', { seed: 'news-applicability' });
+    noRouteState.year = 2000;
+    noRouteState.quarter = 1;
+    const withoutRoutes = Object.values(eligibleNewsPoolForState(noRouteState, { mode: 'random' })).flat().map((item) => item.title);
+    expect(withoutRoutes).not.toEqual(expect.arrayContaining([
+      '枢纽机场遭遇极端天气中断',
+      '枢纽机场启动临时跑道检修',
+      '新型流感变种引发区域性恐慌',
+    ]));
 
-    expect(marketExitNews).toMatchObject({ title: '部分机型停止接受新订单' });
-    expect(marketExitNews.desc).toContain('现有机队仍可继续运营');
+    const scheduledState = initState('beijing', 'era3', { seed: 'scheduled-news' });
+    scheduledState.year = 2026;
+    scheduledState.quarter = 3;
+    generateEvents(scheduledState);
+    expect(scheduledState.newsItems.some((item) => item.title === '棕榈滩机场启用特朗普国际机场新名')).toBe(true);
+
+    const repeatedState = initState('beijing', 'era4', { seed: 'news-repeat-control' });
+    repeatedState.year = 1980;
+    repeatedState.quarter = 1;
+    generateEvents(repeatedState);
+    const firstTitles = new Set(repeatedState.newsItems.map((item) => item._randomNewsSourceTitle).filter(Boolean));
+    repeatedState.quarter = 2;
+    generateEvents(repeatedState);
+    const secondTitles = new Set(repeatedState.newsItems.map((item) => item._randomNewsSourceTitle).filter(Boolean));
+    expect(firstTitles.size).toBeGreaterThan(0);
+    expect(secondTitles.size).toBeGreaterThan(0);
+    expect([...secondTitles].filter((title) => firstTitles.has(title))).toEqual([]);
+
+    const fluState = stateWithRoute('beijing', 'shanghai');
+    const flu = NEWS_POOL.health.find((item) => item.title === '新型流感变种引发区域性恐慌');
+    flu.effectFn({ state: fluState, addDemandModifier, selectRouteKeys, random: () => 0.99 });
+    expect(routeDemandMultiplier(fluState, fluState.routes[0])).toBe(0.8);
   });
 
   it('adds soft disaster demand modifiers for matching event-zone routes', () => {
@@ -157,7 +192,7 @@ describe('news event effects', () => {
     const state = stateWithRoute('beijing', 'shanghai');
     const route = state.routes[0];
 
-    maintenance.effectFn({ state, addCostModifier, random: () => 0 });
+    const presentation = maintenance.effectFn({ state, addCostModifier, random: () => 0, getAirport, airportDisplayCode });
 
     expect(state.activeModifiers[0]).toMatchObject({
       type: 'cost',
@@ -170,6 +205,7 @@ describe('news event effects', () => {
       fromAirportId: 'virtual-london',
       toAirportId: 'virtual-newyork',
     })).toBe(1);
+    expect(presentation.title).toContain(airportDisplayCode(route.fromAirportId));
   });
 
   it('builds active mega events and news metadata for the current quarter', () => {
@@ -213,5 +249,32 @@ describe('news event effects', () => {
     expect(byId.get('oly_s1968')).toMatchObject({ year: 1968, quarter: 4, cityId: 'mexicocity' });
     expect(byId.get('expo_1970')).toMatchObject({ year: 1970, quarter: 1, cityId: 'osaka' });
     expect(byId.get('oly_s1996').desc).not.toContain('回归故土');
+  });
+
+  it('maps World Cup finals to dated playable air gateways', () => {
+    const byId = new Map(WORLD_CUP_EVENTS.map((event) => [event.id, event]));
+    expect(WORLD_CUP_EVENTS).toHaveLength(15);
+    expect(byId.get('wc_1962')).toMatchObject({ year: 1962, quarter: 2, cityId: 'santiago' });
+    expect(byId.get('wc_1966')).toMatchObject({ year: 1966, quarter: 3, cityId: 'london' });
+    expect(byId.get('wc_2002')).toMatchObject({ year: 2002, quarter: 2, cityId: 'tokyo' });
+    expect(byId.get('wc_2002').desc).toContain('决赛在横滨举行');
+
+    const state = initState('johannesburg', 'era3');
+    state.year = 2010;
+    state.quarter = 3;
+    const activeEvents = syncMegaEventState(state);
+    const worldCup = activeEvents.find((event) => event.id === 'wc_2010');
+    expect(worldCup).toMatchObject({ cityId: 'johannesburg', quartersFromEvent: 0, currentBoost: 0.2 });
+    expect(megaEventNewsFor(worldCup)).toMatchObject({
+      title: '2010年国际足联世界杯迎来巅峰对决！',
+      _megaEventType: 'world_cup',
+      _isHeadline: true,
+    });
+    expect(state.activeModifiers.find((modifier) => modifier.megaEvent?.id === 'wc_2010')).toMatchObject({
+      megaEvent: { hostCityId: 'johannesburg' },
+    });
+    expect(megaEventBoostCurve(-4, 'world_cup')).toBe(0.05);
+    expect(megaEventBoostCurve(1, 'world_cup')).toBe(0.4);
+    expect(megaEventBoostCurve(-4, 'olympics_summer')).toBe(0.1);
   });
 });

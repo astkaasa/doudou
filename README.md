@@ -62,6 +62,7 @@ npm run upstream:check
 - `docs/balance-baseline.md`：四时代批量模拟方法、当前基线和待验证的平衡问题。
 - `docs/balance-targets.md`：四时代平衡验收目标、区域样本矩阵和通关评级阈值。
 - `docs/airport-city-system-design.md`：城市数据重整、机场领域模型、存档兼容和分阶段实施方案。
+- `docs/event-news-system.md`：随机新闻、固定日期新闻、历史盛事和机型目录的职责与扩充规则。
 - `docs/airport-slot-feasibility.md`：时刻资产交易的阶段 5 可行性结论、延后原因和后续立项条件。
 - `docs/visual-regression.md`：桌面与手机界面的视觉回归场景矩阵和失败标准。
 - `docs/upstream-sync.md`：上游资源图发现、漂移检查、原子同步和审查流程。

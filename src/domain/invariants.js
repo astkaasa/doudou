@@ -116,10 +116,16 @@ export function validateStaticData() {
   validateUniqueIds(issues, 'megaEvents', MEGA_EVENTS);
   MEGA_EVENTS.forEach((event, index) => {
     const path = `megaEvents[${index}]`;
+    if (!['olympics_summer', 'world_expo', 'world_cup'].includes(event.type)) {
+      issues.push(`${path}.type is invalid: ${String(event.type)}`);
+    }
     if (!CITY_IDS.has(event.cityId)) issues.push(`${path}.cityId references unknown city ${String(event.cityId)}`);
+    requireText(issues, `${path}.name`, event.name);
+    requireText(issues, `${path}.fullName`, event.fullName);
+    requireText(issues, `${path}.desc`, event.desc);
     requireInteger(issues, `${path}.year`, event.year);
     requireFiniteRange(issues, `${path}.quarter`, event.quarter, 1, 4, true);
-    requirePositive(issues, `${path}.maxBoost`, event.maxBoost);
+    requireFiniteRange(issues, `${path}.maxBoost`, event.maxBoost, 0.01, 1);
   });
 
   validateNewsData(issues);
@@ -153,6 +159,11 @@ function validateNewsData(issues) {
 
       if (item.startYear !== undefined) requireInteger(issues, `${path}.startYear`, item.startYear);
       if (item.endYear !== undefined) requireInteger(issues, `${path}.endYear`, item.endYear);
+      ['scheduled', 'requiresRoutes', 'requiresAirportRoutes'].forEach((field) => {
+        if (item[field] !== undefined && typeof item[field] !== 'boolean') {
+          issues.push(`${path}.${field} must be a boolean`);
+        }
+      });
       if (Number.isInteger(item.startYear) && Number.isInteger(item.endYear) && item.endYear < item.startYear) {
         issues.push(`${path}.endYear must not precede startYear`);
       }

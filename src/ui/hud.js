@@ -154,9 +154,15 @@ function renderMegaEventBadgeLabel(badge) {
   const events = badge._megaEvents || [];
   const event = events[megaEventBadgeIndex % events.length];
   if (!event) return;
-  badge.textContent = `🏆 ${event.name}`;
+  badge.textContent = `${megaEventIcon(event.type)} ${event.name}`;
   badge.title = `${event.cityName || event.name}航线需求提升`;
   badge.classList.toggle('mega-badge-urgent', event.currentBoost >= event.maxBoost * 0.8);
+}
+
+function megaEventIcon(type) {
+  if (type === 'world_cup') return '⚽';
+  if (type === 'world_expo') return '🌐';
+  return '🏅';
 }
 
 function clearMegaEventRotation() {

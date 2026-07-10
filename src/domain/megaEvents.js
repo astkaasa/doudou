@@ -4,11 +4,14 @@ import {
   MEGA_EVENT_PRE_ANNOUNCE,
   MEGA_EVENT_REMOTE_SPILLOVER,
   MEGA_EVENT_SPILLOVER,
+  WORLD_CUP_REMOTE_SPILLOVER,
+  WORLD_CUP_SPILLOVER,
 } from './constants.js';
 import { getCity } from './helpers.js';
 import { addMegaEventDemandModifier, MODIFIER_MODES, removeMegaEventDemandModifiers } from './modifiers.js';
 
-export function megaEventBoostCurve(quartersFromEvent) {
+export function megaEventBoostCurve(quartersFromEvent, eventType = null) {
+  if (eventType === 'world_cup') return worldCupBoostCurve(quartersFromEvent);
   if (quartersFromEvent <= -5) return 0;
   if (quartersFromEvent === -4) return 0.1;
   if (quartersFromEvent === -3) return 0.25;
@@ -18,6 +21,19 @@ export function megaEventBoostCurve(quartersFromEvent) {
   if (quartersFromEvent === 1) return 0.6;
   if (quartersFromEvent === 2) return 0.3;
   if (quartersFromEvent === 3) return 0.1;
+  return 0;
+}
+
+function worldCupBoostCurve(quartersFromEvent) {
+  if (quartersFromEvent <= -5) return 0;
+  if (quartersFromEvent === -4) return 0.05;
+  if (quartersFromEvent === -3) return 0.15;
+  if (quartersFromEvent === -2) return 0.35;
+  if (quartersFromEvent === -1) return 0.7;
+  if (quartersFromEvent === 0) return 1;
+  if (quartersFromEvent === 1) return 0.4;
+  if (quartersFromEvent === 2) return 0.15;
+  if (quartersFromEvent === 3) return 0.05;
   return 0;
 }
 
@@ -31,7 +47,7 @@ export function activeMegaEventsForPeriod(state) {
       const quartersFromEvent = quartersFromMegaEvent(state, eventDef);
       const inWindow = quartersFromEvent >= -MEGA_EVENT_PRE_ANNOUNCE
         && quartersFromEvent <= MEGA_EVENT_DECAY_LENGTH;
-      const currentBoost = eventDef.maxBoost * megaEventBoostCurve(quartersFromEvent);
+      const currentBoost = eventDef.maxBoost * megaEventBoostCurve(quartersFromEvent, eventDef.type);
       const hostCity = getCity(eventDef.cityId);
       if (!inWindow || currentBoost <= 0 || !hostCity) return null;
       return {
@@ -60,40 +76,41 @@ export function syncMegaEventState(state) {
   state.activeMegaEvents = activeEvents;
   removeMegaEventDemandModifiers(state);
   activeEvents.forEach((event) => {
+    const isWorldCup = event.type === 'world_cup';
     addMegaEventDemandModifier(state, event.name, {
       id: event.id,
       hostCityId: event.cityId,
       hostRegion: event.region,
       boost: event.currentBoost,
-      spillover: MEGA_EVENT_SPILLOVER,
-      remoteSpillover: MEGA_EVENT_REMOTE_SPILLOVER,
+      spillover: isWorldCup ? WORLD_CUP_SPILLOVER : MEGA_EVENT_SPILLOVER,
+      remoteSpillover: isWorldCup ? WORLD_CUP_REMOTE_SPILLOVER : MEGA_EVENT_REMOTE_SPILLOVER,
     }, 1, existingIds.get(event.id));
   });
   return activeEvents;
 }
 
 export function megaEventNewsFor(event) {
-  const typeLabel = event.type === 'olympics_summer' ? '夏奥' : '世博';
   const isExpo = event.type === 'world_expo';
+  const isWorldCup = event.type === 'world_cup';
   const q = event.quartersFromEvent;
   let title = '';
   let desc = '';
   let effect = '';
 
   if (q === -4) {
-    title = `${event.name}进入开幕前一年倒计时`;
+    title = isWorldCup ? `${event.name}进入赛前一年筹备` : `${event.name}进入开幕前一年倒计时`;
     desc = `${event.cityName}的场馆、交通和接待设施进入最后一年筹备，国际旅客开始提前规划行程。`;
     effect = `${event.cityName}航线需求开始升温`;
   } else if (q === -2) {
     title = `${event.name}进入倒计时，${event.cityName}航空客流攀升`;
-    desc = `筹备工作进入冲刺阶段，各国${isExpo ? '参展方' : '代表团'}陆续安排先遣团队，航空预订量持续走高。`;
+    desc = `筹备工作进入冲刺阶段，各国${isExpo ? '参展方' : isWorldCup ? '球队与媒体' : '代表团'}陆续安排先遣团队，航空预订量持续走高。`;
     effect = `${event.cityName}航线需求明显上升`;
   } else if (q === -1) {
-    title = `${event.name}即将开幕！`;
-    desc = `各国代表团和${typeLabel === '夏奥' ? '运动员' : '参展商'}陆续抵达${event.cityName}，航空运力面临巨大考验。`;
+    title = `${event.name}${isWorldCup ? '即将开赛' : '即将开幕'}！`;
+    desc = `各国${isExpo ? '参展商' : isWorldCup ? '球队、媒体和球迷' : '代表团与运动员'}陆续抵达${event.cityName}，航空运力面临巨大考验。`;
     effect = `${event.cityName}航线需求大幅攀升`;
   } else if (q === 0) {
-    title = `${event.fullName}隆重开幕！`;
+    title = isWorldCup ? `${event.fullName}迎来巅峰对决！` : `${event.fullName}隆重开幕！`;
     desc = event.desc;
     effect = `${event.cityName}航线需求达到峰值`;
   } else if (q === 1) {
@@ -124,6 +141,7 @@ export function megaEventNewsFor(event) {
     effect,
     stockEffect: event.stockEffect,
     _megaEventId: event.id,
+    _megaEventType: event.type,
     _isHeadline: q === 0,
   };
 }

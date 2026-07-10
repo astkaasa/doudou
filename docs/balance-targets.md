@@ -61,13 +61,13 @@ An S grade represents an optimized run rather than the expected first success. T
 
 ## Quest calibration
 
-Each cell lists company value / routes / represented network regions / consecutive profitable quarters. Network coverage counts the headquarters, branches, and endpoints of active routes. These are the current tuning values pending the next full regional matrix.
+Each cell lists company value / routes / represented network regions / consecutive profitable quarters. Network coverage counts the headquarters, branches, and endpoints of active routes. These values were validated by the final 1,600-campaign event/news acceptance matrix recorded in `docs/balance-baseline.md`.
 
 | Stage | era1 | era2 | era3 | era4 |
 | --- | --- | --- | --- | --- |
 | 1 | 150M / 8 / 1 / 2 | 500M / 10 / 2 / 2 | 800M / 12 / 2 / 2 | 500M / 10 / 2 / 4 |
 | 2 | 250M / 16 / 2 / 3 | 1,500M / 30 / 4 / 3 | 2,000M / 35 / 4 / 3 | 2,000M / 40 / 3 / 8 |
-| 3 | 1,100M / 42 / 4 / 6 | 2,500M / 45 / 6 / 4 | 2,800M / 50 / 6 / 4 | 9,000M / 76 / 6 / 12 |
+| 3 | 1,100M / 42 / 4 / 6 | 2,500M / 45 / 6 / 4 | 2,800M / 50 / 6 / 4 | 9,100M / 76 / 6 / 12 |
 
 ## Change order
 

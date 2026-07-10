@@ -164,3 +164,33 @@ Reproduce the strict run with:
 ```bash
 npm run balance:acceptance -- --workers 8 --strict --output /tmp/doudou-balance-airport-city-final.json
 ```
+
+## Event and news expansion follow-up
+
+The event/news pass added dated World Cups, state-aware random news, and annual aircraft-market bulletins. A first comparison against the airport-and-city baseline exposed a positive bias from recurring industry-trend bonuses. Long-running trends were therefore changed to informational/stock-market news, World Cups received a shorter localized curve, and route-dependent negative events were guaranteed to affect at least one active route.
+
+The final fast matrix covered all 80 era/policy/headquarters combinations with five deterministic seeds each (400 campaigns). Every era retained four viable policies; era 4 finished with 86.0% all-policy survival, 64.0% aggressive victory, 32.1% aggressive profit margin, and 17.5% aggressive cash pressure.
+
+The quest-focused follow-up used all five headquarters and 20 seeds per era. Eras 1-3 reuse the final all-era run; era 4 was rerun after the legendary final company-value target moved from 9,000M to 9,100M:
+
+| Era | Aggressive survival | Victory | Victory turn | Route margin | Profit margin | Cash pressure |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| era1 | 99.0% | 43.0% | 62.5 | 15.4% | 17.9% | 12.3% |
+| era2 | 100.0% | 67.0% | 69.7 | 25.9% | 28.1% | 5.6% |
+| era3 | 100.0% | 89.0% | 59.6 | 32.6% | 34.4% | 4.9% |
+| era4 | 89.0% | 70.0% | 193.5 | 30.2% | 32.6% | 14.4% |
+
+All quest-focused metrics are inside their acceptance bands. The final strict matrix then covered four eras, four policies, five headquarters, and 20 seeds per combination: 1,600 campaigns and all 80 combinations. Eight workers completed the run in 677.12 seconds, every quarter passed state validation, and strict acceptance returned `PASS`.
+
+| Era | All-policy survival | Aggressive victory | Victory turn | Route margin | Profit margin | Cash pressure | Non-route income | Rescue / 100 turns | Liquidations / 100 turns | Viable policies |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| era1 | 99.8% | 43.0% | 62.5 | 15.4% | 17.9% | 12.3% | 3.1% | 0.0 | 0.4 | 4 |
+| era2 | 99.8% | 67.0% | 69.7 | 25.9% | 28.1% | 5.6% | 2.9% | 0.1 | 0.6 | 4 |
+| era3 | 100.0% | 89.0% | 59.6 | 32.2% | 34.0% | 5.1% | 2.7% | 0.0 | 0.1 | 4 |
+| era4 | 84.8% | 70.0% | 193.5 | 30.2% | 32.6% | 14.4% | 3.2% | 0.1 | 0.4 | 4 |
+
+Reproduce this matrix with:
+
+```bash
+npm run balance:acceptance -- --workers 8 --strict --output /tmp/doudou-balance-event-news-final.json
+```

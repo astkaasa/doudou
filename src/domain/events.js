@@ -1,5 +1,6 @@
 import { NEWS_POOL } from '../data/news.js';
-import { PLANES } from '../data/planes.js';
+import { aircraftMarketNewsForPeriod } from './aircraftNews.js';
+import { airportDisplayCode, getAirport } from './airports.js';
 import { clamp, fmtPct, getCity } from './helpers.js';
 import { megaEventNewsFor, syncMegaEventState } from './megaEvents.js';
 import { addAirportDisruptionModifier, addCostModifier, addDemandModifier, addDisasterDemandModifier, addSuspensionModifier, advanceActiveModifiers, selectRouteKeys } from './modifiers.js';
@@ -7,6 +8,9 @@ import { nextRandom, randomBetween, randomInt } from './random.js';
 import { updateStockPrices } from './stocks.js';
 
 export function generateEvents(state) {
+  const previousRandomNewsTitles = new Set((state.newsItems || [])
+    .map((item) => item?._randomNewsSourceTitle)
+    .filter(Boolean));
   state.events = [];
   state.newsItems = [];
   state.prevOilPrice = state.oilPrice;
@@ -27,8 +31,15 @@ export function generateEvents(state) {
       state.newsItems.push(item);
       state.events.push({ type: 'mega_event', text: item.title, severity: item._isHeadline ? 'high' : 'medium' });
     });
+  const scheduledPool = eligibleNewsPoolForState(state, { mode: 'scheduled' });
+  Object.entries(scheduledPool).forEach(([category, items]) => {
+    items.forEach((news) => appendNewsItem(state, category, news, 'scheduled'));
+  });
   const numNews = randomInt(state, 2, 4);
-  const newsPool = eligibleNewsPool(state.year, state.quarter);
+  const newsPool = eligibleNewsPoolForState(state, {
+    mode: 'random',
+    excludeTitles: previousRandomNewsTitles,
+  });
   const categories = Object.keys(newsPool);
   const picked = new Set();
   for (let i = 0; i < numNews; i++) {
@@ -45,50 +56,12 @@ export function generateEvents(state) {
     } while (rejected && tries < 20);
     if (picked.has(news.title) || isDisasterProtectedByMegaEvent(state, cat, news)) continue;
     picked.add(news.title);
-    const item = { category: cat, title: news.title, desc: news.desc, effect: news.effect, stockEffect: news.stockEffect || null };
+    appendNewsItem(state, cat, news, 'random');
+  }
+  aircraftMarketNewsForPeriod(state.year, state.quarter).forEach((item) => {
     state.newsItems.push(item);
-    try {
-      news.effectFn?.({
-        state,
-        getCity,
-        clamp,
-        addCostModifier,
-        addAirportDisruptionModifier,
-        addDemandModifier,
-        addDisasterDemandModifier,
-        addSuspensionModifier,
-        selectRouteKeys,
-        random: () => nextRandom(state),
-      });
-    } catch {
-      // News effects should not break turn progression.
-    }
-    state.events.push({ type: cat, text: news.title, severity: cat === 'disaster' ? 'high' : cat === 'economy' ? 'medium' : 'low' });
-  }
-  const enteringMarket = PLANES.filter((plane) => plane.serviceStart === state.year);
-  const leavingMarket = PLANES.filter((plane) => plane.serviceEnd === state.year);
-  if (enteringMarket.length > 0) {
-    const fictional = enteringMarket.filter((plane) => plane.fictional);
-    const historical = enteringMarket.filter((plane) => !plane.fictional);
-    const descriptions = [];
-    if (historical.length > 0) descriptions.push(`${historical.map((plane) => plane.name).join('、')}加入采购目录`);
-    if (fictional.length > 0) descriptions.push(`${fictional.map((plane) => plane.name).join('、')}作为架空科技线机型开放采购`);
-    state.newsItems.push({
-      category: 'aviation',
-      title: fictional.length === enteringMarket.length ? '架空机型进入采购市场' : '新机型进入采购市场',
-      desc: `${descriptions.join('；')}。`,
-      effect: '',
-      stockEffect: { tech: 0.04, finance: 0.02 },
-    });
-  } else if (leavingMarket.length > 0) {
-    state.newsItems.push({
-      category: 'aviation',
-      title: '部分机型停止接受新订单',
-      desc: `${leavingMarket.map((plane) => plane.name).join('、')}退出新机采购目录，现有机队仍可继续运营。`,
-      effect: '',
-      stockEffect: { tourism: -0.01 },
-    });
-  }
+    state.events.push({ type: 'aviation', text: item.title, severity: 'low' });
+  });
   updateStockPrices(state);
 }
 
@@ -104,6 +77,30 @@ export function isNewsAvailableInPeriod(news, year, quarter) {
 export function eligibleNewsPool(year, quarter) {
   return Object.fromEntries(Object.entries(NEWS_POOL)
     .map(([category, items]) => [category, items.filter((item) => isNewsAvailableInPeriod(item, year, quarter))])
+    .filter(([, items]) => items.length > 0));
+}
+
+export function isNewsApplicableToState(news, state) {
+  if (!isNewsAvailableInPeriod(news, state?.year, state?.quarter)) return false;
+  const routes = Array.isArray(state?.routes) ? state.routes : [];
+  if (news.requiresRoutes && !routes.some((route) => !route.suspended)) return false;
+  if (news.requiresAirportRoutes
+    && !routes.some((route) => !route.suspended && route.fromAirportId && route.toAirportId)) return false;
+  return true;
+}
+
+export function eligibleNewsPoolForState(state, options = {}) {
+  const mode = options.mode || 'all';
+  const excluded = options.excludeTitles instanceof Set
+    ? options.excludeTitles
+    : new Set(options.excludeTitles || []);
+  return Object.fromEntries(Object.entries(NEWS_POOL)
+    .map(([category, items]) => [category, items.filter((item) => {
+      if (!isNewsApplicableToState(item, state) || excluded.has(item.title)) return false;
+      if (mode === 'scheduled') return item.scheduled === true;
+      if (mode === 'random') return item.scheduled !== true;
+      return true;
+    })])
     .filter(([, items]) => items.length > 0));
 }
 
@@ -124,4 +121,47 @@ function isDisasterProtectedByMegaEvent(state, category, news) {
     return hostCity && news.eventZone
       && (hostCity.eventZones || [hostCity.subRegion]).includes(news.eventZone);
   });
+}
+
+function appendNewsItem(state, category, news, source) {
+  const item = {
+    category,
+    title: news.title,
+    desc: news.desc,
+    effect: news.effect,
+    stockEffect: news.stockEffect || null,
+  };
+  try {
+    const presentation = news.effectFn?.({
+      state,
+      getCity,
+      getAirport,
+      airportDisplayCode,
+      clamp,
+      addCostModifier,
+      addAirportDisruptionModifier,
+      addDemandModifier,
+      addDisasterDemandModifier,
+      addSuspensionModifier,
+      selectRouteKeys,
+      random: () => nextRandom(state),
+    });
+    if (presentation && typeof presentation === 'object') {
+      ['title', 'desc', 'effect'].forEach((field) => {
+        if (typeof presentation[field] === 'string' && presentation[field].trim()) item[field] = presentation[field];
+      });
+    }
+  } catch {
+    // News effects should not break turn progression.
+  }
+  if (source === 'random') item._randomNewsSourceTitle = news.title;
+  if (source === 'scheduled') item._scheduledNewsSourceTitle = news.title;
+  state.newsItems.push(item);
+  state.events.push({ type: category, text: item.title, severity: newsSeverity(category) });
+}
+
+function newsSeverity(category) {
+  if (category === 'disaster') return 'high';
+  if (category === 'economy' || category === 'health') return 'medium';
+  return 'low';
 }

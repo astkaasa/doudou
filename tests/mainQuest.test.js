@@ -126,4 +126,11 @@ describe('main quest progression', () => {
     expect(calcVictoryGrade(208, 'era4').grade).toBe('B');
     expect(calcVictoryGrade(209, 'era4').grade).toBe('C');
   });
+
+  it('uses the calibrated legendary-era final company value target', () => {
+    const state = initState('beijing', 'era4');
+    state.mainQuest.currentStage = 3;
+
+    expect(checkMainQuestProgress(state).dimensions.cash.target).toBe(9100);
+  });
 });

@@ -33,7 +33,7 @@ function buildNewspaperHtml(state, includeFooter = true, period = null) {
     <div class="newspaper-body">`;
   const headline = pickNewspaperHeadline(state, newsItems);
   if (headline) {
-    html += `<div class="newspaper-headline">${headline.category === 'mega_event' ? '🏆' : '⚡'} ${escapeHtml(headline.title)}</div>`;
+    html += `<div class="newspaper-headline">${headline.category === 'mega_event' ? megaEventIcon(headline) : '⚡'} ${escapeHtml(headline.title)}</div>`;
   }
   const oilChange = state.prevOilPrice > 0 ? ((state.oilPrice - state.prevOilPrice) / state.prevOilPrice * 100) : 0;
   const oilArrow = oilChange > 0.01 ? '↑' : oilChange < -0.01 ? '↓' : '→';
@@ -72,7 +72,7 @@ function buildNewspaperHtml(state, includeFooter = true, period = null) {
         : '';
     html += `<div class="newspaper-item${featuredClass}">
       <span class="cat ${category}">${catName}</span>
-      <div class="title">${category === 'mega_event' ? '🏆 ' : ''}${escapeHtml(item.title)}</div>
+      <div class="title">${category === 'mega_event' ? `${megaEventIcon(item)} ` : ''}${escapeHtml(item.title)}</div>
       <div class="desc">${escapeHtml(item.desc)}</div>
       ${item.effect ? `<div class="effect">→ ${escapeHtml(item.effect)}</div>` : ''}
     </div>`;
@@ -86,6 +86,12 @@ function buildNewspaperHtml(state, includeFooter = true, period = null) {
   }
   html += '</div>';
   return html;
+}
+
+function megaEventIcon(item) {
+  if (item?._megaEventType === 'world_cup') return '⚽';
+  if (item?._megaEventType === 'world_expo') return '🌐';
+  return '🏅';
 }
 
 function pickNewspaperHeadline(state, newsItems) {

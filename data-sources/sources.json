@@ -61,6 +61,27 @@
       ],
       "version": "name and KDJT effective 2026-07-09; IATA DJT scheduled 2026-08-18",
       "checkedAt": "2026-07-10"
+    },
+    {
+      "id": "fifa-world-cup-archives",
+      "scope": "world-cup-tournament-and-final-city-chronology",
+      "title": "FIFA World Cup Archives and official finals history",
+      "urls": [
+        "https://www.archives.fifa.com/fifa_world_cup",
+        "https://www.fifa.com/es/articles/todas-las-finales-de-la-copa-mundial-de-la-fifa"
+      ],
+      "checkedAt": "2026-07-10"
+    },
+    {
+      "id": "official-aviation-technology-history",
+      "scope": "random-news-availability-windows",
+      "title": "Official histories for reservation systems, ETOPS and airline alliances",
+      "urls": [
+        "https://www.ibm.com/history/sabre",
+        "https://www.faa.gov/lessons_learned/transport_airplane/accidents/C-GITS",
+        "https://portal.staralliance.com/cms/about/right/jeffrey-goh-ceo-of-star-alliance"
+      ],
+      "checkedAt": "2026-07-10"
     }
   ]
 }

@@ -1,4 +1,6 @@
-export const MEGA_EVENTS = [
+import { WORLD_CUP_EVENTS } from './worldCups.js';
+
+const OLYMPIC_AND_EXPO_EVENTS = [
   {
     id: 'oly_s1960',
     type: 'olympics_summer',
@@ -252,3 +254,6 @@ export const MEGA_EVENTS = [
     stockEffect: { tourism: 0.1, culture: 0.08 },
   },
 ];
+
+export const MEGA_EVENTS = [...OLYMPIC_AND_EXPO_EVENTS, ...WORLD_CUP_EVENTS]
+  .sort((a, b) => a.year - b.year || a.quarter - b.quarter || a.id.localeCompare(b.id));
