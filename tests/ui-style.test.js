@@ -8,7 +8,6 @@ const INLINE_STYLE_BUDGET = {
   'src/ui/map.js': 18,
   'src/ui/panel.js': 9,
   'src/ui/reportModals.js': 41,
-  'src/ui/routeModals.js': 74,
   'src/ui/season.js': 1,
   'src/ui/stockModals.js': 2,
   'src/ui/tutorial.js': 6,
