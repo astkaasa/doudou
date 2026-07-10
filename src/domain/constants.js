@@ -1,5 +1,6 @@
 export const DEFAULT_COMPANY_NAME = '豆豆航空';
-export const SPICY_TRAIT_FUND_RATIO = 0.025;
+export const SPICY_TRAIT_FUND_BASE = 0.5;
+export const SPICY_TRAIT_FUND_REVENUE_RATIO = 0.025;
 export const BANKRUPTCY_THRESHOLD = -5;
 export const ANGEL_INVEST_MIN = 50;
 export const ANGEL_INVEST_MAX = 100;

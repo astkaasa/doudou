@@ -3,7 +3,7 @@ import { growCityStates } from '../data/cityEraData.js';
 import { advanceBranchConstruction } from './bases.js';
 import { advanceTemporaryModifiers, generateEvents } from './events.js';
 import { advanceFleetAge } from './fleet.js';
-import { BANKRUPTCY_THRESHOLD, SPICY_TRAIT_FUND_RATIO } from './constants.js';
+import { BANKRUPTCY_THRESHOLD, SPICY_TRAIT_FUND_BASE, SPICY_TRAIT_FUND_REVENUE_RATIO } from './constants.js';
 import { hasPendingEraSettlement, settleEraIfDue } from './eraSettlement.js';
 import { clamp } from './helpers.js';
 import { loanInterest } from './loans.js';
@@ -126,9 +126,7 @@ export function calculateTurnFinancials(state, extraRevenue = 0) {
 }
 
 export function estimateTurnFinancials(state) {
-  const traitFund = state.playerTrait === '辣'
-    ? Math.max(0, Math.floor(state.cash * SPICY_TRAIT_FUND_RATIO))
-    : 0;
+  const traitFund = calcSpicyTraitFund(state);
   return buildTurnFinancials(state, traitFund, {
     opsCost: calcOpsBudgetCost(state).total,
     faultLoss: 0,
@@ -166,8 +164,13 @@ function buildTurnFinancials(state, extraRevenue, options) {
 }
 
 function rollTraitFund(state) {
-  if (state.playerTrait !== '辣') return 0;
-  return Math.max(0, Math.floor(state.cash * SPICY_TRAIT_FUND_RATIO));
+  return calcSpicyTraitFund(state);
+}
+
+export function calcSpicyTraitFund(state) {
+  if (state?.playerTrait !== '辣' || (Number(state.cash) || 0) <= 0) return 0;
+  const routeRevenue = (state.routes || []).reduce((sum, route) => sum + Math.max(0, Number(route.revenue) || 0), 0);
+  return Math.round((SPICY_TRAIT_FUND_BASE + routeRevenue * SPICY_TRAIT_FUND_REVENUE_RATIO) * 10) / 10;
 }
 
 function advanceCalendar(state) {

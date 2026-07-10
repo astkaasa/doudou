@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PLANES } from '../src/data/planes.js';
 import { suggestedPrice } from '../src/domain/economy.js';
 import { continueEraInSandbox } from '../src/domain/eraSettlement.js';
-import { advanceTurnState, calculateTurnFinancials, estimateTurnFinancials } from '../src/domain/turn.js';
+import { advanceTurnState, calculateTurnFinancials, calcSpicyTraitFund, estimateTurnFinancials } from '../src/domain/turn.js';
 import { initState } from '../src/domain/state.js';
 import { openBranch } from '../src/domain/bases.js';
 
@@ -79,10 +79,10 @@ describe('turn progression', () => {
 
     const report = advanceTurnState(state);
 
-    expect(report.traitFund).toBe(3);
-    expect(state._lastTraitFund).toBe(3);
-    expect(state.turnRevenue).toBe(3);
-    expect(state.history[0].traitFund).toBe(3);
+    expect(report.traitFund).toBe(0.5);
+    expect(state._lastTraitFund).toBe(0.5);
+    expect(state.turnRevenue).toBe(0.5);
+    expect(state.history[0].traitFund).toBe(0.5);
     expect(state.history[0]).toMatchObject({
       routeRevenue: 0,
       routeCost: 0,
@@ -156,6 +156,18 @@ describe('turn progression', () => {
     expect(report.traitFund).toBe(0);
     expect(state._lastTraitFund).toBe(0);
     expect(state.history[0].traitFund).toBe(0);
+  });
+
+  it('scales spicy bean funding with operations instead of accumulated cash', () => {
+    const state = initState('beijing', 'era3');
+    state.playerTrait = '辣';
+    state.routes = [{ revenue: 100 }];
+
+    state.cash = 100;
+    expect(calcSpicyTraitFund(state)).toBe(3);
+
+    state.cash = 10000;
+    expect(calcSpicyTraitFund(state)).toBe(3);
   });
 
   it('completes branch construction when advancing a quarter', () => {

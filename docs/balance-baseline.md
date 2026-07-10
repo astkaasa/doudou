@@ -88,3 +88,9 @@ The earlier `forcedLiquidations` metric also counted emergency loans. It now cou
 ## Era-end settlement update
 
 The game now settles each scenario once at its advertised horizon. The final-quarter report leads to a mandatory choice between retirement and sandbox continuation, and the choice is persisted. Existing saves already beyond their horizon migrate directly to sandbox continuation so they are not interrupted retroactively. Diagnostic simulations automatically choose sandbox only when an explicit `--turns` horizon extends beyond the scenario deadline.
+
+## First balance change: trait income
+
+The spicy trait now pays a fixed 0.5M plus 2.5% of route operating revenue instead of 2.5% of accumulated cash. On the comparable `balance-v1`, era 4, aggressive, Beijing seed, end cash fell from about 225,695M to 56,911M and non-route income share fell from 55.7% to 2.5%.
+
+This removes the independent exponential income source, but does not finish the economy pass: route operating margin remained about 59.5%, still well above the 15%-35% target band. Route economics are therefore the next subsystem to calibrate.
