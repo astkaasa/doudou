@@ -13,7 +13,7 @@ export function showMainQuestPanel(state) {
   const dimensionRows = MAIN_QUEST_DIMS.map((meta) => renderDimension(progress.dimensions[meta.key], meta)).join('');
   const stages = MAIN_QUEST_STAGES.map((stage) => renderStageDot(stage, stats)).join('');
   const victory = grade ? `<div class="main-quest-victory-card">
-      <strong style="color:${escapeAttr(grade.color)}">${escapeHtml(grade.grade)}</strong>
+      <strong class="grade-${grade.grade.toLowerCase()}">${escapeHtml(grade.grade)}</strong>
       <span>${escapeHtml(grade.title)}</span>
       <small>第 ${stats.victoryTurn} 季通关</small>
     </div>` : '';
@@ -57,7 +57,7 @@ export function showMainQuestVictory(data) {
     <h2>苍穹之巅</h2>
     <p>航空帝国已成</p>
     <div class="main-quest-victory-dims">${MAIN_QUEST_DIMS.map((meta) => renderVictoryDimension(data.dimensions?.[meta.key], meta)).join('')}</div>
-    <div class="main-quest-grade" style="color:${escapeAttr(grade.color)}">${escapeHtml(grade.grade)}</div>
+    <div class="main-quest-grade grade-${grade.grade.toLowerCase()}">${escapeHtml(grade.grade)}</div>
     <strong>${escapeHtml(grade.title)}</strong>
     <small>经营 ${Number(data.turnsPlayed) || 0} 季达成通关 · 累计利润 ${fmt(data.totalProfit || 0)}</small>
     <div class="main-quest-victory-actions">
@@ -78,14 +78,14 @@ export function closeMainQuestOverlay(overlay = null) {
 export function showVictoryEnding(state) {
   const grade = VICTORY_GRADES.find((item) => item.grade === state?.mainQuest?.victoryGrade) || VICTORY_GRADES[VICTORY_GRADES.length - 1];
   showModal(`<div class="gameover">
-    <h1 style="color:#fbbf24">苍穹之巅</h1>
-    <div class="main-quest-grade" style="color:${escapeAttr(grade.color)}">${escapeHtml(grade.grade)}</div>
-    <p style="color:#fbbf24;font-weight:800">${escapeHtml(grade.title)}</p>
+    <h1 class="victory-title">苍穹之巅</h1>
+    <div class="main-quest-grade grade-${grade.grade.toLowerCase()}">${escapeHtml(grade.grade)}</div>
+    <p class="victory-subtitle">${escapeHtml(grade.title)}</p>
     <p>你的航空帝国已然建成。</p>
     <p>经营了 ${Number(state.turnsPlayed) || 0} 个季度</p>
     <p>最终资金：${fmt(state.cash || 0)} · 累计利润：${fmt(state.totalProfit || 0)}</p>
     <p>拥有 ${(state.routes || []).length} 条航线 · ${(state.fleet || []).length} 架飞机</p>
-    <button class="btn btn-primary" data-action="reload-page" style="margin-top:16px;padding:10px 32px">重新开始</button>
+    <button class="btn btn-primary btn-dialog-primary" data-action="reload-page">重新开始</button>
   </div>`);
 }
 
@@ -106,7 +106,7 @@ function renderDimension(dimension, meta) {
       <b>${formatDimensionValue(dimension, meta.key)}</b>
       <small>/ ${formatDimensionTarget(dimension, meta.key)}</small>
     </div>
-    <div class="main-quest-progress"><i style="width:${pct.toFixed(1)}%"></i></div>
+    <progress class="main-quest-progress" max="100" value="${pct.toFixed(1)}" aria-label="${escapeAttr(meta.label)}完成度"></progress>
   </div>`;
 }
 

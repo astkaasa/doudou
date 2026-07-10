@@ -58,7 +58,7 @@ export function showOperationsPanel(state) {
     </div>`;
   }
 
-  html += '<div style="margin-top:16px;text-align:center"><button class="btn btn-primary" data-action="close-modal" style="padding:8px 32px">关闭</button></div>';
+  html += '<div class="modal-actions modal-actions-center"><button class="btn btn-primary btn-dialog-primary" data-action="close-modal">关闭</button></div>';
   showModal(`<div class="ops-modal">${html}</div>`);
 }
 

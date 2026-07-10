@@ -28,7 +28,7 @@ export function showMilestoneList(state) {
       <h2>奖杯陈列室</h2>
       <div class="milestone-progress">
         <span>收集进度</span>
-        <div class="milestone-progress-track"><div style="width:${pct}%"></div></div>
+        <progress class="milestone-progress-track" max="100" value="${pct}" aria-label="里程碑收集进度"></progress>
         <strong>${stats.unlocked} / ${stats.total}</strong>
       </div>
     </div>
@@ -112,7 +112,7 @@ function buildToastHtml(list) {
 
 function renderTrophy(level, unlocked, size) {
   const material = TROPHY_MATERIALS[level] || TROPHY_MATERIALS[1];
-  return `<span class="trophy trophy-lv-${level} ${unlocked ? '' : 'locked'}" style="width:${size}px;height:${size}px">
+  return `<span class="trophy trophy-size-${size} trophy-lv-${level} ${unlocked ? '' : 'locked'}">
     <svg viewBox="0 0 56 56" width="${size}" height="${size}" aria-hidden="true">
       <path d="M16 10 L14 30 Q14 42 28 42 Q42 42 42 30 L40 10 Z" fill="${material.fill}" stroke="${material.stroke}" stroke-width="1.5"/>
       <path d="M16 14 Q8 14 8 22 Q8 30 14 30" fill="none" stroke="${material.stroke}" stroke-width="2" stroke-linecap="round"/>

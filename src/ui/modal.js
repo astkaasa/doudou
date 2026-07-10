@@ -6,12 +6,12 @@ let modalReturnFocus = null;
 let modalBackgroundState = [];
 
 export function showModal(html, options = {}) {
-  const widthStyle = options.wide ? 'position:relative;max-width:960px;width:min(960px,95vw)' : 'position:relative';
-  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop"><div class="modal" role="dialog" aria-modal="true" tabindex="-1" style="${widthStyle}">${html}</div></div>`);
+  const widthClass = options.wide ? ' modal-wide' : '';
+  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop"><div class="modal modal-relative${widthClass}" role="dialog" aria-modal="true" tabindex="-1">${html}</div></div>`);
 }
 
 export function showRouteModal(html) {
-  renderModalRoot(`<div class="modal-overlay route-overlay" data-action="modal-backdrop"><div class="modal route-modal" role="dialog" aria-modal="true" tabindex="-1" style="position:relative">${html}</div></div>`);
+  renderModalRoot(`<div class="modal-overlay route-overlay" data-action="modal-backdrop"><div class="modal route-modal modal-relative" role="dialog" aria-modal="true" tabindex="-1">${html}</div></div>`);
 }
 
 export function renderModalRoot(html) {

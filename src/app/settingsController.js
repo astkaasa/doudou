@@ -45,7 +45,7 @@ export function createSettingsController(app, storage = localStorage) {
         </span>
         <input type="checkbox" data-action="toggle-map-boundaries" ${checked}>
       </label>
-      <div style="margin-top:14px;display:flex;justify-content:flex-end">
+      <div class="modal-actions">
         <button class="btn btn-primary" data-action="close-modal">完成</button>
       </div>`);
   }

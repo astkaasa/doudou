@@ -9,10 +9,10 @@ export function showBranchBanner(state) {
   banner.innerHTML = `
     <div class="branch-title">📍 选择分部城市</div>
     <div class="branch-hint">点击地图上的城市开设分部（费用 ${fmt(cost)}）</div>
-    <div id="branch-selected-info" class="branch-selected" style="display:none">已选择: <span id="branch-selected-name" class="branch-name"></span></div>
-    <div style="margin-top:14px;display:flex;gap:10px;justify-content:center">
-      <button class="btn" style="background:#334155;color:#e0e8f0;padding:8px 20px" data-action="cancel-branch-select">← 取消</button>
-      <button class="btn btn-success" id="branch-confirm-btn" style="padding:8px 32px;display:none" data-action="confirm-branch">确认开设</button>
+    <div id="branch-selected-info" class="branch-selected" hidden>已选择: <span id="branch-selected-name" class="branch-name"></span></div>
+    <div class="selection-actions">
+      <button class="btn btn-secondary selection-cancel" data-action="cancel-branch-select">← 取消</button>
+      <button class="btn btn-success selection-confirm" id="branch-confirm-btn" data-action="confirm-branch" hidden>确认开设</button>
     </div>
   `;
   document.body.appendChild(banner);
@@ -28,6 +28,6 @@ export function showSelectedBranch(cityName) {
   const btnEl = byId('branch-confirm-btn');
   const infoEl = byId('branch-selected-info');
   if (nameEl) nameEl.textContent = cityName;
-  if (btnEl) btnEl.style.display = '';
-  if (infoEl) infoEl.style.display = '';
+  if (btnEl) btnEl.hidden = false;
+  if (infoEl) infoEl.hidden = false;
 }

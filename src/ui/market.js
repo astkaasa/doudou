@@ -70,5 +70,5 @@ export function renderMarketCard(state, city) {
 
 function renderMarketBar(label, value, displayValue) {
   const pct = Math.max(0, Math.min(100, Math.round(value)));
-  return `<div class="market-bar"><span>${label}</span><div><i style="width:${pct}%"></i></div><b>${displayValue}</b></div>`;
+  return `<div class="market-bar"><span>${label}</span><progress max="100" value="${pct}" aria-label="${escapeAttr(label)}"></progress><b>${displayValue}</b></div>`;
 }

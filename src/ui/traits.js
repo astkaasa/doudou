@@ -9,7 +9,7 @@ export function showTraitEnvelope(state) {
   if (!Array.isArray(state.pendingTraitChoices)) state.pendingTraitChoices = shufflePlayerTraits(randomSource(state));
   removeTraitOverlay();
   renderModalRoot(`<div id="trait-overlay" role="dialog" aria-modal="true" aria-label="选择航空公司特质" tabindex="-1">
-    <div style="text-align:center">
+    <div class="trait-stage">
       <button class="envelope-wrap" type="button" data-action="open-trait-coins" aria-label="打开神秘信件">
         <span class="envelope-body">
           <span class="envelope-flap"></span>
@@ -27,8 +27,8 @@ export function openTraitCoins(state) {
   if (state && !Array.isArray(state.pendingTraitChoices)) state.pendingTraitChoices = shufflePlayerTraits(randomSource(state));
   const traits = state?.pendingTraitChoices || shufflePlayerTraits();
   overlay.innerHTML = `
-    <div style="text-align:center">
-      <div style="color:#fbbf24;font-size:18px;font-weight:700;margin-bottom:24px">请随机选择一粒金豆</div>
+    <div class="trait-stage">
+      <div class="trait-prompt">请随机选择一粒金豆</div>
       <div class="coins-stage" id="coins-stage">
         ${traits.map((trait, index) => `
           <button class="coin" type="button" data-action="select-trait-coin" data-trait="${escapeAttr(trait)}" data-coin-index="${index}" aria-label="选择第 ${index + 1} 粒金豆">
@@ -39,7 +39,7 @@ export function openTraitCoins(state) {
           </button>
         `).join('')}
       </div>
-      <div style="color:#7ba3cc;font-size:12px;margin-top:20px">金豆豆，银豆豆，不如我家的辣豆豆</div>
+      <div class="trait-caption">金豆豆，银豆豆，不如我家的辣豆豆</div>
     </div>`;
 }
 
@@ -48,7 +48,7 @@ export function revealSelectedTrait(trait, coinIndex) {
   const info = PLAYER_TRAITS[trait];
   if (!overlay || !info) return;
   overlay.querySelectorAll('.coin').forEach((coin) => {
-    coin.style.pointerEvents = 'none';
+    coin.classList.add('interaction-locked');
     if (coin.dataset.coinIndex === String(coinIndex)) {
       const inner = byId(`coin-inner-${coinIndex}`);
       if (inner) inner.classList.add('flipped');
@@ -59,11 +59,11 @@ export function revealSelectedTrait(trait, coinIndex) {
   setTimeout(() => {
     if (!overlay.isConnected) return;
     overlay.innerHTML = `
-      <div style="text-align:center;animation:fadeInUp 0.5s ease-out">
-        <div style="font-size:48px;margin-bottom:8px">🪙</div>
-        <div style="font-size:28px;font-weight:700;margin:16px 0 8px;color:${info.color}">「${escapeHtml(trait)}」— ${escapeHtml(info.name)}</div>
-        <p style="color:#7ba3cc;font-size:13px;line-height:1.6;max-width:360px">${escapeHtml(info.desc)}</p>
-        <button class="btn btn-primary" type="button" data-action="confirm-trait" data-trait="${escapeAttr(trait)}" style="padding:10px 40px;font-size:15px;border-radius:8px;margin-top:16px">轰~隆隆！ ☁</button>
+      <div class="trait-stage trait-result" data-trait="${escapeAttr(trait)}">
+        <div class="trait-result-icon">🪙</div>
+        <div class="trait-result-title">「${escapeHtml(trait)}」— ${escapeHtml(info.name)}</div>
+        <p class="trait-result-desc">${escapeHtml(info.desc)}</p>
+        <button class="btn btn-primary trait-confirm" type="button" data-action="confirm-trait" data-trait="${escapeAttr(trait)}">轰~隆隆！ ☁</button>
       </div>`;
   }, 1000);
 }

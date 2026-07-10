@@ -4,28 +4,27 @@ import { describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const INLINE_STYLE_BUDGET = {
-  'src/app/networkController.js': 2,
-  'src/app/settingsController.js': 3,
-  'src/ui/branches.js': 4,
   'src/ui/branchModals.js': 28,
   'src/ui/financeModals.js': 24,
   'src/ui/fleetModals.js': 8,
   'src/ui/hud.js': 1,
-  'src/ui/mainQuest.js': 7,
   'src/ui/map.js': 18,
-  'src/ui/market.js': 1,
-  'src/ui/milestones.js': 2,
-  'src/ui/modal.js': 2,
-  'src/ui/operations.js': 2,
   'src/ui/panel.js': 9,
   'src/ui/reportModals.js': 41,
   'src/ui/routeModals.js': 74,
   'src/ui/season.js': 1,
   'src/ui/stockModals.js': 2,
   'src/ui/subsidiaryModals.js': 4,
-  'src/ui/traits.js': 9,
   'src/ui/tutorial.js': 6,
-  'src/ui/versionLog.js': 3,
+};
+const STYLE_MUTATION_BUDGET = {
+  'src/app/sessionController.js': 1,
+  'src/ui/angelInvestment.js': 2,
+  'src/ui/hud.js': 3,
+  'src/ui/map.js': 16,
+  'src/ui/modal.js': 3,
+  'src/ui/onboarding.js': 10,
+  'src/ui/tutorial.js': 5,
 };
 
 describe('UI style ownership', () => {
@@ -40,10 +39,22 @@ describe('UI style ownership', () => {
       expect(countInlineStyles(relative), relative).toBeLessThanOrEqual(INLINE_STYLE_BUDGET[relative] || 0);
     });
   });
+
+  it('does not increase direct DOM style mutation debt', () => {
+    const files = listJavaScriptFiles(path.join(ROOT, 'src'));
+    files.forEach((file) => {
+      const relative = path.relative(ROOT, file);
+      expect(countStyleMutations(relative), relative).toBeLessThanOrEqual(STYLE_MUTATION_BUDGET[relative] || 0);
+    });
+  });
 });
 
 function countInlineStyles(relativePath) {
-  return (fs.readFileSync(path.join(ROOT, relativePath), 'utf8').match(/style="/g) || []).length;
+  return (fs.readFileSync(path.join(ROOT, relativePath), 'utf8').match(/\sstyle="/g) || []).length;
+}
+
+function countStyleMutations(relativePath) {
+  return (fs.readFileSync(path.join(ROOT, relativePath), 'utf8').match(/\.style\./g) || []).length;
 }
 
 function listJavaScriptFiles(directory) {

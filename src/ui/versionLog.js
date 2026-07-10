@@ -3,10 +3,10 @@ import { escapeHtml } from './html.js';
 import { renderModalRoot } from './modal.js';
 
 const VERSION_SECTIONS = [
-  ['new', '新功能', '#fbbf24'],
-  ['balance', '平衡调整', '#4ade80'],
-  ['fix', '修复', '#93c5fd'],
-  ['ui', '界面', '#c084fc'],
+  ['new', '新功能'],
+  ['balance', '平衡调整'],
+  ['fix', '修复'],
+  ['ui', '界面'],
 ];
 
 export function showVersionLog() {
@@ -15,7 +15,7 @@ export function showVersionLog() {
 
   const body = VERSION_LOG.map(renderVersionEntry).join('');
   renderModalRoot(`<div class="modal-overlay version-log-overlay" data-action="modal-backdrop">
-    <div class="modal version-log-modal" style="position:relative">
+    <div class="modal version-log-modal modal-relative">
       <button class="version-log-close" type="button" data-action="close-modal" title="关闭">✕</button>
       <div class="version-log-head">
         <h2>更新日志</h2>
@@ -30,7 +30,7 @@ export function showVersionLog() {
 }
 
 function renderVersionEntry(entry) {
-  const body = VERSION_SECTIONS.map(([key, label, color]) => renderSection(entry[key], label, color)).join('');
+  const body = VERSION_SECTIONS.map(([key, label]) => renderSection(entry[key], key, label)).join('');
   return `<article class="version-log-entry">
     <div class="version-log-entry-head">
       <strong>v${escapeHtml(entry.ver)}</strong>
@@ -40,13 +40,13 @@ function renderVersionEntry(entry) {
   </article>`;
 }
 
-function renderSection(items, label, color) {
+function renderSection(items, key, label) {
   if (!Array.isArray(items) || items.length === 0) return '';
   const rows = items
-    .map((item) => `<div class="version-log-item" style="--version-section-color:${color}">• ${escapeHtml(item)}</div>`)
+    .map((item) => `<div class="version-log-item">• ${escapeHtml(item)}</div>`)
     .join('');
-  return `<section class="version-log-section">
-    <h3 style="color:${color}">${escapeHtml(label)}</h3>
+  return `<section class="version-log-section version-log-section-${key}">
+    <h3>${escapeHtml(label)}</h3>
     ${rows}
   </section>`;
 }
