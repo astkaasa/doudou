@@ -126,18 +126,18 @@ function planeTypeLabel(type) {
 export function showFleetPanel(state) {
   let html = '<h2>机队管理</h2>';
   if (state.fleet.length === 0) {
-    html += '<p style="color:#556">尚未拥有飞机，请先购买。</p>';
+    html += '<p class="modal-empty modal-empty-compact">尚未拥有飞机，请先购买。</p>';
   } else {
     state.fleet.forEach((p) => {
       const assignedRoute = state.routes.find((r) => (r.assignedPlanes || []).includes(p.uid));
       const status = p.delivering ? `交付中 (${p.deliverIn}回合)` : assignedRoute ? `${getCity(assignedRoute.from).name}→${getCity(assignedRoute.to).name}` : '空闲';
-      const statusColor = p.delivering ? '#fbbf24' : assignedRoute ? '#4ade80' : '#556';
-      const leaseTag = p.isLease ? `<span class="lease-badge">R</span><span style="color:#d97706;font-size:10px;margin-left:4px">租${p.leaseTurns || 0}/${p.maxLeaseTurns || 40}季</span>` : '';
+      const statusClass = p.delivering ? 'status-delivering' : assignedRoute ? 'status-assigned' : 'status-idle';
+      const leaseTag = p.isLease ? `<span class="lease-badge">R</span><span class="fleet-lease-meta">租${p.leaseTurns || 0}/${p.maxLeaseTurns || 40}季</span>` : '';
       const action = p.isLease ? 'return-lease' : 'sell-plane';
       const actionLabel = p.isLease ? '退租' : '出售';
-      html += `<div class="fleet-item"><div><span class="name">${p.name}</span>${leaseTag}<span style="color:#556;font-size:11px;margin-left:6px">机龄${p.age.toFixed(1)}年</span></div><div style="text-align:right"><span class="status" style="color:${statusColor}">${status}</span>${!p.delivering && !assignedRoute ? `<button class="btn btn-danger btn-sm" style="margin-left:6px" data-action="${action}" data-uid="${p.uid}">${actionLabel}</button>` : ''}</div></div>`;
+      html += `<div class="fleet-item"><div class="fleet-item-main"><span class="name">${escapeHtml(p.name)}</span>${leaseTag}<span class="fleet-age">机龄${p.age.toFixed(1)}年</span></div><div class="fleet-item-side"><span class="status ${statusClass}">${escapeHtml(status)}</span>${!p.delivering && !assignedRoute ? `<button class="btn btn-danger btn-sm" data-action="${action}" data-uid="${escapeAttr(p.uid)}">${actionLabel}</button>` : ''}</div></div>`;
     });
   }
-  html += '<div style="margin-top:12px;text-align:right"><button class="btn" style="background:#334155;color:#e0e8f0" data-action="close-modal">关闭</button></div>';
+  html += '<div class="modal-actions"><button class="btn btn-secondary" data-action="close-modal">关闭</button></div>';
   showModal(html);
 }

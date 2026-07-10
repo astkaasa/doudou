@@ -53,7 +53,7 @@ export function showSubsidiaryOverview(state, cityId = selectedCityId) {
 
 export function showCompanyValueModal(state) {
   const value = calcCompanyValue(state);
-  const netColor = value.totalNetWorth >= 0 ? '#4ade80' : '#f87171';
+  const netClass = value.totalNetWorth >= 0 ? 'text-positive' : 'text-danger';
   showModal(`<div class="company-value-modal">
     <h2>公司市值</h2>
     <div class="report-section">
@@ -61,10 +61,10 @@ export function showCompanyValueModal(state) {
       <div class="report-row"><span>自有飞机估值</span><span>${fmt(value.fleetValue)}</span></div>
       <div class="report-row"><span>子公司总值</span><span>${fmt(value.subValue)}</span></div>
       <div class="report-row"><span>证券持仓市值</span><span>${fmt(value.stockValue)}</span></div>
-      <div class="report-row"><span>贷款负债</span><span style="color:#f87171">-${fmt(value.loanDebt)}</span></div>
-      <div class="report-total" style="color:${netColor}">净资产: ${fmt(value.totalNetWorth)}</div>
+      <div class="report-row"><span>贷款负债</span><span class="text-danger">-${fmt(value.loanDebt)}</span></div>
+      <div class="report-total ${netClass}">净资产: ${fmt(value.totalNetWorth)}</div>
     </div>
-    <div style="text-align:right"><button class="btn btn-primary" type="button" data-action="close-modal">关闭</button></div>
+    <div class="modal-actions"><button class="btn btn-primary" type="button" data-action="close-modal">关闭</button></div>
   </div>`);
 }
 
@@ -80,6 +80,7 @@ export function showSubsidiaryConfirm(state, mode, cityId, type) {
     ? `${type === 'airport' ? '退出投资' : '出售'}${cfg.name}`
     : `${isAcquire ? '收购' : type === 'airport' ? '投资共建' : '新设'}${cfg.name}`;
   const cashAfter = isSell ? state.cash + cost : state.cash - cost - fee;
+  const cashClass = cashAfter >= 0 ? 'text-positive' : 'text-danger';
   const action = isSell ? 'execute-sub-sell' : 'execute-sub-open';
   const label = isSell ? `${type === 'airport' ? '确认回购' : '确认出售'} ${fmt(cost)}` : `确认${isAcquire ? '收购' : type === 'airport' ? '投资' : '新设'} ${fmt(cost + fee)}`;
   showModal(`<div class="sub-confirm">
@@ -87,7 +88,7 @@ export function showSubsidiaryConfirm(state, mode, cityId, type) {
     <div class="report-section">
       <div class="report-row"><span>${isSell ? '实得金额' : isAcquire ? '收购价格' : '基础成本'}</span><span>${fmt(cost)}</span></div>
       <div class="report-row"><span>手续费</span><span>${fmt(fee)}</span></div>
-      <div class="report-row"><span>操作后现金</span><span style="color:${cashAfter >= 0 ? '#4ade80' : '#f87171'}">${fmt(cashAfter)}</span></div>
+      <div class="report-row"><span>操作后现金</span><span class="${cashClass}">${fmt(cashAfter)}</span></div>
       ${type === 'airport' && isSell ? '<div class="sub-note">机场投资按当前估值 60% 回购退出。</div>' : ''}
       ${type === 'airport' && !isSell ? '<div class="sub-note">机场建设仅可在总部或分部城市投资，可降低同城航线着陆费。</div>' : ''}
     </div>

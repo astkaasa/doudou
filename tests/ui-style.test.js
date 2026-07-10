@@ -4,9 +4,6 @@ import { describe, expect, it } from 'vitest';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const INLINE_STYLE_BUDGET = {
-  'src/ui/branchModals.js': 28,
-  'src/ui/financeModals.js': 24,
-  'src/ui/fleetModals.js': 8,
   'src/ui/hud.js': 1,
   'src/ui/map.js': 18,
   'src/ui/panel.js': 9,
@@ -14,7 +11,6 @@ const INLINE_STYLE_BUDGET = {
   'src/ui/routeModals.js': 74,
   'src/ui/season.js': 1,
   'src/ui/stockModals.js': 2,
-  'src/ui/subsidiaryModals.js': 4,
   'src/ui/tutorial.js': 6,
 };
 const STYLE_MUTATION_BUDGET = {
