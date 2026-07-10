@@ -80,6 +80,14 @@ projectLonLat(lat, lon)
 
 状态字段是 `year`、`quarter`、`turnsPlayed`。没有真实日期、小时、昼夜、晨昏线逻辑。
 
+时代剧本期限为 `(endYear - startYear) * 4` 个季度。到期结算状态统一走 `state.eraSettlement`：
+
+```text
+active -> pending -> continued / retired
+```
+
+`pending` 时不能继续推进季度；玩家必须选择收官或进入沙箱。旧存档迁移和新状态字段归一化在 `src/domain/save.js`，不要根据 `year` 临时重复弹出结算。
+
 报纸事件不要直接改航线票价、品牌或临时塞字段到 route 上。事件影响统一走：
 
 ```js

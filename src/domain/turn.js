@@ -4,6 +4,7 @@ import { advanceBranchConstruction } from './bases.js';
 import { advanceTemporaryModifiers, generateEvents } from './events.js';
 import { advanceFleetAge } from './fleet.js';
 import { BANKRUPTCY_THRESHOLD, SPICY_TRAIT_FUND_RATIO } from './constants.js';
+import { hasPendingEraSettlement, settleEraIfDue } from './eraSettlement.js';
 import { clamp } from './helpers.js';
 import { loanInterest } from './loans.js';
 import { updateMainQuest } from './mainQuest.js';
@@ -14,7 +15,7 @@ import { handleBankruptcy, settleSubsidiaryQuarter } from './subsidiaries.js';
 import { randomSource } from './random.js';
 
 export function advanceTurnState(state) {
-  if (!state || state.gameOver) return null;
+  if (!state || state.gameOver || hasPendingEraSettlement(state)) return null;
   const period = { year: state.year, quarter: state.quarter };
 
   const branchCompleted = advanceBranchConstruction(state);
@@ -91,6 +92,7 @@ export function advanceTurnState(state) {
     angelRescue = Boolean(bankruptcyAction.angelRescue);
   }
   const mainQuestUpdate = state.gameOver || angelRescue ? null : updateMainQuest(state);
+  const eraSettlement = state.gameOver ? null : settleEraIfDue(state);
   return {
     period,
     nextPeriod,
@@ -112,6 +114,7 @@ export function advanceTurnState(state) {
     angelRescue,
     bankruptcyAction,
     mainQuestUpdate,
+    eraSettlement,
   };
 }
 

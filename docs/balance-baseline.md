@@ -62,9 +62,8 @@ Per-system contribution metrics and multi-headquarters sampling support are now 
 
 Before changing economy constants:
 
-1. Define era-end settlement behavior; the simulator currently enforces the advertised horizon because the game itself does not.
-2. Establish target bands for survival, victory timing, mature margin, cash trough, and strategy spread.
-3. Run multi-seed sensitivity sweeps, then change one economic subsystem per commit.
+1. Establish target bands for survival, victory timing, mature margin, cash trough, and strategy spread.
+2. Run multi-seed sensitivity sweeps, then change one economic subsystem per commit.
 
 The full simulator is deterministic, so every outlier can be reproduced from its era, policy, and seed.
 
@@ -85,3 +84,7 @@ The first five-headquarters diagnostic run is intentionally only a one-seed sens
 - In surviving era 4 runs, non-route income contributed roughly 40%-61% of all inflows. The aggressive policy uses the spicy trait, so its cash-proportional trait fund is the primary candidate behind late-game exponential growth.
 
 The earlier `forcedLiquidations` metric also counted emergency loans. It now counts only forced stock, subsidiary, or aircraft sales; emergency borrowing is reported separately.
+
+## Era-end settlement update
+
+The game now settles each scenario once at its advertised horizon. The final-quarter report leads to a mandatory choice between retirement and sandbox continuation, and the choice is persisted. Existing saves already beyond their horizon migrate directly to sandbox continuation so they are not interrupted retroactively. Diagnostic simulations automatically choose sandbox only when an explicit `--turns` horizon extends beyond the scenario deadline.

@@ -1,9 +1,11 @@
 import { normalizePlayerTrait } from '../data/playerTraits.js';
+import { hasPendingEraSettlement, hasRetiredEraSettlement } from '../domain/eraSettlement.js';
 import { byId } from '../domain/helpers.js';
 import { checkMilestones } from '../domain/milestones.js';
 import { loadGameState, saveGameState } from '../domain/save.js';
 import { createSetupState, initState, seedInitialFleet } from '../domain/state.js';
 import { removeBranchBanner } from '../ui/branches.js';
+import { showEraRetirement, showEraSettlement } from '../ui/eraSettlement.js';
 import { focusMapOnCity } from '../ui/map.js';
 import { closeMainQuestOverlay, continueFromVictory, showMainQuestPanel, showVictoryEnding } from '../ui/mainQuest.js';
 import { showMilestoneList } from '../ui/milestones.js';
@@ -99,7 +101,9 @@ export function createSessionController(app) {
       app.renderGame();
       app.scrollPanelToTop();
       restoreContractState(game);
-      showTraitEnvelope(game);
+      if (hasRetiredEraSettlement(game)) showEraRetirement(game);
+      else if (hasPendingEraSettlement(game)) showEraSettlement(game);
+      else showTraitEnvelope(game);
       const loadMessage = result.recoveredFromBackup
         ? '主存档损坏，已从上一份备份恢复：'
         : '存档已载入！';

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
 import { suggestedPrice } from '../src/domain/economy.js';
+import { continueEraInSandbox } from '../src/domain/eraSettlement.js';
 import { advanceTurnState, calculateTurnFinancials, estimateTurnFinancials } from '../src/domain/turn.js';
 import { initState } from '../src/domain/state.js';
 import { openBranch } from '../src/domain/bases.js';
@@ -237,5 +238,28 @@ describe('turn progression', () => {
     expect(report.bankruptcyAction).toMatchObject({ action: 'emergencyLoan' });
     expect(state.loan).toBeGreaterThan(0);
     expect(state.cash).toBeGreaterThanOrEqual(0);
+  });
+
+  it('settles the era after the final advertised quarter', () => {
+    const state = initState('beijing', 'era1');
+    state.ai = [];
+    state.cash = 1000;
+    state.turnsPlayed = 79;
+    state.year = 1979;
+    state.quarter = 4;
+
+    const report = advanceTurnState(state);
+
+    expect(report.eraSettlement).toMatchObject({
+      type: 'era_settlement',
+      eraId: 'era1',
+      deadlineTurn: 80,
+    });
+    expect(state.eraSettlement.status).toBe('pending');
+    expect(advanceTurnState(state)).toBeNull();
+
+    expect(continueEraInSandbox(state).ok).toBe(true);
+    expect(advanceTurnState(state)).not.toBeNull();
+    expect(state.turnsPlayed).toBe(81);
   });
 });

@@ -4,6 +4,7 @@ import { ERAS } from '../data/eras.js';
 import { MEGA_EVENTS } from '../data/megaEvents.js';
 import { PLANES } from '../data/planes.js';
 import { STOCKS, STOCK_SECTORS } from '../data/stocks.js';
+import { ERA_SETTLEMENT_OUTCOMES, ERA_SETTLEMENT_STATUSES, eraSettlementDeadlineTurns } from './eraSettlement.js';
 import { routeKey } from './helpers.js';
 
 const CITY_IDS = new Set(CITIES.map((city) => city.id));
@@ -100,6 +101,7 @@ export function validateGameState(state, options = {}) {
   requireNonNegativeInteger(issues, 'state.turnsPlayed', state.turnsPlayed);
   requirePositiveInteger(issues, 'state.planeIdCounter', state.planeIdCounter);
   validateRandomState(issues, state.rng);
+  validateEraSettlementState(issues, state);
 
   const fleet = requireArray(issues, 'state.fleet', state.fleet);
   const routes = requireArray(issues, 'state.routes', state.routes);
@@ -257,6 +259,47 @@ function validateRandomState(issues, rng) {
     }
   });
   requireNonNegativeInteger(issues, 'state.rng.draws', rng.draws);
+}
+
+function validateEraSettlementState(issues, state) {
+  const settlement = state.eraSettlement;
+  if (!settlement || typeof settlement !== 'object' || Array.isArray(settlement)) {
+    issues.push('state.eraSettlement must be an object');
+    return;
+  }
+  if (!ERA_SETTLEMENT_STATUSES.includes(settlement.status)) {
+    issues.push(`state.eraSettlement.status is invalid: ${String(settlement.status)}`);
+    return;
+  }
+  if (settlement.status === 'active') {
+    if (settlement.settledTurn !== null) issues.push('state.eraSettlement.settledTurn must be null while active');
+    if (settlement.result !== null) issues.push('state.eraSettlement.result must be null while active');
+    return;
+  }
+
+  requirePositiveInteger(issues, 'state.eraSettlement.settledTurn', settlement.settledTurn);
+  const deadline = eraSettlementDeadlineTurns(state);
+  if (deadline !== null && settlement.settledTurn < deadline) {
+    issues.push('state.eraSettlement.settledTurn must not precede the era deadline');
+  }
+  const result = settlement.result;
+  if (!result || typeof result !== 'object' || Array.isArray(result)) {
+    issues.push('state.eraSettlement.result must be an object after settlement');
+    return;
+  }
+  if (!ERA_SETTLEMENT_OUTCOMES.includes(result.outcome)) {
+    issues.push(`state.eraSettlement.result.outcome is invalid: ${String(result.outcome)}`);
+  }
+  requirePositiveInteger(issues, 'state.eraSettlement.result.deadlineTurn', result.deadlineTurn);
+  ['companyValue', 'cash', 'totalProfit'].forEach((field) => {
+    requireFinite(issues, `state.eraSettlement.result.${field}`, result[field]);
+  });
+  ['completedStages', 'routes', 'fleet', 'baseRegions'].forEach((field) => {
+    requireNonNegativeInteger(issues, `state.eraSettlement.result.${field}`, result[field]);
+  });
+  if (settlement.status === 'retired' && state.gameOver !== true) {
+    issues.push('state.gameOver must be true after era retirement');
+  }
 }
 
 function isBaseCity(state, cityId) {

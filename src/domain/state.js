@@ -2,6 +2,7 @@ import { AI_PROFILES } from '../data/aiProfiles.js';
 import { initCityStates } from '../data/cityEraData.js';
 import { ERAS } from '../data/eras.js';
 import { DEFAULT_COMPANY_NAME } from './constants.js';
+import { createEraSettlementState } from './eraSettlement.js';
 import { availablePlaneTemplates } from './fleet.js';
 import { createMainQuestState } from './mainQuest.js';
 import { STAFF_HQ_BASE, calcStaffNeeded, syncStaffToNeeded } from './operations.js';
@@ -91,6 +92,7 @@ function createBaseState(era, overrides = {}) {
     consecutiveProfit: 0,
     milestones: {},
     mainQuest: createMainQuestState(),
+    eraSettlement: createEraSettlementState(),
     bankruptRescued: false,
     gameOver: false,
     selectedCity: null,

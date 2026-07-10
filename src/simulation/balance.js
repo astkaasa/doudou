@@ -1,6 +1,7 @@
 import { CITIES } from '../data/cities.js';
 import { ERAS } from '../data/eras.js';
 import { calcLoadFactor, routeCost, routeRevenue, suggestedPrice } from '../domain/economy.js';
+import { continueEraInSandbox } from '../domain/eraSettlement.js';
 import { availablePlaneTemplates, buyPlane, quotePlaneAcquisition } from '../domain/fleet.js';
 import { cityDist, getCity, routeKey } from '../domain/helpers.js';
 import { assertGameState } from '../domain/invariants.js';
@@ -149,6 +150,7 @@ export function simulateGame(options = {}) {
 
     const report = advanceTurnState(state);
     if (!report) break;
+    if (report.eraSettlement && state.turnsPlayed < maxTurns) continueEraInSandbox(state);
     if (report.angelRescue) {
       const rescue = applyAngelInvestment(state, pickAngelInvestmentAmount(state));
       context.contributions.rescueCapital += rescue.ok ? rescue.amount : 0;
@@ -525,6 +527,8 @@ function buildSimulationResult(state, era, policy, seed, maxTurns, context) {
     questStage: quest.currentStage,
     questStagesCompleted: quest.stageCompleted.length,
     questProgress: quest.progress?.dimensions || null,
+    eraSettlementStatus: state.eraSettlement.status,
+    eraSettlementOutcome: state.eraSettlement.result?.outcome || null,
     endCash: round(state.cash),
     minCash: round(context.minCash),
     maxCash: round(context.maxCash),

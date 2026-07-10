@@ -322,6 +322,28 @@ describe('save migration', () => {
     expect(result.state._mainQuestOnboardShown).toBe(false);
   });
 
+  it('migrates pre-settlement saves without interrupting completed campaigns', () => {
+    const beforeDeadline = loadGameState(memoryStorage(JSON.stringify({
+      v: 13,
+      g: { era: 'era3', hq: 'beijing', turnsPlayed: 79, routes: [], fleet: [] },
+    })));
+    const afterDeadline = loadGameState(memoryStorage(JSON.stringify({
+      v: 13,
+      g: { era: 'era3', hq: 'beijing', turnsPlayed: 80, routes: [], fleet: [] },
+    })));
+
+    expect(beforeDeadline.state.eraSettlement).toEqual({
+      status: 'active',
+      settledTurn: null,
+      result: null,
+    });
+    expect(afterDeadline.state.eraSettlement).toMatchObject({
+      status: 'continued',
+      settledTurn: 80,
+      result: { eraId: 'era3', deadlineTurn: 80 },
+    });
+  });
+
   it('normalizes subsidiary fields from old saves', () => {
     const raw = JSON.stringify({
       v: 10,

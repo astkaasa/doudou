@@ -1,6 +1,7 @@
 import { getCity, routeKey, STORAGE_KEYS } from './helpers.js';
 import { normalizeCityStates } from '../data/cityEraData.js';
 import { suggestedPrice } from './economy.js';
+import { normalizeEraSettlementState } from './eraSettlement.js';
 import { syncMegaEventState } from './megaEvents.js';
 import { normalizeMainQuestState } from './mainQuest.js';
 import { normalizeMilestoneState } from './milestones.js';
@@ -11,7 +12,7 @@ import { normalizeSubsidiaryState } from './subsidiaries.js';
 import { PLAYER_TRAIT_SYMBOLS, normalizePlayerTrait } from '../data/playerTraits.js';
 import { legacyRandomSeed, normalizeRandomState } from './random.js';
 
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 export const PERSISTED_GAME_STATE_FIELDS = Object.freeze([
   'companyName',
@@ -75,6 +76,7 @@ export const PERSISTED_GAME_STATE_FIELDS = Object.freeze([
   'consecutiveProfit',
   'milestones',
   'mainQuest',
+  'eraSettlement',
   'bankruptRescued',
   'gameOver',
   'planeIdCounter',
@@ -109,6 +111,7 @@ const SAVE_MIGRATIONS = Object.freeze({
   10: preserveLegacyState,
   11: migrateV11ToV12,
   12: migrateV12ToV13,
+  13: migrateV13ToV14,
 });
 
 export function saveGameState(state, storage = localStorage) {
@@ -224,6 +227,11 @@ function migrateV12ToV13(state) {
   return state;
 }
 
+function migrateV13ToV14(state) {
+  normalizeEraSettlementState(state);
+  return state;
+}
+
 function saveSummary(result) {
   const state = result.state;
   return {
@@ -269,6 +277,7 @@ function normalizeUpstreamStateFields(state) {
   state.cityStates = normalizeCityStates(state);
   normalizeMilestoneState(state);
   normalizeMainQuestState(state);
+  normalizeEraSettlementState(state);
   normalizeStockState(state);
   normalizeOperationsState(state);
   normalizeSubsidiaryState(state);

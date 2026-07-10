@@ -46,6 +46,7 @@ describe('game state invariants', () => {
     const state = initState('beijing', 'era3');
     seedInitialFleet(state);
     state.cash = Number.NaN;
+    state.eraSettlement = { status: 'unknown', settledTurn: 1, result: null };
     state.branches = ['missing-city'];
     state.routes = [{
       from: 'missing-city',
@@ -59,6 +60,7 @@ describe('game state invariants', () => {
 
     expect(issues).toEqual(expect.arrayContaining([
       'state.cash must be finite',
+      'state.eraSettlement.status is invalid: unknown',
       'state.branches[0] references unknown city missing-city',
       'state.routes[0].from references unknown city missing-city',
       'state.routes[0].price must be a positive finite number',

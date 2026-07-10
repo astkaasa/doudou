@@ -67,4 +67,17 @@ describe('balance simulation', () => {
   it('rejects unknown headquarters explicitly', () => {
     expect(() => simulateGame({ hq: 'missing-city', maxTurns: 1 })).toThrow('Unknown headquarters');
   });
+
+  it('continues automatically when a diagnostic horizon exceeds the era', () => {
+    const result = simulateGame({
+      eraId: 'era1',
+      policyId: 'conservative',
+      seed: 'post-era-diagnostic',
+      maxTurns: 82,
+    });
+
+    expect(result.turnsPlayed).toBe(82);
+    expect(result.eraSettlementStatus).toBe('continued');
+    expect(result.eraSettlementOutcome).toBeTypeOf('string');
+  });
 });

@@ -1,9 +1,12 @@
 import { applyAngelInvestment } from '../domain/angelInvestment.js';
+import { continueEraInSandbox, hasPendingEraSettlement, retireAtEraEnd } from '../domain/eraSettlement.js';
 import { fmt, getCity } from '../domain/helpers.js';
 import { hasPendingContracts, setOpsTier, signBonusContract, signRecruitContract } from '../domain/operations.js';
 import { updateRouteMetrics } from '../domain/routes.js';
+import { saveGameState } from '../domain/save.js';
 import { advanceTurnState } from '../domain/turn.js';
 import { clearAngelTimers, lockAngelSlot, showAngelInvestment, showAngelSlotPhase } from '../ui/angelInvestment.js';
+import { showEraRetirement, showEraSettlement } from '../ui/eraSettlement.js';
 import { showMainQuestStageNotification, showMainQuestVictory } from '../ui/mainQuest.js';
 import { closeModalRoot, showBanner, showModal } from '../ui/modal.js';
 import {
@@ -57,12 +60,45 @@ export function createTurnController(app) {
     clearAngelTimers();
     closeModalRoot();
     app.renderGame();
+    if (hasPendingEraSettlement(game)) {
+      showEraSettlement(game);
+      return;
+    }
     showBanner(`辣豆基金注资 ${fmt(result.amount)}，重振旗鼓`, '#d97706');
+  }
+
+  function openEraSettlement() {
+    const game = state();
+    if (!game || !hasPendingEraSettlement(game)) return;
+    closeModalRoot();
+    showEraSettlement(game);
+  }
+
+  function continueEra() {
+    const game = state();
+    if (!game || !continueEraInSandbox(game).ok) return;
+    persistEraChoice(game);
+    closeModalRoot();
+    app.renderGame();
+    showBanner('沙箱模式 · 时代限制已解除', '#16a34a');
+  }
+
+  function retireEra() {
+    const game = state();
+    if (!game || !retireAtEraEnd(game).ok) return;
+    persistEraChoice(game);
+    closeModalRoot();
+    app.renderGame();
+    showEraRetirement(game);
   }
 
   function advanceTurn(force = false) {
     const game = state();
     if (!game || game.gameOver) return;
+    if (hasPendingEraSettlement(game)) {
+      showEraSettlement(game);
+      return;
+    }
     if (hasPendingContracts(game)) {
       showAdvanceContractGuide(game);
       return;
@@ -112,6 +148,7 @@ export function createTurnController(app) {
     if (isReportOnboarding) window.setTimeout(showQuarterSummary, 400);
     else showQuarterSummary();
     app.updateMilestones();
+    if (report.eraSettlement) return;
     if (report.mainQuestUpdate?.type === 'stage_complete') {
       showMainQuestStageNotification(report.mainQuestUpdate);
     } else if (report.mainQuestUpdate?.type === 'victory') {
@@ -151,6 +188,14 @@ export function createTurnController(app) {
     if (type) focusContractFromPanel(game, type);
   }
 
+  function persistEraChoice(game) {
+    try {
+      saveGameState(game);
+    } catch {
+      // The settlement choice remains valid for this session when storage is unavailable.
+    }
+  }
+
   return {
     clickActions: {
       'start-angel-slot': () => {
@@ -183,6 +228,9 @@ export function createTurnController(app) {
       },
       'advance-contract-guide': focusNextPendingContract,
       'advance-turn': () => advanceTurn(),
+      'open-era-settlement': openEraSettlement,
+      'continue-era-sandbox': continueEra,
+      'retire-era': retireEra,
       'confirm-advance-without-routes': () => {
         app.closeModal();
         advanceTurn(true);
