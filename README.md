@@ -35,6 +35,7 @@ npm run build
 npm run check
 npm run balance -- --runs 20
 npm run balance:acceptance
+npm run long-game:baseline
 npm run data:airports
 npm run data:audit
 npm run release:verify
@@ -45,6 +46,7 @@ npm run upstream:check
 首次运行浏览器测试前执行 `npx playwright install chromium`；`npm run test:e2e` 会自动启动独立的 Vite 服务，并在桌面与手机视口验证核心经营流程。
 `npm run balance` 会用固定种子批量运行四时代和多种经营策略；可使用 `--era era3`、`--policy balanced`、`--turns 40` 或 `--json` 缩小范围或输出明细。使用 `--hq beijing,london` 可对比指定总部，`--regional` 会覆盖北京、迪拜、伦敦、纽约和悉尼五个区域样本。
 `npm run balance:acceptance` 会并行运行四时代、四策略、五总部、每组合 20 个固定种子的正式验收矩阵，并自动对照 `docs/balance-targets.md`。可用 `--workers 4` 控制并发，用 `--output /tmp/balance.json` 保存可复现明细；`--strict` 会在矩阵不完整或指标越界时返回非零状态。
+`npm run long-game:baseline` 会用固定种子生成 200 季、60—90 条航线和 80—120 架飞机的传奇时代密集经营状态，并记录存档大小与季度推进耗时，供中后期管理界面回归使用。
 `npm run data:airports` 使用仓库内固定的 OurAirports 精简快照重建机场源码和审计报告，普通构建不会联网；`npm run data:audit` 同时校验城市来源、历史市场、机场匹配、稳定 ID 和抽象回退。
 `npm run release:verify` 会运行构建、版本与 standalone 校验、正式平衡验收、双视口 E2E，并用 `file://` 直接启动玩家单文件产物。推送与 `GAME_VERSION` 一致的 `v*` tag 后，GitHub Actions 会上传 `dist/standalone.html` 和 SHA-256 发布清单，并创建对应 Release。
 `npm run upstream:check` 会从线上入口递归发现 HTML、CSS、JavaScript、manifest 和浏览器实际加载的同源资源，只报告与 `upstream/` 的差异；第三方外链只进入报告，不会复制。确认差异后使用 `npm run upstream:sync` 原子更新快照；可加 `-- --no-browser` 只做静态发现，或 `-- --report upstream-report.json` 保存报告。
@@ -64,6 +66,7 @@ npm run upstream:check
 - `docs/airport-city-system-design.md`：城市数据重整、机场领域模型、存档兼容和分阶段实施方案。
 - `docs/event-news-system.md`：随机新闻、固定日期新闻、历史盛事和机型目录的职责与扩充规则。
 - `docs/codebase-review.md`：整体产品与工程 Review 结论、已修问题、当前约束和后续立项条件。
+- `docs/long-game-baseline.md`：中后期密集经营夹具、性能基线和后续验收要求。
 - `docs/airport-slot-feasibility.md`：时刻资产交易的阶段 5 可行性结论、延后原因和后续立项条件。
 - `docs/visual-regression.md`：桌面与手机界面的视觉回归场景矩阵和失败标准。
 - `docs/upstream-sync.md`：上游资源图发现、漂移检查、原子同步和审查流程。

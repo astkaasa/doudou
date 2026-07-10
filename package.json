@@ -13,6 +13,7 @@
     "test:e2e:headed": "playwright test --headed",
     "balance": "node scripts/simulate-balance.mjs",
     "balance:acceptance": "node scripts/accept-balance.mjs",
+    "long-game:baseline": "node scripts/benchmark-long-game.mjs",
     "data:sync:cities": "python3 scripts/sync-city-data.py --write",
     "data:sync:airports": "node scripts/build-airport-data.mjs --download --write",
     "data:cities": "node scripts/generate-city-data.mjs",
