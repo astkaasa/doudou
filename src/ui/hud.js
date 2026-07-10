@@ -18,12 +18,12 @@ export function updateHUD(state) {
   if (traitBadge) {
     const trait = PLAYER_TRAITS[state.playerTrait];
     if (trait) {
-      traitBadge.style.display = 'inline-flex';
+      traitBadge.hidden = false;
       traitBadge.className = 'hud-trait';
       traitBadge.innerHTML = `${trait.symbol}<span class="trait-tooltip">${trait.name}</span>`;
       traitBadge.title = `${trait.name}：${trait.desc}`;
     } else {
-      traitBadge.style.display = 'none';
+      traitBadge.hidden = true;
       traitBadge.className = '';
       traitBadge.textContent = '';
       traitBadge.removeAttribute('title');
@@ -88,10 +88,10 @@ export function updateHUD(state) {
   const loanWrap = byId('hud-loan-wrap');
   if (loanWrap) {
     if ((state.loan || 0) > 0) {
-      loanWrap.style.display = 'flex';
+      loanWrap.hidden = false;
       byId('hud-loan').textContent = fmt(state.loan);
     } else {
-      loanWrap.style.display = 'none';
+      loanWrap.hidden = true;
     }
   }
   updateMegaEventBadge(state);

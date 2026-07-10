@@ -86,7 +86,7 @@ export function showRouteCreateInfo(cityFrom, cityTo, html) {
   const sec = byId('panel-route-create');
   const info = byId('route-create-info');
   if (!sec || !info) return;
-  sec.style.display = '';
+  sec.hidden = false;
   info.innerHTML = html;
 }
 
@@ -132,7 +132,7 @@ export function renderRouteCityPicker(state, selectedCityId = null) {
 
 export function hideRouteCreateInfo() {
   const sec = byId('panel-route-create');
-  if (sec) sec.style.display = 'none';
+  if (sec) sec.hidden = true;
 }
 
 function formatModifierEffect(modifier) {

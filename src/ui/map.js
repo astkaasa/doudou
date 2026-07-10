@@ -343,17 +343,11 @@ export function focusMapOnCity(state, cityId, options = {}) {
 export function updateZoomButtons(zoom) {
   Object.values(ZOOM_BUTTONS).forEach((id) => {
     const el = byId(id);
-    if (el) {
-      el.style.background = '#334155';
-      el.style.color = '#e0e8f0';
-    }
+    if (el) el.classList.remove('active');
   });
   const activeId = ZOOM_BUTTONS[zoom] || 'zoom1';
   const el = byId(activeId);
-  if (el) {
-    el.style.background = '#2563eb';
-    el.style.color = '#fff';
-  }
+  if (el) el.classList.add('active');
 }
 
 export function initMapDrag(getState, render) {

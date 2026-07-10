@@ -91,7 +91,7 @@ export function showNewspaper(state) {
   const html = buildNewspaperHtml(state, true, state?.lastReportData?.newsPeriod || state?.lastReportData?.nextPeriod || state?.lastReportData?.period || null);
   renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop" style="align-items:flex-start;padding-top:40px">${html}</div>`);
   const reread = byId('reread-news-btn');
-  if (reread) reread.style.display = '';
+  if (reread) reread.hidden = false;
 }
 
 export function buildFinancialReportHtml(state, rev, cost, profit, period = null, reportInterest = loanInterest(state), snapshot = createFinancialReportSnapshot(state)) {
@@ -226,8 +226,8 @@ export function showTurnSummary(state, report) {
   renderModalRoot(`<div class="modal-overlay"${overlayAction} data-turn-summary="true"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" data-action="${buttonAction}" style="padding:10px 40px;border-radius:8px">${buttonLabel}</button></div></div></div></div>`);
   const newsBtn = byId('reread-news-btn');
   const reportBtn = byId('reread-report-btn');
-  if (newsBtn) newsBtn.style.display = '';
-  if (reportBtn) reportBtn.style.display = '';
+  if (newsBtn) newsBtn.hidden = false;
+  if (reportBtn) reportBtn.hidden = false;
 }
 
 export function showReportAlone(state) {

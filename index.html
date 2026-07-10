@@ -12,7 +12,7 @@
     <div id="hud-company">
       <span class="hud-company-icon">✈</span>
       <span id="hud-company-name">豆豆航空</span>
-      <span id="hud-trait-badge" style="display:none"></span>
+      <span id="hud-trait-badge" hidden></span>
     </div>
     <button class="hud-item hud-company-value" id="hud-cv-badge" type="button" data-action="open-company-value" hidden><span class="hud-label">市值</span><span class="hud-val">$0M</span></button>
     <div class="hud-item hud-cash-wrap"><span class="hud-label">资金</span><span class="hud-val" id="hud-cash">$0M</span></div>
@@ -25,11 +25,11 @@
     <div id="hud-brand"><span class="hud-label">品牌</span><span class="hud-val" id="hud-brand-val">★</span></div>
     <button id="hud-main-quest-btn" class="hud-main-quest-btn" type="button" data-action="open-main-quest" title="查看苍穹之路主线目标"><span>🛫 苍穹之路 🛬</span><strong id="hud-main-quest-stage">1</strong></button>
     <button class="hud-milestone-btn" type="button" data-action="open-milestones" title="查看里程碑"><span class="hud-milestone-label">里程碑</span><strong id="hud-milestones">0/30</strong></button>
-    <div class="hud-item" id="hud-loan-wrap" style="display:none"><span class="hud-label">贷款</span><span class="hud-val negative" id="hud-loan">$0M</span></div>
+    <div class="hud-item" id="hud-loan-wrap" hidden><span class="hud-label">贷款</span><span class="hud-val negative" id="hud-loan">$0M</span></div>
     <div id="mega-event-badge" hidden></div>
-    <div id="hud-actions" style="display:flex;gap:4px;margin-left:8px">
-      <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="save-game" title="保存存档">💾 <span class="hud-action-label">存档</span></button>
-      <button class="btn btn-sm" style="background:#334155;color:#e0e8f0" data-action="load-game" title="载入存档">📂 <span class="hud-action-label">读档</span></button>
+    <div id="hud-actions">
+      <button class="btn btn-sm btn-secondary" data-action="save-game" title="保存存档">💾 <span class="hud-action-label">存档</span></button>
+      <button class="btn btn-sm btn-secondary" data-action="load-game" title="载入存档">📂 <span class="hud-action-label">读档</span></button>
     </div>
     <div id="hud-turn">2020 Q1</div>
   </div>
@@ -42,11 +42,11 @@
           <button class="btn btn-primary btn-sm" id="btn-open-route" data-action="open-route-modal">开通航线</button>
           <button class="btn btn-primary btn-sm" id="btn-buy-plane" data-action="open-buy-plane-modal">购买飞机</button>
           <button class="btn btn-warning btn-sm" id="btn-fleet" data-action="open-fleet-panel">机队管理</button>
-          <button class="btn btn-sm" id="btn-routes" style="background:#334155;color:#e0e8f0" data-action="open-route-list">航线管理</button>
-          <button class="btn btn-sm" id="btn-ops" style="background:#0891b2;color:#fff" data-action="open-operations-panel">运营管理</button>
-          <button class="btn btn-sm" id="btn-loan" style="background:#b45309;color:#fff" data-action="open-loan-modal">银行贷款</button>
-          <button class="btn btn-sm" id="btn-branch" style="background:#7c3aed;color:#fff" data-action="open-branch-modal">分部管理</button>
-          <button class="btn btn-sm" id="btn-subsidiary" style="background:#607d8b;color:#fff" data-action="open-subsidiary-overview">投资管理</button>
+          <button class="btn btn-sm btn-secondary" id="btn-routes" data-action="open-route-list">航线管理</button>
+          <button class="btn btn-sm btn-info" id="btn-ops" data-action="open-operations-panel">运营管理</button>
+          <button class="btn btn-sm btn-warning" id="btn-loan" data-action="open-loan-modal">银行贷款</button>
+          <button class="btn btn-sm btn-violet" id="btn-branch" data-action="open-branch-modal">分部管理</button>
+          <button class="btn btn-sm btn-muted" id="btn-subsidiary" data-action="open-subsidiary-overview">投资管理</button>
         </div>
       </div>
       <div class="panel-section" id="panel-info">
@@ -57,7 +57,7 @@
         <div class="panel-title">市场动态</div>
         <div id="market-info"></div>
       </div>
-      <div class="panel-section" id="panel-route-create" style="display:none">
+      <div class="panel-section" id="panel-route-create" hidden>
         <div class="panel-title">航线开通</div>
         <div id="route-create-info"></div>
       </div>
@@ -65,19 +65,19 @@
   </div>
   <div id="bottom">
     <span id="season-badge"></span>
-    <span id="oil-badge" style="padding:2px 10px;border-radius:10px;font-size:13px;font-weight:600;background:#33415580;color:#fbbf24"></span>
+    <span id="oil-badge"></span>
     <button id="nasdou-badge" type="button" data-action="open-stock-market" hidden>📈 NASDOU</button>
-    <span id="reread-news-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#1e3a5f80;color:#93c5fd;cursor:pointer" data-action="show-newspaper">📰 上季报纸</span>
-    <span id="reread-report-btn" style="display:none;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#16a34a20;color:#4ade80;cursor:pointer" data-action="show-report">📊 上季财报</span>
-    <span style="font-size:13px;color:#7ba3cc" id="bottom-hint" hidden></span>
+    <span id="reread-news-btn" data-action="show-newspaper" hidden>📰 上季报纸</span>
+    <span id="reread-report-btn" data-action="show-report" hidden>📊 上季财报</span>
+    <span id="bottom-hint" hidden></span>
     <span id="turn-forecast" hidden></span>
-    <div id="zoom-controls" style="display:flex;gap:2px;margin-left:auto;align-items:center">
-      <span style="font-size:12px;color:#556;margin-right:4px">缩放</span>
-      <button class="btn btn-sm" style="background:#2563eb;color:#fff;padding:2px 8px" data-action="set-map-zoom" data-zoom="1" id="zoom1">1x</button>
-      <button class="btn btn-sm" style="background:#334155;color:#e0e8f0;padding:2px 8px" data-action="set-map-zoom" data-zoom="1.5" id="zoom15">1.5x</button>
-      <button class="btn btn-sm" style="background:#334155;color:#e0e8f0;padding:2px 8px" data-action="set-map-zoom" data-zoom="2" id="zoom2">2x</button>
+    <div id="zoom-controls">
+      <span class="zoom-label">缩放</span>
+      <button class="btn btn-sm map-zoom-btn active" data-action="set-map-zoom" data-zoom="1" id="zoom1">1x</button>
+      <button class="btn btn-sm map-zoom-btn" data-action="set-map-zoom" data-zoom="1.5" id="zoom15">1.5x</button>
+      <button class="btn btn-sm map-zoom-btn" data-action="set-map-zoom" data-zoom="2" id="zoom2">2x</button>
     </div>
-    <button id="advance-btn" data-action="advance-turn" style="margin-left:10px">推进回合 ▶</button>
+    <button id="advance-btn" data-action="advance-turn">推进回合 ▶</button>
     <div id="bottom-tools">
       <button id="focus-hq-btn" type="button" data-action="focus-hq" title="定位总部" aria-label="定位总部">⌖</button>
       <button id="settings-btn" type="button" data-action="show-settings" title="设置">⚙</button>
