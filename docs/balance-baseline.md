@@ -62,7 +62,7 @@ Per-system contribution metrics and multi-headquarters sampling support are now 
 
 Before changing economy constants:
 
-1. Establish target bands for survival, victory timing, mature margin, cash trough, and strategy spread.
+1. Use the acceptance bands in [`balance-targets.md`](balance-targets.md).
 2. Run multi-seed sensitivity sweeps, then change one economic subsystem per commit.
 
 The full simulator is deterministic, so every outlier can be reproduced from its era, policy, and seed.
