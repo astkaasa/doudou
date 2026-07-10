@@ -1,6 +1,6 @@
 {
   "name": "doudou-airline",
-  "version": "0.1.0",
+  "version": "1.4.0",
   "private": true,
   "type": "module",
   "description": "Engineered local workspace for the Skyline Airlines browser game.",
@@ -13,7 +13,8 @@
     "test:e2e:headed": "playwright test --headed",
     "balance": "node scripts/simulate-balance.mjs",
     "balance:acceptance": "node scripts/accept-balance.mjs",
-    "check": "npm run test && npm run build"
+    "check": "npm run test && npm run build && node scripts/verify-release.mjs",
+    "release:verify": "npm run check && npm run balance:acceptance -- --strict && npm run test:e2e && node scripts/verify-standalone-browser.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

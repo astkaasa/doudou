@@ -59,7 +59,7 @@ async function inlineFavicon(source) {
 }
 
 async function inlineAssetRefs(source) {
-  return replaceAsync(source, /(?:\.\/|\/)?(?:assets\/[^"'`)\\\s]+|favicon\.svg)|[\w.-]+\.(?:gif|jpe?g|png|svg|webp)/g, async (assetRef) => {
+  return replaceAsync(source, /(?:\.\/|\/)?(?:assets\/[^"'`)\\\s]+|favicon\.svg|[\w.-]+\.(?:gif|jpe?g|png|svg|webp))/g, async (assetRef) => {
     return assetDataUrl(assetRef);
   });
 }
