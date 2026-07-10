@@ -126,3 +126,7 @@ The same three-seed Beijing aggressive-policy diagnostic now produces:
 | era4 | 66.7% | 66.7% | 180.0 | 35%-70% | 140-215 |
 
 This small Beijing sample now sits inside every victory and timing band. It is a tuning checkpoint, not final acceptance; M2.4 must still test all policies, five headquarters, and at least 20 seeds.
+
+## Simulation performance
+
+CPU profiling identified route-key array sorting and repeated AI competitor scans as the dominant batch-simulation costs. Replacing them with direct canonical keys and per-decision route indexes kept the deterministic results identical while reducing the six-game era 2/3 aggressive benchmark from 31.25 seconds to 6.21 seconds on the same machine. This also reduces quarter-advance latency in normal games with mature AI networks.

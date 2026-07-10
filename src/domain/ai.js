@@ -9,15 +9,17 @@ export function aiTurn(state, ai, random = randomSource(state)) {
   if (ai.routes.length < 8 && random() < 0.6) {
     let best = null;
     let bestScore = 0;
+    const ownRouteKeys = new Set(ai.routes.map((route) => routeKey(route.from, route.to)));
+    const competitorCounts = buildCompetitorCounts(state, ai);
     for (let i = 0; i < CITIES.length; i++) {
       for (let j = i + 1; j < CITIES.length; j++) {
         const a = CITIES[i];
         const b = CITIES[j];
         const key = routeKey(a.id, b.id);
-        if (ai.routes.find((r) => routeKey(r.from, r.to) === key)) continue;
+        if (ownRouteKeys.has(key)) continue;
         const d = cityDist(a, b);
         const demand = baseDemand(a, b, state);
-        const score = demand * (ai.riskAverse > 0.5 ? (a.level + b.level) : 1) / (1 + countCompetitorsAI(state, a.id, b.id, ai));
+        const score = demand * (ai.riskAverse > 0.5 ? (a.level + b.level) : 1) / (1 + (competitorCounts.get(key) || 0));
         if (score > bestScore) {
           bestScore = score;
           best = { from: a.id, to: b.id, dist: d };
@@ -69,11 +71,19 @@ export function aiTurn(state, ai, random = randomSource(state)) {
 }
 
 export function countCompetitorsAI(state, from, to, self) {
-  const key = routeKey(from, to);
-  let c = 0;
-  if (state.routes.find((r) => routeKey(r.from, r.to) === key)) c++;
+  return buildCompetitorCounts(state, self).get(routeKey(from, to)) || 0;
+}
+
+function buildCompetitorCounts(state, self) {
+  const counts = new Map();
+  addRouteOwner(counts, state.routes);
   state.ai.forEach((ai) => {
-    if (ai !== self && ai.routes.find((r) => routeKey(r.from, r.to) === key)) c++;
+    if (ai !== self) addRouteOwner(counts, ai.routes);
   });
-  return c;
+  return counts;
+}
+
+function addRouteOwner(counts, routes) {
+  const keys = new Set(routes.map((route) => routeKey(route.from, route.to)));
+  keys.forEach((key) => counts.set(key, (counts.get(key) || 0) + 1));
 }

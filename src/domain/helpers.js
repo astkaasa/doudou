@@ -35,7 +35,7 @@ export function clamp(v, lo, hi) {
 }
 
 export function routeKey(a, b) {
-  return [a, b].sort().join('-');
+  return a < b ? `${a}-${b}` : `${b}-${a}`;
 }
 
 export function seasonName(q) {
