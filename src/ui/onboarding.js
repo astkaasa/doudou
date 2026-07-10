@@ -8,6 +8,8 @@ const ONBOARDING_DONE_KEY = 'skyline_onboard_done';
 const NORMAL_STEP_COUNT = 5;
 const BRANCH_STEP_INDEX = -1;
 const NORMAL_DISMISS_MS = 5000;
+const HINT_STATE_CLASSES = ['onboard-hint-branch', 'onboard-hint-modal-layer'];
+const SPOTLIGHT_DIM_CLASSES = ['spotlight-dim-soft', 'spotlight-dim-medium', 'spotlight-dim-strong'];
 
 const ONBOARD_STEPS = [
   {
@@ -170,8 +172,7 @@ export function acknowledgeOnboarding() {
     dismissedHints.add(String(stepIdx));
     dismissCooldown[stepIdx] = Date.now() + NORMAL_DISMISS_MS;
   }
-  hint.style.display = 'none';
-  hint.style.zIndex = '';
+  hideHint();
   clearSpotlight();
 }
 
@@ -261,9 +262,9 @@ export function updateOnboarding(state, uiState = {}) {
   hint.dataset.onboardingStep = step.id;
   hint.dataset.stepIdx = String(step.stepIdx);
   hint.dataset.branchHint = isBranch ? 'true' : 'false';
-  hint.style.display = 'block';
-  hint.style.borderColor = isBranch ? '#fbbf24' : '#4ade80';
-  hint.style.zIndex = !isBranch && step.stepIdx === 3 ? '110' : '';
+  hint.hidden = false;
+  hint.classList.toggle('onboard-hint-branch', isBranch);
+  hint.classList.toggle('onboard-hint-modal-layer', !isBranch && step.stepIdx === 3);
   setText(hint, '.hint-title', step.title);
   setText(hint, '.hint-body', typeof step.body === 'function' ? step.body(state) : step.body);
   setText(hint, '.hint-step', isBranch ? '小贴士' : '新手引导');
@@ -376,25 +377,26 @@ function activateSpotlight(selector) {
   const target = document.querySelector(selector);
   if (!target) return;
   spotlightActive = true;
-  document.body.classList.add('spotlight-active');
-  const opacity = [0.15, 0.35, 0.55][Math.min(spotlightDimCount, 2)];
-  document.body.style.setProperty('--spotlight-dim-opacity', String(opacity));
+  const dimClass = SPOTLIGHT_DIM_CLASSES[Math.min(spotlightDimCount, SPOTLIGHT_DIM_CLASSES.length - 1)];
+  document.body.classList.remove(...SPOTLIGHT_DIM_CLASSES);
+  document.body.classList.add('spotlight-active', dimClass);
   target.classList.add('spotlight-target-pulse');
 }
 
 function clearSpotlight() {
-  if (typeof document === 'undefined' || !spotlightActive) return;
-  document.body.classList.remove('spotlight-active');
-  document.body.style.removeProperty('--spotlight-dim-opacity');
-  document.querySelectorAll('.spotlight-target-pulse').forEach((target) => target.classList.remove('spotlight-target-pulse'));
+  if (typeof document === 'undefined') return;
+  document.body.classList.remove('spotlight-active', ...SPOTLIGHT_DIM_CLASSES);
+  if (spotlightActive) {
+    document.querySelectorAll('.spotlight-target-pulse').forEach((target) => target.classList.remove('spotlight-target-pulse'));
+  }
   spotlightActive = false;
 }
 
 function hideHint() {
   const hint = byId('onboard-hint');
   if (!hint) return;
-  hint.style.display = 'none';
-  hint.style.zIndex = '';
+  hint.hidden = true;
+  hint.classList.remove(...HINT_STATE_CLASSES);
 }
 
 function setText(root, selector, value) {
@@ -419,7 +421,7 @@ function readyFleetCount(state) {
 function updateCurrentHintSoon() {
   const hint = byId('onboard-hint');
   if (!hint) return;
-  hint.style.display = 'none';
+  hint.hidden = true;
 }
 
 function showOnboardCompleteToast() {

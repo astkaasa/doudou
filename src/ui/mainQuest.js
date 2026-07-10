@@ -2,7 +2,7 @@ import { MAIN_QUEST_DIMS, MAIN_QUEST_STAGES, VICTORY_GRADES } from '../data/main
 import { fmt } from '../domain/helpers.js';
 import { getMainQuestStats } from '../domain/mainQuest.js';
 import { escapeAttr, escapeHtml } from './html.js';
-import { showBanner, showModal } from './modal.js';
+import { BANNER_TONES, showBanner, showModal } from './modal.js';
 
 export function showMainQuestPanel(state) {
   if (!state) return;
@@ -91,7 +91,7 @@ export function showVictoryEnding(state) {
 
 export function continueFromVictory() {
   closeMainQuestOverlay();
-  showBanner('沙箱模式 · 继续经营', '#4ade80');
+  showBanner('沙箱模式 · 继续经营', BANNER_TONES.success);
 }
 
 function renderDimension(dimension, meta) {

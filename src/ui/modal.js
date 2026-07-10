@@ -1,9 +1,19 @@
 import { byId } from '../domain/helpers.js';
 
 const MODAL_BACKGROUND_IDS = ['app', 'contract-zone', 'delivery-root', 'onboard-hint', 'tutorial'];
+const VALID_BANNER_TONES = new Set(['accent', 'danger', 'info', 'success', 'warning']);
+
+export const BANNER_TONES = Object.freeze({
+  accent: 'accent',
+  danger: 'danger',
+  info: 'info',
+  success: 'success',
+  warning: 'warning',
+});
 
 let modalReturnFocus = null;
 let modalBackgroundState = [];
+let bannerHideTimer = null;
 
 export function showModal(html, options = {}) {
   const widthClass = options.wide ? ' modal-wide' : '';
@@ -47,13 +57,17 @@ export function closeModalRoot() {
   });
 }
 
-export function showBanner(text, color) {
+export function showBanner(text, tone = BANNER_TONES.info) {
   const b = byId('event-banner');
+  if (!b) return;
+  const normalizedTone = VALID_BANNER_TONES.has(tone) ? tone : BANNER_TONES.info;
   b.textContent = text;
-  b.style.background = color || '#2563eb';
-  b.style.display = 'block';
-  setTimeout(() => {
-    b.style.display = 'none';
+  b.className = `event-banner event-banner-${normalizedTone}`;
+  b.hidden = false;
+  if (bannerHideTimer) clearTimeout(bannerHideTimer);
+  bannerHideTimer = setTimeout(() => {
+    b.hidden = true;
+    bannerHideTimer = null;
   }, 3000);
 }
 

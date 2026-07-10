@@ -7,11 +7,8 @@ const INLINE_STYLE_BUDGET = {
   'src/ui/map.js': 1,
 };
 const STYLE_MUTATION_BUDGET = {
-  'src/app/sessionController.js': 1,
   'src/ui/angelInvestment.js': 2,
   'src/ui/map.js': 16,
-  'src/ui/modal.js': 3,
-  'src/ui/onboarding.js': 10,
 };
 
 describe('UI style ownership', () => {

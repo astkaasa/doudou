@@ -8,7 +8,7 @@ import { advanceTurnState } from '../domain/turn.js';
 import { clearAngelTimers, lockAngelSlot, showAngelInvestment, showAngelSlotPhase } from '../ui/angelInvestment.js';
 import { showEraRetirement, showEraSettlement } from '../ui/eraSettlement.js';
 import { showMainQuestStageNotification, showMainQuestVictory } from '../ui/mainQuest.js';
-import { closeModalRoot, showBanner, showModal } from '../ui/modal.js';
+import { BANNER_TONES, closeModalRoot, showBanner, showModal } from '../ui/modal.js';
 import {
   closeDeliveryPopup,
   showDeliveryPopup,
@@ -46,7 +46,7 @@ export function createTurnController(app) {
       forceSellSubsidiaries: `已强制出售子公司：${fmt(action.amount)}`,
       forceSellPlanes: `已变卖自有飞机：${fmt(action.amount)}`,
     };
-    if (messages[action.action]) showBanner(messages[action.action], '#d97706');
+    if (messages[action.action]) showBanner(messages[action.action], BANNER_TONES.warning);
   }
 
   function applyAngelRescue(target) {
@@ -54,7 +54,7 @@ export function createTurnController(app) {
     if (!game) return;
     const result = applyAngelInvestment(game, Number(target.dataset.amount));
     if (!result.ok) {
-      showBanner(result.message, '#b91c1c');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     clearAngelTimers();
@@ -64,7 +64,7 @@ export function createTurnController(app) {
       showEraSettlement(game);
       return;
     }
-    showBanner(`辣豆基金注资 ${fmt(result.amount)}，重振旗鼓`, '#d97706');
+    showBanner(`辣豆基金注资 ${fmt(result.amount)}，重振旗鼓`, BANNER_TONES.warning);
   }
 
   function openEraSettlement() {
@@ -80,7 +80,7 @@ export function createTurnController(app) {
     persistEraChoice(game);
     closeModalRoot();
     app.renderGame();
-    showBanner('沙箱模式 · 时代限制已解除', '#16a34a');
+    showBanner('沙箱模式 · 时代限制已解除', BANNER_TONES.success);
   }
 
   function retireEra() {
@@ -135,7 +135,7 @@ export function createTurnController(app) {
       updateOnboarding(game, app.uiState);
     }
     if (report.branchCompleted.length > 0) {
-      showBanner(`分部完工：${report.branchCompleted.map((cityId) => getCity(cityId)?.name || cityId).join('、')}`, '#7c3aed');
+      showBanner(`分部完工：${report.branchCompleted.map((cityId) => getCity(cityId)?.name || cityId).join('、')}`, BANNER_TONES.accent);
     }
     const showQuarterSummary = () => {
       showTurnSummary(game, report);
@@ -174,7 +174,7 @@ export function createTurnController(app) {
       : signRecruitContract(game, selected);
     markContractSigned(game, type, result);
     app.renderGame();
-    showBanner(result.message, type === 'bonus' ? '#d97706' : '#2563eb');
+    showBanner(result.message, type === 'bonus' ? BANNER_TONES.warning : BANNER_TONES.info);
     window.setTimeout(() => {
       clearSignedContract(game, type);
       app.renderGame();

@@ -1,7 +1,7 @@
 import { getCity, fmt } from '../domain/helpers.js';
 import { repayLoan, takeLoan } from '../domain/loans.js';
 import { updateHUD } from '../ui/hud.js';
-import { showBanner } from '../ui/modal.js';
+import { BANNER_TONES, showBanner } from '../ui/modal.js';
 import {
   buyStockFromModal,
   executeSubsidiaryOpen,
@@ -25,12 +25,12 @@ export function createFinanceController(app) {
     if (!game) return;
     const result = takeLoan(game, parseFloat(target.dataset.amount));
     if (!result.ok) {
-      showBanner(result.message, '#dc2626');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     updateHUD(game);
     showLoanModal(game);
-    showBanner(`贷款 $${result.amount}M 已到账（手续费 ${fmt(result.fee)}）`, '#b45309');
+    showBanner(`贷款 $${result.amount}M 已到账（手续费 ${fmt(result.fee)}）`, BANNER_TONES.warning);
     app.updateMilestones();
   }
 
@@ -39,12 +39,12 @@ export function createFinanceController(app) {
     if (!game) return;
     const result = repayLoan(game, parseFloat(target.dataset.amount));
     if (!result.ok) {
-      showBanner(result.message, '#dc2626');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     updateHUD(game);
     showLoanModal(game);
-    showBanner(`还款 ${fmt(result.amount)}`, '#16a34a');
+    showBanner(`还款 ${fmt(result.amount)}`, BANNER_TONES.success);
     app.updateMilestones();
   }
 
@@ -53,12 +53,12 @@ export function createFinanceController(app) {
     if (!game) return;
     const result = buyStockFromModal(game, target.dataset.stockId, Number(target.dataset.shares));
     if (!result.ok) {
-      showBanner(result.message, '#b91c1c');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     updateHUD(game);
     renderPanel(game, app.uiState);
-    showBanner(`买入 ${result.stock.code} ${target.dataset.shares}M，花费 ${fmt(result.totalCost)}`, '#16a34a');
+    showBanner(`买入 ${result.stock.code} ${target.dataset.shares}M，花费 ${fmt(result.totalCost)}`, BANNER_TONES.success);
   }
 
   function sellSelectedStock(target) {
@@ -66,12 +66,12 @@ export function createFinanceController(app) {
     if (!game) return;
     const result = sellStockFromModal(game, target.dataset.stockId, Number(target.dataset.shares));
     if (!result.ok) {
-      showBanner(result.message, '#b91c1c');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     updateHUD(game);
     renderPanel(game, app.uiState);
-    showBanner(`卖出 ${result.stock.code} ${target.dataset.shares}M，到账 ${fmt(result.netRevenue)}`, '#d97706');
+    showBanner(`卖出 ${result.stock.code} ${target.dataset.shares}M，到账 ${fmt(result.netRevenue)}`, BANNER_TONES.warning);
   }
 
   function executeSubOpen(target) {
@@ -79,13 +79,13 @@ export function createFinanceController(app) {
     if (!game) return;
     const result = executeSubsidiaryOpen(game, target.dataset.subMode, target.dataset.cityId, target.dataset.subType);
     if (!result.ok) {
-      showBanner(result.message, '#b91c1c');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     app.renderGame();
     const city = getCity(target.dataset.cityId);
     const action = target.dataset.subMode === 'acquire' ? '收购' : target.dataset.subType === 'airport' ? '投资' : '新设';
-    showBanner(`${action}完成：${city?.name || target.dataset.cityId}，花费 ${fmt(result.totalCost)}`, '#16a34a');
+    showBanner(`${action}完成：${city?.name || target.dataset.cityId}，花费 ${fmt(result.totalCost)}`, BANNER_TONES.success);
     checkFirstTimePopups(game);
     app.updateMilestones();
   }
@@ -95,12 +95,12 @@ export function createFinanceController(app) {
     if (!game) return;
     const result = executeSubsidiarySell(game, target.dataset.cityId, target.dataset.subType);
     if (!result.ok) {
-      showBanner(result.message, '#b91c1c');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     app.renderGame();
     const city = getCity(target.dataset.cityId);
-    showBanner(`已出售：${city?.name || target.dataset.cityId}，到账 ${fmt(result.sellPrice)}`, '#d97706');
+    showBanner(`已出售：${city?.name || target.dataset.cityId}，到账 ${fmt(result.sellPrice)}`, BANNER_TONES.warning);
     app.updateMilestones();
   }
 

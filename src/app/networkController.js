@@ -14,7 +14,7 @@ import {
 import { removeBranchBanner, showBranchBanner, showSelectedBranch } from '../ui/branches.js';
 import { updateHUD } from '../ui/hud.js';
 import { describeRouteSelection, focusMapOnCity, setMapZoom } from '../ui/map.js';
-import { closeModalRoot, showBanner, showModal } from '../ui/modal.js';
+import { BANNER_TONES, closeModalRoot, showBanner, showModal } from '../ui/modal.js';
 import {
   showBranchModal,
   showBuyPlaneModal,
@@ -76,12 +76,12 @@ export function createNetworkController(app) {
     if (!select || !slider) return;
     const result = openRoute(game, from, to, parseInt(select.value, 10), parseInt(slider.value, 10));
     if (!result.ok) {
-      showBanner(result.message, '#dc2626');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     app.renderGame();
     app.closeModal();
-    showBanner(`航线开通：${getCity(from).name} → ${getCity(to).name}  开通费用 ${fmt(result.cost)}`, '#16a34a');
+    showBanner(`航线开通：${getCity(from).name} → ${getCity(to).name}  开通费用 ${fmt(result.cost)}`, BANNER_TONES.success);
     completeOnboardingStep(game, game.routes.length > 1 ? 1 : 0);
     updateOnboarding(game, app.uiState);
     app.updateMilestones();
@@ -115,18 +115,18 @@ export function createNetworkController(app) {
   function confirmBranchFromMap() {
     const game = state();
     if (!game || !app.uiState.selectedBranch) {
-      showBanner('请先选择分部城市', '#d97706');
+      showBanner('请先选择分部城市', BANNER_TONES.warning);
       return;
     }
     const cityId = app.uiState.selectedBranch;
     const result = openBranch(game, cityId);
     if (!result.ok) {
-      showBanner(result.message, '#dc2626');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     cancelBranchSelect();
     app.renderGame();
-    showBanner(`分部建设：${getCity(cityId).name}（花费 ${fmt(result.cost)}，${result.constructIn}季度后完工）`, '#fbbf24');
+    showBanner(`分部建设：${getCity(cityId).name}（花费 ${fmt(result.cost)}，${result.constructIn}季度后完工）`, BANNER_TONES.warning);
     app.updateMilestones();
   }
 
@@ -135,12 +135,12 @@ export function createNetworkController(app) {
     if (!game) return;
     const result = closeBranchDomain(game, cityId);
     if (!result.ok) {
-      showBanner(result.message, '#dc2626');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     app.renderGame();
     closeModalRoot();
-    showBanner(`已关闭分部：${getCity(cityId).name}`, '#dc2626');
+    showBanner(`已关闭分部：${getCity(cityId).name}`, BANNER_TONES.danger);
   }
 
   function onMapEmptyClick() {
@@ -169,11 +169,11 @@ export function createNetworkController(app) {
     if (app.uiState.branchSelectMode) {
       const city = getCity(cityId);
       if (isBase(game, cityId)) {
-        showBanner(city.name + ' 已是基地，无法重复开设', '#d97706');
+        showBanner(city.name + ' 已是基地，无法重复开设', BANNER_TONES.warning);
         return;
       }
       if (isBranchConstructing(game, cityId)) {
-        showBanner(city.name + ' 分部正在建设中', '#d97706');
+        showBanner(city.name + ' 分部正在建设中', BANNER_TONES.warning);
         return;
       }
       app.uiState.selectedBranch = cityId;
@@ -217,13 +217,13 @@ export function createNetworkController(app) {
     const count = qtyInput ? parseInt(qtyInput.value, 10) : 1;
     const result = buyPlane(game, target.dataset.planeId, target.dataset.lease === 'true', count);
     if (!result.ok) {
-      showBanner(result.message, '#dc2626');
+      showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     app.closeModal();
     updateHUD(game);
     renderPanel(game, app.uiState);
-    showBanner(`${target.dataset.lease === 'true' ? '租赁' : '购买'} ${result.planes.length}架 ${result.plane.name}`, target.dataset.lease === 'true' ? '#d97706' : '#2563eb');
+    showBanner(`${target.dataset.lease === 'true' ? '租赁' : '购买'} ${result.planes.length}架 ${result.plane.name}`, target.dataset.lease === 'true' ? BANNER_TONES.warning : BANNER_TONES.info);
     updateOnboarding(game);
     app.updateMilestones();
   }
@@ -236,7 +236,7 @@ export function createNetworkController(app) {
     updateHUD(game);
     renderPanel(game, app.uiState);
     app.closeModal();
-    showBanner(`出售 ${sold.plane.name}，获得 ${fmt(sold.sellPrice)}`, '#d97706');
+    showBanner(`出售 ${sold.plane.name}，获得 ${fmt(sold.sellPrice)}`, BANNER_TONES.warning);
     app.updateMilestones();
   }
 
@@ -248,7 +248,7 @@ export function createNetworkController(app) {
     updateHUD(game);
     renderPanel(game, app.uiState);
     app.closeModal();
-    showBanner(`退租 ${returned.plane.name}`, '#d97706');
+    showBanner(`退租 ${returned.plane.name}`, BANNER_TONES.warning);
   }
 
   function adjustPrice(from, to, price) {
@@ -258,7 +258,7 @@ export function createNetworkController(app) {
     if (!route) return;
     app.renderGame();
     showRouteList(game);
-    showBanner(`${getCity(route.from).name}→${getCity(route.to).name} 票价调整为 $${route.price}`, '#2563eb');
+    showBanner(`${getCity(route.from).name}→${getCity(route.to).name} 票价调整为 $${route.price}`, BANNER_TONES.info);
   }
 
   function closeRoute(target) {
@@ -283,12 +283,12 @@ export function createNetworkController(app) {
     if (!game) return;
     const result = suspendRoute(game, target.dataset.from, target.dataset.to);
     if (!result.ok) {
-      showBanner(result.message, '#d97706');
+      showBanner(result.message, BANNER_TONES.warning);
       showRouteList(game);
       return;
     }
     app.renderGame();
-    showBanner(`航线已停飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, '#d97706');
+    showBanner(`航线已停飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, BANNER_TONES.warning);
     showRouteList(game);
   }
 
@@ -297,12 +297,12 @@ export function createNetworkController(app) {
     if (!game) return;
     const result = resumeRoute(game, target.dataset.from, target.dataset.to);
     if (!result.ok) {
-      showBanner(result.message, '#d97706');
+      showBanner(result.message, BANNER_TONES.warning);
       showRouteList(game);
       return;
     }
     app.renderGame();
-    showBanner(`航线已复飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, '#16a34a');
+    showBanner(`航线已复飞：${getCity(result.route.from).name} → ${getCity(result.route.to).name}`, BANNER_TONES.success);
     showRouteList(game);
   }
 
@@ -311,12 +311,12 @@ export function createNetworkController(app) {
     if (!game) return;
     const result = changeRoutePlane(game, target.dataset.from, target.dataset.to, target.dataset.uid);
     if (!result.ok) {
-      showBanner(result.message, '#dc2626');
+      showBanner(result.message, BANNER_TONES.danger);
       showRouteList(game);
       return;
     }
     app.renderGame();
-    showBanner(`${getCity(result.route.from).name}→${getCity(result.route.to).name} 已更换执飞机型`, '#d97706');
+    showBanner(`${getCity(result.route.from).name}→${getCity(result.route.to).name} 已更换执飞机型`, BANNER_TONES.warning);
     showRouteList(game);
   }
 

@@ -9,7 +9,7 @@ import { showEraRetirement, showEraSettlement } from '../ui/eraSettlement.js';
 import { focusMapOnCity } from '../ui/map.js';
 import { closeMainQuestOverlay, continueFromVictory, showMainQuestPanel, showVictoryEnding } from '../ui/mainQuest.js';
 import { showMilestoneList } from '../ui/milestones.js';
-import { closeModalRoot, showBanner } from '../ui/modal.js';
+import { BANNER_TONES, closeModalRoot, showBanner } from '../ui/modal.js';
 import { closeDeliveryPopup } from '../ui/modals.js';
 import {
   acknowledgeOnboarding,
@@ -68,14 +68,14 @@ export function createSessionController(app) {
   function saveGame() {
     const game = state();
     if (!game) {
-      showBanner('游戏尚未开始，无法存档', '#dc2626');
+      showBanner('游戏尚未开始，无法存档', BANNER_TONES.danger);
       return;
     }
     try {
       saveGameState(game);
-      showBanner('存档保存成功！(' + game.year + ' Q' + game.quarter + ')', '#16a34a');
+      showBanner('存档保存成功！(' + game.year + ' Q' + game.quarter + ')', BANNER_TONES.success);
     } catch (error) {
-      showBanner('存档失败：' + error.message, '#dc2626');
+      showBanner('存档失败：' + error.message, BANNER_TONES.danger);
     }
   }
 
@@ -83,7 +83,7 @@ export function createSessionController(app) {
     try {
       const result = loadGameState();
       if (!result.ok) {
-        showBanner(result.message, '#d97706');
+        showBanner(result.message, BANNER_TONES.warning);
         return;
       }
       const game = result.state;
@@ -107,15 +107,15 @@ export function createSessionController(app) {
       const loadMessage = result.recoveredFromBackup
         ? '主存档损坏，已从上一份备份恢复：'
         : '存档已载入！';
-      showBanner(loadMessage + game.companyName + ' - ' + game.year + ' Q' + game.quarter, result.recoveredFromBackup ? '#d97706' : '#16a34a');
+      showBanner(loadMessage + game.companyName + ' - ' + game.year + ' Q' + game.quarter, result.recoveredFromBackup ? BANNER_TONES.warning : BANNER_TONES.success);
     } catch (error) {
-      showBanner('读档失败：' + error.message, '#dc2626');
+      showBanner('读档失败：' + error.message, BANNER_TONES.danger);
     }
   }
 
   function tutorialNextStep() {
     if (!app.uiState.selectedEra) {
-      showBanner('请先选择时代剧本', '#d97706');
+      showBanner('请先选择时代剧本', BANNER_TONES.warning);
       return;
     }
     const name = getTutorialCompanyName();
@@ -163,14 +163,14 @@ export function createSessionController(app) {
     showTraitEnvelope(game);
     if (byId('trait-overlay')) {
       const hint = byId('onboard-hint');
-      if (hint) hint.style.display = 'none';
+      if (hint) hint.hidden = true;
     }
     app.setBottomHint();
   }
 
   function confirmHQAndStart() {
     if (!app.uiState.selectedHQ) {
-      showBanner('请先选择总部城市', '#d97706');
+      showBanner('请先选择总部城市', BANNER_TONES.warning);
       return;
     }
     startGame();
@@ -182,7 +182,7 @@ export function createSessionController(app) {
     const trait = normalizePlayerTrait(target.dataset.trait);
     const isPendingChoice = !Array.isArray(game.pendingTraitChoices) || game.pendingTraitChoices.includes(trait);
     if (!trait || !isPendingChoice) {
-      showBanner('特质选择无效，请重新选择', '#dc2626');
+      showBanner('特质选择无效，请重新选择', BANNER_TONES.danger);
       showTraitEnvelope(game);
       return;
     }
@@ -191,7 +191,7 @@ export function createSessionController(app) {
     game.pendingTraitChoices = null;
     removeTraitOverlay();
     app.renderGame();
-    showBanner('欢迎经营 ' + game.companyName + '！(' + game.year + '-' + game.endYear + ') 试试开通第一条航线吧', '#2563eb');
+    showBanner('欢迎经营 ' + game.companyName + '！(' + game.year + '-' + game.endYear + ') 试试开通第一条航线吧', BANNER_TONES.info);
   }
 
   const clickActions = {
@@ -235,7 +235,7 @@ export function createSessionController(app) {
       resetOnboarding(game);
       closeModalRoot();
       if (game) app.renderGame();
-      showBanner('新手提示已重新开启', '#16a34a');
+      showBanner('新手提示已重新开启', BANNER_TONES.success);
     },
     'close-modal': closeModal,
     'modal-backdrop': closeModal,
