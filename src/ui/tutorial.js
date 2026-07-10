@@ -142,14 +142,14 @@ export function selectEraCard(eraId) {
 export function hideTutorial() {
   stopCreditsScroll();
   const tutorial = byId('tutorial');
-  if (tutorial) tutorial.style.display = 'none';
+  if (tutorial) tutorial.hidden = true;
   const app = byId('app');
   if (app) app.hidden = false;
 }
 
 export function showTutorial() {
   const tutorial = byId('tutorial');
-  if (tutorial) tutorial.style.display = '';
+  if (tutorial) tutorial.hidden = false;
   const app = byId('app');
   if (app) app.hidden = true;
 }
@@ -162,10 +162,10 @@ export function showHQBanner() {
   banner.innerHTML = `
     <div class="hq-title">📍 选择总部城市</div>
     <div class="hq-hint">点击左侧地图上的城市选择你的航空公司总部</div>
-    <div id="hq-selected-info" class="hq-selected" style="display:none">已选择: <span id="hq-selected-name" class="hq-name"></span></div>
-    <div style="margin-top:14px;display:flex;gap:10px;justify-content:center">
-      <button class="btn" style="background:#334155;color:#e0e8f0;padding:8px 20px" data-action="cancel-hq-select">← 返回</button>
-      <button class="btn btn-success" id="hq-confirm-btn" style="padding:8px 32px;display:none" data-action="confirm-hq-start">确认起飞！</button>
+    <div id="hq-selected-info" class="hq-selected" hidden>已选择: <span id="hq-selected-name" class="hq-name"></span></div>
+    <div class="selection-actions">
+      <button class="btn btn-secondary selection-cancel" type="button" data-action="cancel-hq-select">← 返回</button>
+      <button class="btn btn-success selection-confirm" type="button" id="hq-confirm-btn" data-action="confirm-hq-start" hidden>确认起飞！</button>
     </div>
   `;
   document.body.appendChild(banner);
@@ -181,8 +181,8 @@ export function showSelectedHQ(cityName) {
   const btnEl = byId('hq-confirm-btn');
   const infoEl = byId('hq-selected-info');
   if (nameEl) nameEl.textContent = cityName;
-  if (btnEl) btnEl.style.display = '';
-  if (infoEl) infoEl.style.display = '';
+  if (btnEl) btnEl.hidden = false;
+  if (infoEl) infoEl.hidden = false;
 }
 
 function renderEraCard(era, selected) {

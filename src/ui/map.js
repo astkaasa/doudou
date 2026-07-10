@@ -2,6 +2,7 @@ import { CITIES, HQ_RECOMMENDED_CITY_IDS, projectCity, projectLonLat } from '../
 import { WORLD_BOUNDARY_PATH, WORLD_LAND_PATH } from '../data/worldMapPaths.js';
 import { byId, cityDist, clamp, fmt, getCity } from '../domain/helpers.js';
 import terrainMapUrl from '../assets/natural-earth-2-50m.jpg';
+import { escapeHtml } from './html.js';
 
 const MAP_WIDTH = 1000;
 const MAP_HEIGHT = 500;
@@ -925,10 +926,10 @@ function wrapLongitudeDelta(delta) {
 
 export function describeRouteSelection(cityFrom, cityTo, options = {}) {
   const fromIsBase = options.fromIsBase ?? true;
-  const baseWarning = fromIsBase ? '' : '<span style="color:#f87171;font-size:11px;margin-left:6px">（非基地）</span>';
+  const baseWarning = fromIsBase ? '' : '<span class="route-selection-base-warning">（非基地）</span>';
   if (!cityTo) {
-    return `<div style="font-size:13px"><div style="margin-bottom:6px"><span style="color:#7ba3cc">起飞：</span><span style="color:#e0e8f0;font-weight:700">${cityFrom.name}</span>${baseWarning}</div><div style="color:#556">点击地图选择到达城市${fromIsBase ? '' : '（仅查看距离，无法开通航线）'}</div></div>`;
+    return `<div class="route-selection"><div class="route-selection-row route-selection-row-spacious"><span class="route-selection-label">起飞：</span><span class="route-selection-value">${escapeHtml(cityFrom.name)}</span>${baseWarning}</div><div class="route-selection-hint">点击地图选择到达城市${fromIsBase ? '' : '（仅查看距离，无法开通航线）'}</div></div>`;
   }
   const d = cityDist(cityFrom, cityTo);
-  return `<div style="font-size:13px"><div style="margin-bottom:4px"><span style="color:#7ba3cc">起飞：</span><span style="color:#e0e8f0;font-weight:700">${cityFrom.name}</span>${baseWarning}</div><div style="margin-bottom:4px"><span style="color:#7ba3cc">到达：</span><span style="color:#e0e8f0;font-weight:700">${cityTo.name}</span></div><div style="color:#7ba3cc">距离：${Math.round(d)} km</div>${fromIsBase ? '' : '<div style="color:#f87171;font-size:11px;margin-top:4px">起飞城市非基地，无法开通航线</div>'}</div>`;
+  return `<div class="route-selection"><div class="route-selection-row"><span class="route-selection-label">起飞：</span><span class="route-selection-value">${escapeHtml(cityFrom.name)}</span>${baseWarning}</div><div class="route-selection-row"><span class="route-selection-label">到达：</span><span class="route-selection-value">${escapeHtml(cityTo.name)}</span></div><div class="route-selection-distance">距离：${Math.round(d)} km</div>${fromIsBase ? '' : '<div class="route-selection-warning">起飞城市非基地，无法开通航线</div>'}</div>`;
 }

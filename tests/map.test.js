@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { initState } from '../src/domain/state.js';
-import { focusMapOnCity, renderMap } from '../src/ui/map.js';
+import { describeRouteSelection, focusMapOnCity, renderMap } from '../src/ui/map.js';
 
 const originalDocument = globalThis.document;
 
@@ -70,5 +70,18 @@ describe('map rendering', () => {
 
     expect(state.mapPanX).toBeLessThan(0);
     expect(container.innerHTML).toContain('aria-label="选择北京"');
+  });
+
+  it('renders route selection details with semantic styles and escaped city names', () => {
+    const from = { name: '<北京>', lat: 39.9042, lon: 116.4074 };
+    const to = { name: '东京 & 羽田', lat: 35.6762, lon: 139.6503 };
+
+    const html = describeRouteSelection(from, to, { fromIsBase: false });
+
+    expect(html).toContain('route-selection-base-warning');
+    expect(html).toContain('route-selection-warning');
+    expect(html).toContain('&lt;北京&gt;');
+    expect(html).toContain('东京 &amp; 羽田');
+    expect(html).not.toContain('style=');
   });
 });

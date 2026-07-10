@@ -5,11 +5,10 @@ import { describe, expect, it } from 'vitest';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const INLINE_STYLE_BUDGET = {
   'src/ui/hud.js': 1,
-  'src/ui/map.js': 18,
-  'src/ui/panel.js': 9,
+  'src/ui/map.js': 3,
   'src/ui/season.js': 1,
   'src/ui/stockModals.js': 2,
-  'src/ui/tutorial.js': 6,
+  'src/ui/tutorial.js': 2,
 };
 const STYLE_MUTATION_BUDGET = {
   'src/app/sessionController.js': 1,
@@ -18,7 +17,7 @@ const STYLE_MUTATION_BUDGET = {
   'src/ui/map.js': 16,
   'src/ui/modal.js': 3,
   'src/ui/onboarding.js': 10,
-  'src/ui/tutorial.js': 5,
+  'src/ui/tutorial.js': 1,
 };
 
 describe('UI style ownership', () => {
