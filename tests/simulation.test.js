@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { aggregateSimulationResults, BALANCE_POLICIES, simulateBatch, simulateGame } from '../src/simulation/balance.js';
+import { aggregateSimulationResults, BALANCE_POLICIES, createSimulationJobs, simulateBatch, simulateGame } from '../src/simulation/balance.js';
 
 describe('balance simulation', () => {
   it('is deterministic for a fixed era, policy, and seed', () => {
@@ -16,6 +16,17 @@ describe('balance simulation', () => {
     expect(new Set(results.map((result) => result.eraId))).toEqual(new Set(['era1', 'era2', 'era3', 'era4']));
     expect(new Set(results.map((result) => result.policyId))).toEqual(new Set(Object.keys(BALANCE_POLICIES)));
     expect(results.every((result) => result.turnsPlayed > 0)).toBe(true);
+  });
+
+  it('creates stable matrix jobs independently from execution', () => {
+    const jobs = createSimulationJobs({ eras: 'era2', policies: 'aggressive', hqs: 'beijing,london', runs: 2, seedBase: 'jobs' });
+
+    expect(jobs).toEqual([
+      expect.objectContaining({ eraId: 'era2', policyId: 'aggressive', hq: 'beijing', seed: 'jobs|era2|aggressive|beijing|0' }),
+      expect.objectContaining({ eraId: 'era2', policyId: 'aggressive', hq: 'beijing', seed: 'jobs|era2|aggressive|beijing|1' }),
+      expect.objectContaining({ eraId: 'era2', policyId: 'aggressive', hq: 'london', seed: 'jobs|era2|aggressive|london|0' }),
+      expect.objectContaining({ eraId: 'era2', policyId: 'aggressive', hq: 'london', seed: 'jobs|era2|aggressive|london|1' }),
+    ]);
   });
 
   it('aggregates comparable outcome metrics by era and policy', () => {

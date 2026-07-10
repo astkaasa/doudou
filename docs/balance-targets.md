@@ -14,6 +14,14 @@ Final acceptance uses:
 
 Fast tuning runs may use fewer seeds, but they cannot replace the final matrix.
 
+Run the complete matrix with:
+
+```bash
+npm run balance:acceptance -- --output /tmp/doudou-balance-acceptance.json
+```
+
+The acceptance runner uses deterministic jobs and worker threads, restores result order before aggregation, and reports matrix coverage separately from metric failures. `--era`, `--policy`, `--hq`, and `--runs` are available for scoped diagnostics; `--strict` returns a non-zero status unless the full matrix and all checks pass.
+
 ## Campaign bands
 
 Rates are aggregated across the complete regional matrix. Victory timing applies to successful quest-focused (`aggressive`) runs. Route and profit margins exclude asset-sale proceeds and rescue capital. Cash pressure is the share of quarters ending below the policy reserve.
@@ -26,6 +34,8 @@ Rates are aggregated across the complete regional matrix. Victory timing applies
 | era4 | Epic | 60%-90% | 35%-70% | 140-215 | 15%-35% | 10%-30% | 10%-35% |
 
 These bands apply to regional aggregates, not every individual headquarters. Geography should matter, but no headquarters may have a guaranteed failure under every policy.
+
+Survival and the cross-system limits use all four policies. Victory, victory timing, route margin, profit margin, cash pressure, and non-route income use the quest-focused aggressive policy. This keeps economic comparisons on one stable strategy while the all-policy checks measure overall viability.
 
 ## Cross-system limits
 

@@ -33,10 +33,12 @@ npm run test
 npm run build
 npm run check
 npm run balance -- --runs 20
+npm run balance:acceptance
 ```
 
 `npm run build` 会生成普通静态产物和单文件产物；`npm run check` 会先测试再构建。
 `npm run balance` 会用固定种子批量运行四时代和多种经营策略；可使用 `--era era3`、`--policy balanced`、`--turns 40` 或 `--json` 缩小范围或输出明细。使用 `--hq beijing,london` 可对比指定总部，`--regional` 会覆盖北京、迪拜、伦敦、纽约和悉尼五个区域样本。
+`npm run balance:acceptance` 会并行运行四时代、四策略、五总部、每组合 20 个固定种子的正式验收矩阵，并自动对照 `docs/balance-targets.md`。可用 `--workers 4` 控制并发，用 `--output /tmp/balance.json` 保存可复现明细；`--strict` 会在矩阵不完整或指标越界时返回非零状态。
 
 ## 文件角色
 

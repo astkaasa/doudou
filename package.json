@@ -10,6 +10,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "balance": "node scripts/simulate-balance.mjs",
+    "balance:acceptance": "node scripts/accept-balance.mjs",
     "check": "npm run test && npm run build"
   },
   "devDependencies": {

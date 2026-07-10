@@ -178,27 +178,31 @@ export function simulateGame(options = {}) {
 }
 
 export function simulateBatch(options = {}) {
+  return createSimulationJobs(options).map((job) => simulateGame(job));
+}
+
+export function createSimulationJobs(options = {}) {
   const runs = positiveInteger(options.runs) || 1;
   const eras = normalizeSelection(options.eras, ERAS.map((era) => era.id));
   const policies = normalizeSelection(options.policies, Object.keys(BALANCE_POLICIES));
   const hqs = normalizeSelection(options.hqs || options.hq, ['beijing']);
-  const results = [];
+  const jobs = [];
   eras.forEach((eraId) => {
     policies.forEach((policyId) => {
       hqs.forEach((hq) => {
         for (let run = 0; run < runs; run++) {
-          results.push(simulateGame({
+          jobs.push({
             eraId,
             policyId,
             seed: `${options.seedBase || 'balance'}|${eraId}|${policyId}|${hq}|${run}`,
             maxTurns: options.maxTurns,
             hq,
-          }));
+          });
         }
       });
     });
   });
-  return results;
+  return jobs;
 }
 
 export function aggregateSimulationResults(results) {
