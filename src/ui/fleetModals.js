@@ -17,7 +17,7 @@ export function showBuyPlaneModal(state) {
   <div class="plane-market-summary">
     <span>自有 <strong>${boughtCount}</strong> 架</span>
     <span>租赁 <strong>${leasedCount}/${leaseMax}</strong> 架</span>
-    <span>租期上限 <strong>40 季</strong></span>
+    <span>租期上限 <strong>${LEASE_TERM_QUARTERS} 季</strong></span>
   </div>
   <div id="plane-list">`;
   if (groups.length === 0) {
