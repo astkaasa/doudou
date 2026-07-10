@@ -1,4 +1,5 @@
 import { AI_PROFILES } from '../data/aiProfiles.js';
+import { AIRPORTS, CITY_AIRPORT_IDS, DEFAULT_AIRPORT_IDS } from '../data/airports.generated.js';
 import { CITIES, HQ_RECOMMENDED_CITY_IDS } from '../data/cities.js';
 import { ERAS } from '../data/eras.js';
 import { MAIN_QUEST_STAGES, VICTORY_GRADES } from '../data/mainQuest.js';
@@ -8,10 +9,14 @@ import { PLANES } from '../data/planes.js';
 import { STOCKS, STOCK_SECTORS } from '../data/stocks.js';
 import { ERA_SETTLEMENT_OUTCOMES, ERA_SETTLEMENT_STATUSES, eraSettlementDeadlineTurns } from './eraSettlement.js';
 import { routeKey } from './helpers.js';
+import { airportServesCity } from './airports.js';
 
 const CITY_IDS = new Set(CITIES.map((city) => city.id));
 const ERA_IDS = new Set(ERAS.map((era) => era.id));
 const PLANE_IDS = new Set(PLANES.map((plane) => plane.id));
+const AIRPORT_IDS = new Set(AIRPORTS.map((airport) => airport.id));
+const AIRPORT_CONTRACT_STATUSES = new Set(['offered', 'active', 'completed', 'breached', 'expired']);
+const AIRPORT_RELOCATION_STATUSES = new Set(['pending', 'relocated', 'continued', 'closed']);
 
 export function validateStaticData() {
   const issues = [];
@@ -26,8 +31,39 @@ export function validateStaticData() {
     requirePositive(issues, `${path}.level`, city.level);
     requireText(issues, `${path}.region`, city.region);
     requireText(issues, `${path}.subRegion`, city.subRegion);
+    requireText(issues, `${path}.networkRegion`, city.networkRegion);
+    requireText(issues, `${path}.marketRole`, city.marketRole);
+    requirePositive(issues, `${path}.marketTier`, city.marketTier);
+    const eventZones = requireArray(issues, `${path}.eventZones`, city.eventZones);
+    eventZones.forEach((zone, zoneIndex) => requireText(issues, `${path}.eventZones[${zoneIndex}]`, zone));
   });
   validateReferences(issues, 'hqRecommendedCityIds', HQ_RECOMMENDED_CITY_IDS, CITY_IDS);
+
+  validateUniqueIds(issues, 'airports', AIRPORTS);
+  AIRPORTS.forEach((airport, index) => {
+    const path = `airports[${index}]`;
+    requireText(issues, `${path}.cityId`, airport.cityId);
+    requireText(issues, `${path}.name`, airport.name);
+    requireFiniteRange(issues, `${path}.lat`, airport.lat, -90, 90);
+    requireFiniteRange(issues, `${path}.lon`, airport.lon, -180, 180);
+    const servedCityIds = requireArray(issues, `${path}.servedCityIds`, airport.servedCityIds);
+    servedCityIds.forEach((cityId, cityIndex) => {
+      if (!CITY_IDS.has(cityId)) issues.push(`${path}.servedCityIds[${cityIndex}] references unknown city ${String(cityId)}`);
+    });
+  });
+  CITIES.forEach((city) => {
+    const airportIds = CITY_AIRPORT_IDS[city.id];
+    if (!Array.isArray(airportIds) || !airportIds.includes(`virtual-${city.id}`)) {
+      issues.push(`city ${city.id} must include its abstract airport`);
+    }
+    (airportIds || []).forEach((airportId) => {
+      if (!AIRPORT_IDS.has(airportId)) issues.push(`city ${city.id} references unknown airport ${String(airportId)}`);
+      else if (!airportServesCity(airportId, city.id)) issues.push(`airport ${airportId} does not serve city ${city.id}`);
+    });
+    if (!airportServesCity(DEFAULT_AIRPORT_IDS[city.id], city.id)) {
+      issues.push(`default airport for ${city.id} is invalid`);
+    }
+  });
 
   validateUniqueIds(issues, 'eras', ERAS);
   ERAS.forEach((era, index) => {
@@ -55,6 +91,13 @@ export function validateStaticData() {
     ['seats', 'range', 'fuel', 'maint', 'buyPrice', 'leasePrice'].forEach((field) => {
       requirePositive(issues, `${path}.${field}`, plane[field]);
     });
+    if (!plane.airportPerformance || typeof plane.airportPerformance !== 'object') {
+      issues.push(`${path}.airportPerformance is required`);
+    } else {
+      requirePositive(issues, `${path}.airportPerformance.minRunwayM`, plane.airportPerformance.minRunwayM);
+      requirePositiveInteger(issues, `${path}.airportPerformance.requiredInfrastructureTier`, plane.airportPerformance.requiredInfrastructureTier);
+      requireFiniteRange(issues, `${path}.airportPerformance.hotHighPerformance`, plane.airportPerformance.hotHighPerformance, 0, 1);
+    }
     requireInteger(issues, `${path}.serviceStart`, plane.serviceStart);
     requireInteger(issues, `${path}.serviceEnd`, plane.serviceEnd);
     if (Number.isInteger(plane.serviceStart) && Number.isInteger(plane.serviceEnd) && plane.serviceEnd < plane.serviceStart) {
@@ -179,6 +222,7 @@ export function validateGameState(state, options = {}) {
   requireFiniteRange(issues, 'state.brand', state.brand, 1, 10);
   requireNonNegativeInteger(issues, 'state.turnsPlayed', state.turnsPlayed);
   requirePositiveInteger(issues, 'state.planeIdCounter', state.planeIdCounter);
+  requirePositiveInteger(issues, 'state.routeIdCounter', state.routeIdCounter);
   validateRandomState(issues, state.rng);
   validateEraSettlementState(issues, state);
 
@@ -211,9 +255,12 @@ export function validateGameState(state, options = {}) {
 
   const assignedPlaneUids = new Set();
   const routeKeys = new Set();
+  const routeUids = new Set();
+  let maxRouteUid = 0;
   routes.forEach((route, index) => {
     const path = `state.routes[${index}]`;
-    validateRoute(issues, route, path, routeKeys);
+    validateRoute(issues, route, path, routeKeys, routeUids);
+    if (Number.isInteger(route?.uid)) maxRouteUid = Math.max(maxRouteUid, route.uid);
     if (route && !isBaseCity(state, route.from)) issues.push(`${path}.from must be the headquarters or an active branch`);
     const assignedPlanes = Array.isArray(route?.assignedPlanes) ? route.assignedPlanes : [];
     assignedPlanes.forEach((uid, planeIndex) => {
@@ -222,12 +269,79 @@ export function validateGameState(state, options = {}) {
       assignedPlaneUids.add(uid);
     });
   });
+  if (Number.isInteger(state.routeIdCounter) && state.routeIdCounter <= maxRouteUid) {
+    issues.push('state.routeIdCounter must be greater than every route uid');
+  }
 
   validateBranchState(issues, state, branches, constructing);
   validateCityStates(issues, state.cityStates);
   validateAiState(issues, aiPlayers);
+  validateAirportManagementState(issues, state);
 
   return issues;
+}
+
+function validateAirportManagementState(issues, state) {
+  if (!state.airportRelations || typeof state.airportRelations !== 'object' || Array.isArray(state.airportRelations)) {
+    issues.push('state.airportRelations must be an object');
+  } else {
+    Object.entries(state.airportRelations).forEach(([airportId, relation]) => {
+      if (!AIRPORT_IDS.has(airportId)) issues.push(`state.airportRelations references unknown airport ${airportId}`);
+      requireFiniteRange(issues, `state.airportRelations.${airportId}`, relation, -100, 100, true);
+    });
+  }
+
+  const contracts = requireArray(issues, 'state.airportContracts', state.airportContracts);
+  const contractIds = new Set();
+  contracts.forEach((contract, index) => {
+    const path = `state.airportContracts[${index}]`;
+    if (!contract || typeof contract !== 'object' || Array.isArray(contract)) {
+      issues.push(`${path} must be an object`);
+      return;
+    }
+    requireText(issues, `${path}.id`, contract.id);
+    if (contractIds.has(contract.id)) issues.push(`${path}.id duplicates ${String(contract.id)}`);
+    contractIds.add(contract.id);
+    if (!AIRPORT_CONTRACT_STATUSES.has(contract.status)) issues.push(`${path}.status is invalid`);
+    if (!airportServesCity(contract.airportId, contract.cityId)) issues.push(`${path}.airportId does not serve ${String(contract.cityId)}`);
+    if (!CITY_IDS.has(contract.originCityId)) issues.push(`${path}.originCityId references unknown city ${String(contract.originCityId)}`);
+    requireNonNegativeInteger(issues, `${path}.remainingQuarters`, contract.remainingQuarters);
+    requireNonNegativeInteger(issues, `${path}.metQuarters`, contract.metQuarters);
+    requireNonNegativeInteger(issues, `${path}.missedQuarters`, contract.missedQuarters);
+  });
+  requirePositiveInteger(issues, 'state.airportContractIdCounter', state.airportContractIdCounter);
+
+  const relocations = requireArray(issues, 'state.airportRelocations', state.airportRelocations);
+  const relocationIds = new Set();
+  relocations.forEach((record, index) => {
+    const path = `state.airportRelocations[${index}]`;
+    if (!record || typeof record !== 'object' || Array.isArray(record)) {
+      issues.push(`${path} must be an object`);
+      return;
+    }
+    requireText(issues, `${path}.id`, record.id);
+    if (relocationIds.has(record.id)) issues.push(`${path}.id duplicates ${String(record.id)}`);
+    relocationIds.add(record.id);
+    if (!AIRPORT_RELOCATION_STATUSES.has(record.status)) issues.push(`${path}.status is invalid`);
+    if (!AIRPORT_IDS.has(record.fromAirportId)) issues.push(`${path}.fromAirportId references unknown airport`);
+    if (!AIRPORT_IDS.has(record.toAirportId)) issues.push(`${path}.toAirportId references unknown airport`);
+    if (!CITY_IDS.has(record.cityId)) issues.push(`${path}.cityId references unknown city`);
+    requireNonNegative(issues, `${path}.migrationCost`, record.migrationCost);
+    requireArray(issues, `${path}.affectedRouteUids`, record.affectedRouteUids)
+      .forEach((uid, uidIndex) => requirePositiveInteger(issues, `${path}.affectedRouteUids[${uidIndex}]`, uid));
+  });
+  requirePositiveInteger(issues, 'state.airportRelocationIdCounter', state.airportRelocationIdCounter);
+
+  Object.entries(state.subsidiaries || {}).forEach(([cityId, entries]) => {
+    (entries || []).filter((entry) => entry?.type === 'airport').forEach((entry, index) => {
+      const path = `state.subsidiaries.${cityId}[${index}]`;
+      if (!airportServesCity(entry.airportId, cityId)) issues.push(`${path}.airportId does not serve ${cityId}`);
+      const upgrades = entry.upgrades && typeof entry.upgrades === 'object' && !Array.isArray(entry.upgrades)
+        ? Object.values(entry.upgrades).filter((value) => Number(value) > 0).length
+        : 0;
+      if (upgrades > 3) issues.push(`${path}.upgrades exceeds three slots`);
+    });
+  });
 }
 
 export function assertGameState(state, options) {
@@ -239,7 +353,7 @@ export function assertGameState(state, options) {
   throw error;
 }
 
-function validateRoute(issues, route, path, keys) {
+function validateRoute(issues, route, path, keys, uids) {
   if (!route || typeof route !== 'object') {
     issues.push(`${path} must be an object`);
     return;
@@ -247,6 +361,19 @@ function validateRoute(issues, route, path, keys) {
   if (!CITY_IDS.has(route.from)) issues.push(`${path}.from references unknown city ${String(route.from)}`);
   if (!CITY_IDS.has(route.to)) issues.push(`${path}.to references unknown city ${String(route.to)}`);
   if (route.from === route.to) issues.push(`${path} must connect two different cities`);
+  requirePositiveInteger(issues, `${path}.uid`, route.uid);
+  if (uids.has(route.uid)) issues.push(`${path}.uid duplicates ${String(route.uid)}`);
+  uids.add(route.uid);
+  if (!airportServesCity(route.fromAirportId, route.from)) issues.push(`${path}.fromAirportId does not serve ${String(route.from)}`);
+  if (!airportServesCity(route.toAirportId, route.to)) issues.push(`${path}.toAirportId does not serve ${String(route.to)}`);
+  if (route.fromAlternateAirportId !== null && route.fromAlternateAirportId !== undefined) {
+    if (!AIRPORT_IDS.has(route.fromAlternateAirportId)) issues.push(`${path}.fromAlternateAirportId references unknown airport`);
+    if (route.fromAlternateAirportId === route.fromAirportId) issues.push(`${path}.fromAlternateAirportId duplicates the primary airport`);
+  }
+  if (route.toAlternateAirportId !== null && route.toAlternateAirportId !== undefined) {
+    if (!AIRPORT_IDS.has(route.toAlternateAirportId)) issues.push(`${path}.toAlternateAirportId references unknown airport`);
+    if (route.toAlternateAirportId === route.toAirportId) issues.push(`${path}.toAlternateAirportId duplicates the primary airport`);
+  }
   if (CITY_IDS.has(route.from) && CITY_IDS.has(route.to)) {
     const key = routeKey(route.from, route.to);
     if (keys.has(key)) issues.push(`${path} duplicates route ${key}`);
@@ -322,6 +449,8 @@ function validateAiState(issues, aiPlayers) {
         routeKeys.add(key);
       }
       if (!fleetUids.has(route.assignedPlane)) issues.push(`${routePath}.assignedPlane references missing AI fleet uid ${String(route.assignedPlane)}`);
+      if (!airportServesCity(route.fromAirportId, route.from)) issues.push(`${routePath}.fromAirportId does not serve ${String(route.from)}`);
+      if (!airportServesCity(route.toAirportId, route.to)) issues.push(`${routePath}.toAirportId does not serve ${String(route.to)}`);
     });
   });
 }

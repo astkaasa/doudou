@@ -11,7 +11,23 @@ describe('active modifiers', () => {
     expect(routeMatchesScope(route, { kind: 'connectsCitySets', setA: ['tokyo'], setB: ['beijing'] })).toBe(true);
     expect(routeMatchesScope(route, { kind: 'region', regions: ['asia'] })).toBe(true);
     expect(routeMatchesScope(route, { kind: 'subRegion', subRegions: ['east_asia'] })).toBe(true);
+    expect(routeMatchesScope(route, { kind: 'eventZone', eventZones: ['east_asia'] })).toBe(true);
     expect(routeMatchesScope(route, { kind: 'routeKeys', routeKeys: ['beijing-tokyo'] })).toBe(true);
+    expect(routeMatchesScope(
+      { ...route, fromAirportId: 'oa-a', toAirportId: 'oa-b' },
+      { kind: 'airportIds', airportIds: ['oa-b'] },
+    )).toBe(true);
+  });
+
+  it('matches corrected event zones independently from broad network regions', () => {
+    expect(routeMatchesScope(
+      { from: 'astana', to: 'tashkent' },
+      { kind: 'eventZone', eventZones: ['central_asia'] },
+    )).toBe(true);
+    expect(routeMatchesScope(
+      { from: 'astana', to: 'tashkent' },
+      { kind: 'eventZone', eventZones: ['east_asia'] },
+    )).toBe(false);
   });
 
   it('combines demand and cost modifiers while suspending service', () => {

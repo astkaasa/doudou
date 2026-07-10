@@ -17,6 +17,7 @@ import {
   settleSubsidiaryQuarter,
 } from '../src/domain/subsidiaries.js';
 import { initState } from '../src/domain/state.js';
+import { getAirportInvestmentTargets } from '../src/domain/airportManagement.js';
 
 describe('subsidiary domain', () => {
   it('opens, acquires, and prevents duplicate city subsidiaries', () => {
@@ -41,6 +42,22 @@ describe('subsidiary domain', () => {
 
     expect(getAvailableSubTypes(state, 'beijing')).toEqual(['shuttle', 'hotel', 'travel', 'dutyfree', 'airport']);
     expect(getAvailableSubTypes(state, 'shanghai')).toEqual(['shuttle', 'hotel', 'travel', 'dutyfree']);
+  });
+
+  it('supports separate investments in multiple reviewed airports in one base city', () => {
+    const state = initState('london', 'era3');
+    state.cash = 10000;
+    const targets = getAirportInvestmentTargets(state, 'london');
+
+    expect(targets.length).toBeGreaterThan(2);
+    expect(openSubsidiary(state, 'airport', 'london', { airportId: targets[0].id }).ok).toBe(true);
+    expect(getAvailableSubTypes(state, 'london')).toContain('airport');
+    expect(openSubsidiary(state, 'airport', 'london', { airportId: targets[1].id }).ok).toBe(true);
+    expect(state.subsidiaries.london.filter((sub) => sub.type === 'airport')).toHaveLength(2);
+
+    expect(sellSubsidiary(state, 'london', 'airport', targets[0].id).ok).toBe(true);
+    expect(state.subsidiaries.london.filter((sub) => sub.type === 'airport')).toHaveLength(1);
+    expect(state.subsidiaries.london[0].airportId).toBe(targets[1].id);
   });
 
   it('settles value changes and skips new subsidiaries for one quarter', () => {

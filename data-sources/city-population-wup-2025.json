@@ -1,0 +1,1967 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-10",
+  "sources": {
+    "un-wup-2025": {
+      "title": "United Nations World Urbanization Prospects 2025 / GHS-WUP-MTUC R2025A V1.1",
+      "publisher": "United Nations DESA Population Division and European Commission Joint Research Centre",
+      "url": "https://population.un.org/wup/downloads?tab=Cities",
+      "dataUrl": "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/GHSL/GHS_WUP_MTUC_GLOBE_R2025A/V1-1/GHS_WUP_MTUC_GLOBE_R2025A_V1_1_statistics.zip",
+      "version": "R2025A V1.1",
+      "downloadSha256": "2195f3457d0fa016719d3bf1e51fc9928e1f33689e23122d20f23ec50c76c398",
+      "license": "CC BY 4.0 / UN attribution terms; see source pages",
+      "citation": "United Nations, Department of Economic and Social Affairs, Population Division (2025). World Urbanization Prospects: The 2025 Revision, Online Edition."
+    },
+    "world-bank-population-total": {
+      "title": "World Development Indicators: Population, total",
+      "publisher": "World Bank",
+      "url": "https://data.worldbank.org/indicator/SP.POP.TOTL",
+      "apiUrl": "https://api.worldbank.org/v2/country/GUM;MNP/indicator/SP.POP.TOTL",
+      "version": "last updated 2026-07-01",
+      "license": "CC BY 4.0"
+    }
+  },
+  "defaultSourceKey": "un-wup-2025",
+  "records": {
+    "abuja": {
+      "country": "Nigeria",
+      "distanceKm": 7.6,
+      "population": {
+        "1995": 0.1362,
+        "2000": 0.315,
+        "2020": 1.1469
+      },
+      "sourceId": 7704,
+      "sourceLat": 9.069301061748083,
+      "sourceLon": 7.433905471934677,
+      "sourceName": "Abuja"
+    },
+    "accra": {
+      "country": "Ghana",
+      "distanceKm": 3,
+      "population": {
+        "1960": 0.4935,
+        "1975": 0.8562,
+        "1980": 1.1676,
+        "1995": 2.1661,
+        "2000": 2.6121,
+        "2020": 5.2069
+      },
+      "sourceId": 3336,
+      "sourceLat": 5.605592040000424,
+      "sourceLon": -0.21420685711086462,
+      "sourceName": "Accra"
+    },
+    "addisababa": {
+      "country": "Ethiopia",
+      "distanceKm": 5.5,
+      "population": {
+        "1960": 0.4733,
+        "1975": 0.8689,
+        "1980": 1.1425,
+        "1995": 2.4418,
+        "2000": 2.7917,
+        "2020": 5.9085
+      },
+      "sourceId": 6353,
+      "sourceLat": 9.006593771238244,
+      "sourceLon": 38.74930997019054,
+      "sourceName": "Ādīs Ᾱbeba (Addis Ababa)"
+    },
+    "algiers": {
+      "country": "Algeria",
+      "distanceKm": 10.8,
+      "population": {
+        "1960": 0.9583,
+        "1975": 1.5145,
+        "1980": 1.6221,
+        "1995": 2.0091,
+        "2000": 2.1828,
+        "2020": 3.0927
+      },
+      "sourceId": 3444,
+      "sourceLat": 36.733954958794,
+      "sourceLon": 3.0888503391865947,
+      "sourceName": "El Djazaïr (Algiers)"
+    },
+    "amsterdam": {
+      "country": "Netherlands",
+      "distanceKm": 4.2,
+      "population": {
+        "1960": 0.8202,
+        "1975": 0.9318,
+        "1980": 0.9025,
+        "1995": 0.9609,
+        "2000": 0.9745,
+        "2020": 1.1448
+      },
+      "sourceId": 1754,
+      "sourceLat": 52.36782806942453,
+      "sourceLon": 4.866224826353401,
+      "sourceName": "Amsterdam"
+    },
+    "astana": {
+      "country": "Kazakhstan",
+      "distanceKm": 2.5,
+      "population": {
+        "1960": 0.131,
+        "1975": 0.2346,
+        "1980": 0.2648,
+        "1995": 0.3021,
+        "2000": 0.3529,
+        "2020": 1.042
+      },
+      "sourceId": 1705,
+      "sourceLat": 51.158230616753585,
+      "sourceLon": 71.43759840939131,
+      "sourceName": "Astana"
+    },
+    "athens": {
+      "country": "Greece",
+      "distanceKm": 9.6,
+      "population": {
+        "1960": 2.2532,
+        "1975": 3.003,
+        "1980": 3.3003,
+        "1995": 3.2614,
+        "2000": 3.3031,
+        "2020": 3.2692
+      },
+      "sourceId": 833,
+      "sourceLat": 37.990221030260585,
+      "sourceLon": 23.729580284895103,
+      "sourceName": "Athína (Athens)"
+    },
+    "atlanta": {
+      "country": "United States of America",
+      "distanceKm": 10.1,
+      "population": {
+        "1995": 0.0562,
+        "2000": 0.2615,
+        "2020": 0.4278
+      },
+      "sourceId": 7328,
+      "sourceLat": 33.78976868883355,
+      "sourceLon": -84.36244575969876,
+      "sourceName": "Atlanta"
+    },
+    "auckland": {
+      "country": "New Zealand",
+      "distanceKm": 5.8,
+      "population": {
+        "1960": 0.1769,
+        "1975": 0.2726,
+        "1980": 0.3044,
+        "1995": 0.5566,
+        "2000": 0.656,
+        "2020": 1.0851
+      },
+      "sourceId": 1005,
+      "sourceLat": -36.90250150734678,
+      "sourceLon": 174.77706540588747,
+      "sourceName": "Auckland"
+    },
+    "baghdad": {
+      "country": "Iraq",
+      "distanceKm": 4,
+      "population": {
+        "1960": 0.864,
+        "1975": 2.0358,
+        "1980": 2.5077,
+        "1995": 3.7496,
+        "2000": 4.2721,
+        "2020": 6.1336
+      },
+      "sourceId": 3303,
+      "sourceLat": 33.33622203078022,
+      "sourceLon": 44.38937559062919,
+      "sourceName": "Baghdād (Baghdad)"
+    },
+    "bangkok": {
+      "country": "Thailand",
+      "distanceKm": 7,
+      "population": {
+        "1960": 1.9896,
+        "1975": 3.6508,
+        "1980": 4.6364,
+        "1995": 7.2066,
+        "2000": 8.3771,
+        "2020": 17.2501
+      },
+      "sourceId": 2286,
+      "sourceLat": 13.762493278494343,
+      "sourceLon": 100.55276620672501,
+      "sourceName": "Krung Thep Maha Nakhon (Bangkok)"
+    },
+    "barcelona": {
+      "country": "Spain",
+      "distanceKm": 4.8,
+      "population": {
+        "1960": 1.6811,
+        "1975": 2.2345,
+        "1980": 2.3291,
+        "1995": 2.7463,
+        "2000": 2.8314,
+        "2020": 3.8773
+      },
+      "sourceId": 5068,
+      "sourceLat": 41.42731165848469,
+      "sourceLon": 2.155629897075907,
+      "sourceName": "Barcelona"
+    },
+    "beijing": {
+      "country": "China",
+      "distanceKm": 2.6,
+      "population": {
+        "1960": 4.1013,
+        "1975": 5.155,
+        "1980": 5.5642,
+        "1995": 7.9703,
+        "2000": 9.6354,
+        "2020": 16.4843
+      },
+      "sourceId": 9020,
+      "sourceLat": 39.92912114217374,
+      "sourceLon": 116.37305015256756,
+      "sourceName": "Beijing"
+    },
+    "bengaluru": {
+      "country": "India",
+      "distanceKm": 6.2,
+      "population": {
+        "1960": 1.4794,
+        "1975": 2.3695,
+        "1980": 3.0953,
+        "1995": 5.183,
+        "2000": 6.0519,
+        "2020": 12.9057
+      },
+      "sourceId": 9949,
+      "sourceLat": 13.013688679860724,
+      "sourceLon": 77.55681037392348,
+      "sourceName": "Bengaluru"
+    },
+    "berlin": {
+      "country": "Germany",
+      "distanceKm": 1.1,
+      "population": {
+        "1960": 3.0213,
+        "1975": 3.0259,
+        "1980": 2.9668,
+        "1995": 3.414,
+        "2000": 3.3281,
+        "2020": 3.5404
+      },
+      "sourceId": 5576,
+      "sourceLat": 52.50191363139339,
+      "sourceLon": 13.399854163688222,
+      "sourceName": "Berlin"
+    },
+    "bogota": {
+      "country": "Colombia",
+      "distanceKm": 6.6,
+      "population": {
+        "1960": 1.5728,
+        "1975": 3.3898,
+        "1980": 3.8448,
+        "1995": 5.579,
+        "2000": 6.3408,
+        "2020": 9.9352
+      },
+      "sourceId": 3883,
+      "sourceLat": 4.646146186390521,
+      "sourceLon": -74.1152114162224,
+      "sourceName": "Bogotá"
+    },
+    "brasilia": {
+      "country": "Brazil",
+      "distanceKm": 16.9,
+      "population": {
+        "1975": 0.0881,
+        "1980": 0.2549,
+        "1995": 0.6795,
+        "2000": 0.8795,
+        "2020": 1.3887
+      },
+      "sourceId": 5833,
+      "sourceLat": -15.83626030735146,
+      "sourceLon": -48.073299575760664,
+      "sourceName": "Brasília"
+    },
+    "brisbane": {
+      "country": "Australia",
+      "distanceKm": 1.2,
+      "population": {
+        "1975": 0.0587,
+        "1980": 0.1596,
+        "1995": 0.5346,
+        "2000": 0.5701,
+        "2020": 0.9582
+      },
+      "sourceId": 2591,
+      "sourceLat": -27.477137256031412,
+      "sourceLon": 153.03334725919512,
+      "sourceName": "Brisbane"
+    },
+    "brunei": {
+      "country": "Brunei Darussalam",
+      "distanceKm": 7.3,
+      "population": {
+        "2020": 0.0682
+      },
+      "sourceId": 169,
+      "sourceLat": 4.893437440592862,
+      "sourceLon": 114.91413459137449,
+      "sourceName": "Bandar Seri Begawan"
+    },
+    "buenosaires": {
+      "country": "Argentina",
+      "distanceKm": 13.5,
+      "population": {
+        "1960": 6.1143,
+        "1975": 8.5609,
+        "1980": 9.2769,
+        "1995": 11.0666,
+        "2000": 11.7116,
+        "2020": 13.9412
+      },
+      "sourceId": 4459,
+      "sourceLat": -34.65332084792975,
+      "sourceLon": -58.52226649515977,
+      "sourceName": "Buenos Aires"
+    },
+    "cairo": {
+      "country": "Egypt",
+      "distanceKm": 7.9,
+      "population": {
+        "1960": 4.4217,
+        "1975": 7.4409,
+        "1980": 8.4937,
+        "1995": 13.9279,
+        "2000": 15.6766,
+        "2020": 24.0021
+      },
+      "sourceId": 4435,
+      "sourceLat": 30.069633040612356,
+      "sourceLon": 31.255014283105016,
+      "sourceName": "Al-Qahirah (Cairo)"
+    },
+    "capetown": {
+      "country": "South Africa",
+      "distanceKm": 16.4,
+      "population": {
+        "1960": 0.5358,
+        "1975": 0.9837,
+        "1980": 1.2597,
+        "1995": 2.1305,
+        "2000": 2.427,
+        "2020": 4.077
+      },
+      "sourceId": 413,
+      "sourceLat": -33.97725605665282,
+      "sourceLon": 18.598176221179312,
+      "sourceName": "Cape Town"
+    },
+    "caracas": {
+      "country": "Venezuela (Bolivarian Republic of)",
+      "distanceKm": 1.3,
+      "population": {
+        "1960": 1.3703,
+        "1975": 2.436,
+        "1980": 2.6555,
+        "1995": 2.8885,
+        "2000": 2.9188,
+        "2020": 2.6187
+      },
+      "sourceId": 3791,
+      "sourceLat": 10.47822582490685,
+      "sourceLon": -66.88699819635721,
+      "sourceName": "Caracas"
+    },
+    "casablanca": {
+      "country": "Morocco",
+      "distanceKm": 6.2,
+      "population": {
+        "1960": 0.9205,
+        "1975": 1.7432,
+        "1980": 2.0726,
+        "1995": 2.9591,
+        "2000": 3.1713,
+        "2020": 4.2775
+      },
+      "sourceId": 2076,
+      "sourceLat": 33.58091918357371,
+      "sourceLon": -7.5433082175070805,
+      "sourceName": "Casablanca"
+    },
+    "chengdu": {
+      "country": "China",
+      "distanceKm": 10.2,
+      "population": {
+        "1960": 2.2389,
+        "1975": 2.8142,
+        "1980": 3.1995,
+        "1995": 4.8986,
+        "2000": 5.4868,
+        "2020": 6.269
+      },
+      "sourceId": 6602,
+      "sourceLat": 30.6726799287395,
+      "sourceLon": 104.04414405729193,
+      "sourceName": "Chengdu"
+    },
+    "chicago": {
+      "country": "United States of America",
+      "distanceKm": 10.2,
+      "population": {
+        "1960": 2.9208,
+        "1975": 3.4483,
+        "1980": 3.4393,
+        "1995": 3.6174,
+        "2000": 3.7401,
+        "2020": 3.7053
+      },
+      "sourceId": 7747,
+      "sourceLat": 41.87217904048545,
+      "sourceLon": -87.70788405359376,
+      "sourceName": "Chicago"
+    },
+    "copenhagen": {
+      "country": "Denmark",
+      "distanceKm": 4.9,
+      "population": {
+        "1960": 1.036,
+        "1975": 1.0368,
+        "1980": 0.9482,
+        "1995": 0.9021,
+        "2000": 0.9109,
+        "2020": 1.1962
+      },
+      "sourceId": 680,
+      "sourceLat": 55.6920240202473,
+      "sourceLon": 12.522081251062826,
+      "sourceName": "København (Copenhagen)"
+    },
+    "dakar": {
+      "country": "Senegal",
+      "distanceKm": 3.8,
+      "population": {
+        "1960": 0.4656,
+        "1975": 0.9371,
+        "1980": 1.1314,
+        "1995": 1.859,
+        "2000": 2.1493,
+        "2020": 3.5283
+      },
+      "sourceId": 33,
+      "sourceLat": 14.744555679902867,
+      "sourceLon": -17.38877871373832,
+      "sourceName": "Dakar"
+    },
+    "dallas": {
+      "country": "United States of America",
+      "distanceKm": 10.6,
+      "population": {
+        "1980": 0.0559,
+        "1995": 0.5434,
+        "2000": 0.7616,
+        "2020": 1.4848
+      },
+      "sourceId": 6620,
+      "sourceLat": 32.87297588606913,
+      "sourceLon": -96.72729572476602,
+      "sourceName": "Dallas"
+    },
+    "daressalaam": {
+      "country": "United Republic of Tanzania",
+      "distanceKm": 10.8,
+      "population": {
+        "1960": 0.1023,
+        "1975": 0.2992,
+        "1980": 0.5383,
+        "1995": 1.587,
+        "2000": 2.0716,
+        "2020": 6.851
+      },
+      "sourceId": 3566,
+      "sourceLat": -6.835382196016856,
+      "sourceLon": 39.21902364913317,
+      "sourceName": "Dar es Salaam"
+    },
+    "delhi": {
+      "country": "India",
+      "distanceKm": 4.4,
+      "population": {
+        "1960": 3.6861,
+        "1975": 6.0919,
+        "1980": 7.3926,
+        "1995": 14.4965,
+        "2000": 17.9691,
+        "2020": 29.1013
+      },
+      "sourceId": 8364,
+      "sourceLat": 28.61925074394344,
+      "sourceLon": 77.21927899394366,
+      "sourceName": "New Delhi"
+    },
+    "denver": {
+      "country": "United States of America",
+      "distanceKm": 3.9,
+      "population": {
+        "1960": 0.1216,
+        "1975": 0.1809,
+        "1980": 0.3437,
+        "1995": 0.7727,
+        "2000": 1.2309,
+        "2020": 2.1463
+      },
+      "sourceId": 6032,
+      "sourceLat": 39.718854174270106,
+      "sourceLon": -104.96631102127743,
+      "sourceName": "Denver"
+    },
+    "dhaka": {
+      "country": "Bangladesh",
+      "distanceKm": 28.6,
+      "population": {
+        "1960": 1.7152,
+        "1975": 5.0372,
+        "1980": 6.4309,
+        "1995": 13.6833,
+        "2000": 17.4346,
+        "2020": 32.6359
+      },
+      "sourceId": 6249,
+      "sourceLat": 23.634060606458657,
+      "sourceLon": 90.61692626563493,
+      "sourceName": "Dhaka"
+    },
+    "doha": {
+      "country": "Qatar",
+      "distanceKm": 7.6,
+      "population": {
+        "1995": 0.1033,
+        "2000": 0.3,
+        "2020": 1.9815
+      },
+      "sourceId": 141,
+      "sourceLat": 25.253896757550407,
+      "sourceLon": 51.46350297479403,
+      "sourceName": "Ad-Dawhah (Doha)"
+    },
+    "dubai": {
+      "country": "United Arab Emirates",
+      "distanceKm": 5.9,
+      "population": {
+        "1980": 0.163,
+        "1995": 0.764,
+        "2000": 1.2974,
+        "2020": 4.4232
+      },
+      "sourceId": 865,
+      "sourceLat": 25.23579291138016,
+      "sourceLon": 55.343781953558725,
+      "sourceName": "Dubai"
+    },
+    "frankfurt": {
+      "country": "Germany",
+      "distanceKm": 1.2,
+      "population": {
+        "1960": 0.6771,
+        "1975": 0.6781,
+        "1980": 0.662,
+        "1995": 0.7173,
+        "2000": 0.7069,
+        "2020": 0.8876
+      },
+      "sourceId": 3500,
+      "sourceLat": 50.11950477477326,
+      "sourceLon": 8.671557017643478,
+      "sourceName": "Frankfurt"
+    },
+    "fukuoka": {
+      "country": "Japan",
+      "distanceKm": 4.2,
+      "population": {
+        "1960": 1.291,
+        "1975": 1.8693,
+        "1980": 1.9166,
+        "1995": 2.1721,
+        "2000": 2.1677,
+        "2020": 2.2749
+      },
+      "sourceId": 884,
+      "sourceLat": 33.58629589704933,
+      "sourceLon": 130.4257231151285,
+      "sourceName": "Fukuoka"
+    },
+    "guam": {
+      "sourceId": "WB:GUM",
+      "sourceName": "Guam",
+      "country": "Guam",
+      "sourceLat": 13.4443,
+      "sourceLon": 144.7937,
+      "distanceKm": 6.1,
+      "population": {
+        "1960": 0.069525,
+        "1975": 0.099057,
+        "1980": 0.110141,
+        "1995": 0.150054,
+        "2000": 0.160065,
+        "2020": 0.162158
+      },
+      "sourceKey": "world-bank-population-total"
+    },
+    "guangzhou": {
+      "country": "China",
+      "distanceKm": 31.7,
+      "population": {
+        "1960": 1.1908,
+        "1975": 1.6442,
+        "1980": 2.0862,
+        "1995": 9.1015,
+        "2000": 18.9703,
+        "2020": 26.5083
+      },
+      "sourceId": 11306,
+      "sourceLat": 23.376456530613442,
+      "sourceLon": 113.11024566220216,
+      "sourceName": "Guangzhou"
+    },
+    "hannover": {
+      "country": "Germany",
+      "distanceKm": 1.9,
+      "population": {
+        "1960": 0.6002,
+        "1975": 0.6203,
+        "1980": 0.5967,
+        "1995": 0.5972,
+        "2000": 0.5799,
+        "2020": 0.6113
+      },
+      "sourceId": 4316,
+      "sourceLat": 52.37799661821544,
+      "sourceLon": 9.754112266705565,
+      "sourceName": "Hanover"
+    },
+    "hanoi": {
+      "country": "Viet Nam",
+      "distanceKm": 3.7,
+      "population": {
+        "1960": 0.8876,
+        "1975": 1.4929,
+        "1980": 1.7508,
+        "1995": 2.6058,
+        "2000": 3.024,
+        "2020": 5.0577
+      },
+      "sourceId": 1975,
+      "sourceLat": 21.00973466824796,
+      "sourceLon": 105.83565286071587,
+      "sourceName": "Hà Nội (Hanoi)"
+    },
+    "harbin": {
+      "country": "China",
+      "distanceKm": 13.3,
+      "population": {
+        "1960": 1.3689,
+        "1975": 1.7207,
+        "1980": 1.9073,
+        "1995": 2.8363,
+        "2000": 3.4757,
+        "2020": 4.3831
+      },
+      "sourceId": 9738,
+      "sourceLat": 45.744393343861404,
+      "sourceLon": 126.65888724175433,
+      "sourceName": "Harbin"
+    },
+    "havana": {
+      "country": "Cuba",
+      "distanceKm": 3.4,
+      "population": {
+        "1960": 1.119,
+        "1975": 1.475,
+        "1980": 1.5222,
+        "1995": 1.6948,
+        "2000": 1.7163,
+        "2020": 1.6231
+      },
+      "sourceId": 350,
+      "sourceLat": 23.084611505288944,
+      "sourceLon": -82.36690101201206,
+      "sourceName": "La Habana (Havana)"
+    },
+    "hochiminh": {
+      "country": "Viet Nam",
+      "distanceKm": 6.9,
+      "population": {
+        "1960": 1.4626,
+        "1975": 2.384,
+        "1980": 2.9145,
+        "1995": 4.9268,
+        "2000": 6.0061,
+        "2020": 13.0967
+      },
+      "sourceId": 5435,
+      "sourceLat": 10.829640428389666,
+      "sourceLon": 106.69253307689696,
+      "sourceName": "Ho Chi Minh City"
+    },
+    "hongkong": {
+      "country": "China, Hong Kong SAR",
+      "distanceKm": 2,
+      "population": {
+        "1960": 1.9344,
+        "1975": 2.8775,
+        "1980": 3.2039,
+        "1995": 3.9745,
+        "2000": 4.3047,
+        "2020": 4.8097
+      },
+      "sourceId": 11566,
+      "sourceLat": 22.317097138601895,
+      "sourceLon": 114.18307749983782,
+      "sourceName": "Tamar (Hong Kong)"
+    },
+    "honolulu": {
+      "country": "United States of America",
+      "distanceKm": 4.1,
+      "population": {
+        "1960": 0.2273,
+        "1975": 0.3042,
+        "1980": 0.3505,
+        "1995": 0.402,
+        "2000": 0.4153,
+        "2020": 0.5318
+      },
+      "sourceId": 1,
+      "sourceLat": 21.336564175822303,
+      "sourceLon": -157.88685674599208,
+      "sourceName": "Honolulu"
+    },
+    "houston": {
+      "country": "United States of America",
+      "distanceKm": 6.9,
+      "population": {
+        "1960": 0.0719,
+        "1975": 0.1069,
+        "1980": 0.2001,
+        "1995": 0.91,
+        "2000": 1.229,
+        "2020": 3.44
+      },
+      "sourceId": 6237,
+      "sourceLat": 29.76839930113512,
+      "sourceLon": -95.45345232994165,
+      "sourceName": "Houston"
+    },
+    "islamabad": {
+      "country": "Pakistan",
+      "distanceKm": 11.2,
+      "population": {
+        "1960": 0.4154,
+        "1975": 0.8096,
+        "1980": 0.9907,
+        "1995": 2.1256,
+        "2000": 2.5898,
+        "2020": 4.5217
+      },
+      "sourceId": 7017,
+      "sourceLat": 33.608764784929825,
+      "sourceLon": 73.06127123633041,
+      "sourceName": "Islāmābād"
+    },
+    "istanbul": {
+      "country": "Türkiye",
+      "distanceKm": 3,
+      "population": {
+        "1960": 2.4538,
+        "1975": 5.3052,
+        "1980": 6.2322,
+        "1995": 9.8014,
+        "2000": 10.6336,
+        "2020": 14.6098
+      },
+      "sourceId": 2626,
+      "sourceLat": 41.01250809748104,
+      "sourceLon": 28.988337839805837,
+      "sourceName": "Istanbul"
+    },
+    "jakarta": {
+      "country": "Indonesia",
+      "distanceKm": 14.8,
+      "population": {
+        "1960": 6.4351,
+        "1975": 11.6964,
+        "1980": 14.2047,
+        "1995": 22.4213,
+        "2000": 25.592,
+        "2020": 39.0692
+      },
+      "sourceId": 5590,
+      "sourceLat": -6.323026313596942,
+      "sourceLon": 106.82060240091151,
+      "sourceName": "Jakarta"
+    },
+    "jeddah": {
+      "country": "Saudi Arabia",
+      "distanceKm": 4.8,
+      "population": {
+        "1960": 0.0526,
+        "1975": 0.1893,
+        "1980": 0.3438,
+        "1995": 1.36,
+        "2000": 1.6821,
+        "2020": 3.8931
+      },
+      "sourceId": 1086,
+      "sourceLat": 21.524295283599955,
+      "sourceLon": 39.213769673089345,
+      "sourceName": "Jeddah"
+    },
+    "johannesburg": {
+      "country": "South Africa",
+      "distanceKm": 1,
+      "population": {
+        "1960": 0.7521,
+        "1975": 1.1806,
+        "1980": 1.2103,
+        "1995": 2.0311,
+        "2000": 2.7678,
+        "2020": 6.5187
+      },
+      "sourceId": 3664,
+      "sourceLat": -26.218728315425995,
+      "sourceLon": 28.007423747345563,
+      "sourceName": "Johannesburg"
+    },
+    "karachi": {
+      "country": "Pakistan",
+      "distanceKm": 6.7,
+      "population": {
+        "1960": 2.3008,
+        "1975": 4.6267,
+        "1980": 5.8198,
+        "1995": 9.458,
+        "2000": 10.7995,
+        "2020": 19.3406
+      },
+      "sourceId": 2578,
+      "sourceLat": 24.89795040804016,
+      "sourceLon": 67.06592967001605,
+      "sourceName": "Karachi"
+    },
+    "kingston": {
+      "country": "Jamaica",
+      "distanceKm": 1.5,
+      "population": {
+        "1960": 0.455,
+        "1975": 0.5338,
+        "1980": 0.5517,
+        "1995": 0.5871,
+        "2000": 0.5942,
+        "2020": 0.5967
+      },
+      "sourceId": 776,
+      "sourceLat": 18.011749220208422,
+      "sourceLon": -76.79780430464997,
+      "sourceName": "Kingston"
+    },
+    "kinshasa": {
+      "country": "Democratic Republic of the Congo",
+      "distanceKm": 9.7,
+      "population": {
+        "1960": 0.3754,
+        "1975": 1.0356,
+        "1980": 1.5511,
+        "1995": 4.2537,
+        "2000": 5.3282,
+        "2020": 10.4535
+      },
+      "sourceId": 1854,
+      "sourceLat": -4.383152678229734,
+      "sourceLon": 15.32637459616018,
+      "sourceName": "Kinshasa"
+    },
+    "kolkata": {
+      "country": "India",
+      "distanceKm": 8.1,
+      "population": {
+        "1960": 7.9325,
+        "1975": 10.5276,
+        "1980": 11.8302,
+        "1995": 16.3211,
+        "2000": 18.3553,
+        "2020": 22.0487
+      },
+      "sourceId": 11821,
+      "sourceLat": 22.576895336978204,
+      "sourceLon": 88.34995062086219,
+      "sourceName": "Kolkata"
+    },
+    "kualalumpur": {
+      "country": "Malaysia",
+      "distanceKm": 6.3,
+      "population": {
+        "1960": 0.0924,
+        "1975": 0.1708,
+        "1980": 0.7071,
+        "1995": 2.8559,
+        "2000": 4.1439,
+        "2020": 7.863
+      },
+      "sourceId": 1629,
+      "sourceLat": 3.1015488023744813,
+      "sourceLon": 101.64474497083937,
+      "sourceName": "Kuala Lumpur"
+    },
+    "kyiv": {
+      "country": "Ukraine",
+      "distanceKm": 5.6,
+      "population": {
+        "1960": 1.2855,
+        "1975": 1.9347,
+        "1980": 2.1996,
+        "1995": 2.569,
+        "2000": 2.5646,
+        "2020": 2.8974
+      },
+      "sourceId": 2178,
+      "sourceLat": 50.4471384283026,
+      "sourceLon": 30.519739832217585,
+      "sourceName": "Kyiv (Kiev)"
+    },
+    "lagos": {
+      "country": "Nigeria",
+      "distanceKm": 11,
+      "population": {
+        "1960": 1.2492,
+        "1975": 2.6125,
+        "1980": 3.4147,
+        "1995": 6.8872,
+        "2000": 7.909,
+        "2020": 12.0121
+      },
+      "sourceId": 1265,
+      "sourceLat": 6.5700440472156005,
+      "sourceLon": 3.3097910468782596,
+      "sourceName": "Lagos"
+    },
+    "lhasa": {
+      "country": "China",
+      "distanceKm": 7.7,
+      "population": {
+        "1995": 0.0954,
+        "2000": 0.1481,
+        "2020": 0.215
+      },
+      "sourceId": 3366,
+      "sourceLat": 29.658926868298988,
+      "sourceLon": 91.12011231524916,
+      "sourceName": "Lhasa"
+    },
+    "lima": {
+      "country": "Peru",
+      "distanceKm": 3.4,
+      "population": {
+        "1960": 1.8017,
+        "1975": 3.5198,
+        "1980": 4.2071,
+        "1995": 6.2728,
+        "2000": 6.9917,
+        "2020": 10.0366
+      },
+      "sourceId": 1987,
+      "sourceLat": -12.039178731721687,
+      "sourceLon": -77.01017967442938,
+      "sourceName": "Lima"
+    },
+    "lisbon": {
+      "country": "Portugal",
+      "distanceKm": 11.4,
+      "population": {
+        "1960": 1.046,
+        "1975": 1.2784,
+        "1980": 1.5015,
+        "1995": 1.6299,
+        "2000": 1.6699,
+        "2020": 1.8616
+      },
+      "sourceId": 217,
+      "sourceLat": 38.757415897167256,
+      "sourceLon": -9.218280006463685,
+      "sourceName": "Lisboa (Lisbon)"
+    },
+    "london": {
+      "country": "United Kingdom",
+      "distanceKm": 1.6,
+      "population": {
+        "1960": 8.0326,
+        "1975": 7.3698,
+        "1980": 7.0261,
+        "1995": 7.3883,
+        "2000": 7.6546,
+        "2020": 9.9914
+      },
+      "sourceId": 5938,
+      "sourceLat": 51.50977860867776,
+      "sourceLon": -0.12678629893376847,
+      "sourceName": "London"
+    },
+    "losangeles": {
+      "country": "United States of America",
+      "distanceKm": 14.4,
+      "population": {
+        "1960": 5.7671,
+        "1975": 7.7178,
+        "1980": 8.2057,
+        "1995": 10.7014,
+        "2000": 11.1956,
+        "2020": 12.4915
+      },
+      "sourceId": 1725,
+      "sourceLat": 33.987213228443224,
+      "sourceLon": -118.09554227945681,
+      "sourceName": "Los Angeles"
+    },
+    "madrid": {
+      "country": "Spain",
+      "distanceKm": 1.7,
+      "population": {
+        "1960": 2.0215,
+        "1975": 2.9519,
+        "1980": 3.2488,
+        "1995": 3.6233,
+        "2000": 3.9208,
+        "2020": 5.4891
+      },
+      "sourceId": 3440,
+      "sourceLat": 40.405404758815806,
+      "sourceLon": -3.7092955719375134,
+      "sourceName": "Madrid"
+    },
+    "male": {
+      "country": "Maldives",
+      "distanceKm": 1.8,
+      "population": {
+        "1995": 0.0682,
+        "2000": 0.0792,
+        "2020": 0.2219
+      },
+      "sourceId": 152,
+      "sourceLat": 4.174157263912018,
+      "sourceLon": 73.50757858949213,
+      "sourceName": "Malé"
+    },
+    "manila": {
+      "country": "Philippines",
+      "distanceKm": 2.8,
+      "population": {
+        "1960": 4.3834,
+        "1975": 8.329,
+        "1980": 9.8843,
+        "1995": 16.2935,
+        "2000": 17.7991,
+        "2020": 24.0137
+      },
+      "sourceId": 2369,
+      "sourceLat": 14.582938530933982,
+      "sourceLon": 121.01890545401416,
+      "sourceName": "Manila"
+    },
+    "marseille": {
+      "country": "France",
+      "distanceKm": 0.4,
+      "population": {
+        "1960": 0.5449,
+        "1975": 0.7009,
+        "1980": 0.7656,
+        "1995": 0.811,
+        "2000": 0.8272,
+        "2020": 0.8795
+      },
+      "sourceId": 4276,
+      "sourceLat": 43.306047933998144,
+      "sourceLon": 5.400459790285899,
+      "sourceName": "Marseille"
+    },
+    "mecca": {
+      "country": "Saudi Arabia",
+      "distanceKm": 1.6,
+      "population": {
+        "1960": 0.0635,
+        "1975": 0.1617,
+        "1980": 0.2283,
+        "1995": 0.5522,
+        "2000": 0.6438,
+        "2020": 1.5086
+      },
+      "sourceId": 1513,
+      "sourceLat": 21.414017702466197,
+      "sourceLon": 39.8245673887816,
+      "sourceName": "Mecca"
+    },
+    "melbourne": {
+      "country": "Australia",
+      "distanceKm": 5.7,
+      "population": {
+        "1960": 1.1884,
+        "1975": 1.7158,
+        "1980": 1.8503,
+        "1995": 2.2282,
+        "2000": 2.3426,
+        "2020": 3.5236
+      },
+      "sourceId": 1634,
+      "sourceLat": -37.83805551468141,
+      "sourceLon": 145.05427968433753,
+      "sourceName": "Melbourne"
+    },
+    "mexicocity": {
+      "country": "Mexico",
+      "distanceKm": 5.5,
+      "population": {
+        "1960": 5.6995,
+        "1975": 11.1194,
+        "1980": 13.2161,
+        "1995": 16.6172,
+        "2000": 17.5982,
+        "2020": 17.6105
+      },
+      "sourceId": 5439,
+      "sourceLat": 19.44899420996268,
+      "sourceLon": -99.10180235573934,
+      "sourceName": "Ciudad de México (Mexico City)"
+    },
+    "miami": {
+      "country": "United States of America",
+      "distanceKm": 9.5,
+      "population": {
+        "1960": 0.3107,
+        "1975": 0.5179,
+        "1980": 1.0353,
+        "1995": 1.9059,
+        "2000": 2.1893,
+        "2020": 2.8184
+      },
+      "sourceId": 7289,
+      "sourceLat": 25.85664729166486,
+      "sourceLon": -80.26941686972337,
+      "sourceName": "Miami"
+    },
+    "milan": {
+      "country": "Italy",
+      "distanceKm": 6.8,
+      "population": {
+        "1960": 2.0419,
+        "1975": 2.5447,
+        "1980": 2.5877,
+        "1995": 2.5249,
+        "2000": 2.4948,
+        "2020": 2.5986
+      },
+      "sourceId": 1848,
+      "sourceLat": 45.52139273747053,
+      "sourceLon": 9.192461467544577,
+      "sourceName": "Milan"
+    },
+    "minsk": {
+      "country": "Belarus",
+      "distanceKm": 1.8,
+      "population": {
+        "1960": 0.6368,
+        "1975": 1.0531,
+        "1980": 1.2928,
+        "1995": 1.6028,
+        "2000": 1.6511,
+        "2020": 1.9757
+      },
+      "sourceId": 704,
+      "sourceLat": 53.892732089640205,
+      "sourceLon": 27.58236813360719,
+      "sourceName": "Minsk"
+    },
+    "montreal": {
+      "country": "Canada",
+      "distanceKm": 9.1,
+      "population": {
+        "1960": 1.202,
+        "1975": 1.683,
+        "1980": 1.6862,
+        "1995": 2.0697,
+        "2000": 2.1175,
+        "2020": 2.57
+      },
+      "sourceId": 3645,
+      "sourceLat": 45.53898423456678,
+      "sourceLon": -73.67277614653041,
+      "sourceName": "Montreal"
+    },
+    "moscow": {
+      "country": "Russian Federation",
+      "distanceKm": 6.7,
+      "population": {
+        "1960": 6.6909,
+        "1975": 8.5208,
+        "1980": 9.1076,
+        "1995": 10.3864,
+        "2000": 11.1946,
+        "2020": 14.2684
+      },
+      "sourceId": 2485,
+      "sourceLat": 55.74944105872425,
+      "sourceLon": 37.63813978289457,
+      "sourceName": "Moskva (Moscow)"
+    },
+    "mumbai": {
+      "country": "India",
+      "distanceKm": 4,
+      "population": {
+        "1960": 5.2062,
+        "1975": 8.3388,
+        "1980": 9.7849,
+        "1995": 14.3846,
+        "2000": 15.9529,
+        "2020": 19.3278
+      },
+      "sourceId": 7945,
+      "sourceLat": 19.133799995566434,
+      "sourceLon": 72.8867273687271,
+      "sourceName": "Mumbai"
+    },
+    "munich": {
+      "country": "Germany",
+      "distanceKm": 4.9,
+      "population": {
+        "1960": 1.1748,
+        "1975": 1.3762,
+        "1980": 1.3837,
+        "1995": 1.3459,
+        "2000": 1.2713,
+        "2020": 1.7692
+      },
+      "sourceId": 5337,
+      "sourceLat": 48.138975313771894,
+      "sourceLon": 11.557968466382087,
+      "sourceName": "Munich"
+    },
+    "nairobi": {
+      "country": "Kenya",
+      "distanceKm": 7.7,
+      "population": {
+        "1960": 0.2301,
+        "1975": 0.5383,
+        "1980": 0.7693,
+        "1995": 1.9739,
+        "2000": 2.5802,
+        "2020": 5.5924
+      },
+      "sourceId": 2033,
+      "sourceLat": -1.263989410823469,
+      "sourceLon": 36.84961833113093,
+      "sourceName": "Nairobi"
+    },
+    "newyork": {
+      "country": "United States of America",
+      "distanceKm": 8.3,
+      "population": {
+        "1960": 10.5547,
+        "1975": 12.0764,
+        "1980": 11.7471,
+        "1995": 12.5344,
+        "2000": 13.0445,
+        "2020": 14.0481
+      },
+      "sourceId": 8354,
+      "sourceLat": 40.73846093264201,
+      "sourceLon": -73.93519963273589,
+      "sourceName": "New York City"
+    },
+    "okinawa": {
+      "country": "Japan",
+      "distanceKm": 7.5,
+      "population": {
+        "1960": 0.5861,
+        "1975": 0.7486,
+        "1980": 0.8025,
+        "1995": 0.8824,
+        "2000": 0.939,
+        "2020": 1.0603
+      },
+      "sourceId": 4601,
+      "sourceLat": 26.248518486246926,
+      "sourceLon": 127.73789426452079,
+      "sourceName": "Naha"
+    },
+    "osaka": {
+      "country": "Japan",
+      "distanceKm": 4,
+      "population": {
+        "1960": 10.6239,
+        "1975": 14.4481,
+        "1980": 14.7424,
+        "1995": 15.099,
+        "2000": 14.4878,
+        "2020": 13.4566
+      },
+      "sourceId": 4490,
+      "sourceLat": 34.72107240143789,
+      "sourceLon": 135.47769894518572,
+      "sourceName": "Osaka"
+    },
+    "oslo": {
+      "country": "Norway",
+      "distanceKm": 5.4,
+      "population": {
+        "1960": 0.3878,
+        "1975": 0.4399,
+        "1980": 0.4549,
+        "1995": 0.5337,
+        "2000": 0.5913,
+        "2020": 0.8397
+      },
+      "sourceId": 931,
+      "sourceLat": 59.92046007113889,
+      "sourceLon": 10.777823927438915,
+      "sourceName": "Oslo"
+    },
+    "ottawa": {
+      "country": "Canada",
+      "distanceKm": 0.6,
+      "population": {
+        "1960": 0.1754,
+        "1975": 0.2784,
+        "1980": 0.315,
+        "1995": 0.4196,
+        "2000": 0.4527,
+        "2020": 0.589
+      },
+      "sourceId": 3488,
+      "sourceLat": 45.39491689160947,
+      "sourceLon": -75.70681419311809,
+      "sourceName": "Ottawa"
+    },
+    "panamacity": {
+      "country": "Panama",
+      "distanceKm": 8.8,
+      "population": {
+        "1960": 0.1496,
+        "1975": 0.2838,
+        "1980": 0.3375,
+        "1995": 0.6644,
+        "2000": 0.8644,
+        "2020": 1.4027
+      },
+      "sourceId": 640,
+      "sourceLat": 9.050825999077956,
+      "sourceLon": -79.48030378641396,
+      "sourceName": "Ciudad de Panamá (Panama City)"
+    },
+    "paris": {
+      "country": "France",
+      "distanceKm": 8,
+      "population": {
+        "1960": 6.3406,
+        "1975": 7.4239,
+        "1980": 7.4928,
+        "1995": 8.2238,
+        "2000": 8.3852,
+        "2020": 9.3465
+      },
+      "sourceId": 2994,
+      "sourceLat": 48.84873687640821,
+      "sourceLon": 2.3562878972308194,
+      "sourceName": "Paris"
+    },
+    "perth": {
+      "country": "Australia",
+      "distanceKm": 4.9,
+      "population": {
+        "1975": 0.07,
+        "1980": 0.1742,
+        "1995": 0.6121,
+        "2000": 0.6425,
+        "2020": 0.9708
+      },
+      "sourceId": 330,
+      "sourceLat": -31.941716108078413,
+      "sourceLon": 115.86229714761637,
+      "sourceName": "Perth"
+    },
+    "quito": {
+      "country": "Ecuador",
+      "distanceKm": 2.4,
+      "population": {
+        "1960": 0.3266,
+        "1975": 0.6371,
+        "1980": 0.8086,
+        "1995": 1.4712,
+        "2000": 1.6542,
+        "2020": 2.4294
+      },
+      "sourceId": 2524,
+      "sourceLat": -0.2101494057905026,
+      "sourceLon": -78.50082307689863,
+      "sourceName": "Quito"
+    },
+    "rio": {
+      "country": "Brazil",
+      "distanceKm": 21.4,
+      "population": {
+        "1960": 3.4229,
+        "1975": 5.8807,
+        "1980": 6.6803,
+        "1995": 7.7994,
+        "2000": 8.4168,
+        "2020": 9.4178
+      },
+      "sourceId": 7935,
+      "sourceLat": -22.84569381122971,
+      "sourceLon": -43.36654624568903,
+      "sourceName": "Rio de Janeiro"
+    },
+    "riyadh": {
+      "country": "Saudi Arabia",
+      "distanceKm": 3.5,
+      "population": {
+        "1980": 0.1256,
+        "1995": 1.9644,
+        "2000": 2.5573,
+        "2020": 6.2936
+      },
+      "sourceId": 2961,
+      "sourceLat": 24.69312882019511,
+      "sourceLon": 46.72350690776212,
+      "sourceName": "Ar-Riyāḑ (Riyadh)"
+    },
+    "rome": {
+      "country": "Italy",
+      "distanceKm": 2.4,
+      "population": {
+        "1960": 1.5556,
+        "1975": 1.9387,
+        "1980": 2.0084,
+        "1995": 2.2698,
+        "2000": 2.2128,
+        "2020": 2.3736
+      },
+      "sourceId": 4156,
+      "sourceLat": 41.88877512750712,
+      "sourceLon": 12.514111056964206,
+      "sourceName": "Roma (Rome)"
+    },
+    "rostov": {
+      "country": "Russian Federation",
+      "distanceKm": 5.1,
+      "population": {
+        "1960": 0.784,
+        "1975": 1.0303,
+        "1980": 1.0867,
+        "1995": 1.0992,
+        "2000": 1.087,
+        "2020": 1.0706
+      },
+      "sourceId": 5012,
+      "sourceLat": 47.24572856674405,
+      "sourceLon": 39.707203806864214,
+      "sourceName": "Rostov-on-Don"
+    },
+    "saipan": {
+      "sourceId": "WB:MNP",
+      "sourceName": "Northern Mariana Islands",
+      "country": "Northern Mariana Islands",
+      "sourceLat": 15.1808,
+      "sourceLon": 145.7509,
+      "distanceKm": 6.7,
+      "population": {
+        "1960": 0.008736,
+        "1975": 0.015065,
+        "1980": 0.017625,
+        "1995": 0.048176,
+        "2000": 0.068356,
+        "2020": 0.047528
+      },
+      "sourceKey": "world-bank-population-total"
+    },
+    "sanfrancisco": {
+      "country": "United States of America",
+      "distanceKm": 22.5,
+      "population": {
+        "1960": 1.6997,
+        "1975": 2.1365,
+        "1980": 2.3034,
+        "1995": 2.7416,
+        "2000": 2.837,
+        "2020": 3.1224
+      },
+      "sourceId": 1233,
+      "sourceLat": 37.81290382244179,
+      "sourceLon": -122.65586268385086,
+      "sourceName": "San Francisco"
+    },
+    "santiago": {
+      "country": "Chile",
+      "distanceKm": 10.6,
+      "population": {
+        "1960": 1.8452,
+        "1975": 2.835,
+        "1980": 3.3903,
+        "1995": 4.751,
+        "2000": 5.3053,
+        "2020": 6.5671
+      },
+      "sourceId": 2380,
+      "sourceLat": -33.49781232005826,
+      "sourceLon": -70.65455837694613,
+      "sourceName": "Santiago"
+    },
+    "santodomingo": {
+      "country": "Dominican Republic",
+      "distanceKm": 1.1,
+      "population": {
+        "1960": 0.565,
+        "1975": 1.2493,
+        "1980": 1.6599,
+        "1995": 2.5153,
+        "2000": 2.9204,
+        "2020": 4.4109
+      },
+      "sourceId": 1455,
+      "sourceLat": 18.491492436727572,
+      "sourceLon": -69.91439189613696,
+      "sourceName": "Santo Domingo"
+    },
+    "saopaulo": {
+      "country": "Brazil",
+      "distanceKm": 7.7,
+      "population": {
+        "1960": 5.0814,
+        "1975": 10.5361,
+        "1980": 13.0064,
+        "1995": 16.0467,
+        "2000": 16.702,
+        "2020": 18.802
+      },
+      "sourceId": 7303,
+      "sourceLat": -23.57642289661592,
+      "sourceLon": -46.5997700402146,
+      "sourceName": "São Paulo"
+    },
+    "sapporo": {
+      "country": "Japan",
+      "distanceKm": 6.1,
+      "population": {
+        "1960": 1.0822,
+        "1975": 1.5185,
+        "1980": 1.7049,
+        "1995": 1.9966,
+        "2000": 1.9964,
+        "2020": 1.9988
+      },
+      "sourceId": 334,
+      "sourceLat": 43.06935041645644,
+      "sourceLon": 141.3696909527447,
+      "sourceName": "Sapporo"
+    },
+    "seattle": {
+      "country": "United States of America",
+      "distanceKm": 9.5,
+      "population": {
+        "1960": 0.1312,
+        "1975": 0.1952,
+        "1980": 0.2884,
+        "1995": 0.464,
+        "2000": 0.7202,
+        "2020": 1.3076
+      },
+      "sourceId": 5386,
+      "sourceLat": 47.67511207800109,
+      "sourceLon": -122.28122626508551,
+      "sourceName": "Seattle"
+    },
+    "seoul": {
+      "country": "Republic of Korea",
+      "distanceKm": 13.6,
+      "population": {
+        "1960": 4.6434,
+        "1975": 10.079,
+        "1980": 12.1739,
+        "1995": 17.8395,
+        "2000": 18.9625,
+        "2020": 22.2355
+      },
+      "sourceId": 332,
+      "sourceLat": 37.4889332885498,
+      "sourceLon": 126.94513016228973,
+      "sourceName": "Seoul"
+    },
+    "seville": {
+      "country": "Spain",
+      "distanceKm": 2,
+      "population": {
+        "1960": 0.4466,
+        "1975": 0.5753,
+        "1980": 0.628,
+        "1995": 0.6841,
+        "2000": 0.6752,
+        "2020": 0.7031
+      },
+      "sourceId": 2157,
+      "sourceLat": 37.38749573467137,
+      "sourceLon": -5.9675077884542596,
+      "sourceName": "Seville"
+    },
+    "shanghai": {
+      "country": "China",
+      "distanceKm": 6.5,
+      "population": {
+        "1960": 4.5007,
+        "1975": 4.5428,
+        "1980": 4.9225,
+        "1995": 10.5672,
+        "2000": 14.0346,
+        "2020": 27.6545
+      },
+      "sourceId": 11738,
+      "sourceLat": 31.212760263029413,
+      "sourceLon": 121.43665462385991,
+      "sourceName": "Shanghai"
+    },
+    "shenzhen": {
+      "country": "China",
+      "distanceKm": 13.7,
+      "population": {
+        "1960": 0.2573,
+        "1975": 0.4879,
+        "1980": 0.6769,
+        "1995": 3.3654,
+        "2000": 8.181,
+        "2020": 13.4339
+      },
+      "sourceId": 11478,
+      "sourceLat": 22.657812525790526,
+      "sourceLon": 114.00994062165783,
+      "sourceName": "Shenzhen"
+    },
+    "singapore": {
+      "country": "Singapore",
+      "distanceKm": 8,
+      "population": {
+        "1960": 1.3499,
+        "1975": 2.0043,
+        "1980": 2.1746,
+        "1995": 3.1192,
+        "2000": 3.5391,
+        "2020": 4.7636
+      },
+      "sourceId": 165,
+      "sourceLat": 1.3488399594679417,
+      "sourceLon": 103.84317539681871,
+      "sourceName": "Singapore"
+    },
+    "stockholm": {
+      "country": "Sweden",
+      "distanceKm": 7.4,
+      "population": {
+        "1960": 0.6462,
+        "1975": 0.7838,
+        "1980": 0.7853,
+        "1995": 0.9436,
+        "2000": 0.9912,
+        "2020": 1.4397
+      },
+      "sourceId": 1672,
+      "sourceLat": 59.33095388430974,
+      "sourceLon": 18.007490227982792,
+      "sourceName": "Stockholm"
+    },
+    "stpetersburg": {
+      "country": "Russian Federation",
+      "distanceKm": 2.2,
+      "population": {
+        "1960": 2.8669,
+        "1975": 3.651,
+        "1980": 3.9259,
+        "1995": 4.0714,
+        "2000": 3.9795,
+        "2020": 4.7525
+      },
+      "sourceId": 568,
+      "sourceLat": 59.93430028399997,
+      "sourceLon": 30.337253599279933,
+      "sourceName": "Saint Petersburg"
+    },
+    "sydney": {
+      "country": "Australia",
+      "distanceKm": 12,
+      "population": {
+        "1960": 1.5388,
+        "1975": 2.2217,
+        "1980": 2.3479,
+        "1995": 2.881,
+        "2000": 2.8584,
+        "2020": 4.067
+      },
+      "sourceId": 2139,
+      "sourceLat": -33.85581837537853,
+      "sourceLon": 151.07721233197213,
+      "sourceName": "Sydney"
+    },
+    "taipei": {
+      "country": "China, Taiwan Province of China",
+      "distanceKm": 4.4,
+      "population": {
+        "1960": 1.9965,
+        "1975": 3.6911,
+        "1980": 4.669,
+        "1995": 7.4323,
+        "2000": 7.8986,
+        "2020": 9.2338
+      },
+      "sourceId": 12128,
+      "sourceLat": 25.02200774049881,
+      "sourceLon": 121.46363028736633,
+      "sourceName": "Taipei"
+    },
+    "tashkent": {
+      "country": "Uzbekistan",
+      "distanceKm": 6.5,
+      "population": {
+        "1960": 1.1141,
+        "1975": 2.1011,
+        "1980": 2.3058,
+        "1995": 2.9226,
+        "2000": 2.9861,
+        "2020": 3.6485
+      },
+      "sourceId": 3082,
+      "sourceLat": 41.24069850417402,
+      "sourceLon": 69.25896569297103,
+      "sourceName": "Toshkent (Tashkent)"
+    },
+    "tehran": {
+      "country": "Iran (Islamic Republic of)",
+      "distanceKm": 4.8,
+      "population": {
+        "1960": 1.9865,
+        "1975": 4.2651,
+        "1980": 5.1078,
+        "1995": 6.7801,
+        "2000": 6.9992,
+        "2020": 8.8892
+      },
+      "sourceId": 5264,
+      "sourceLat": 35.69401604772911,
+      "sourceLon": 51.35657921090298,
+      "sourceName": "Tehrān (Tehran)"
+    },
+    "tokyo": {
+      "country": "Japan",
+      "distanceKm": 6.5,
+      "population": {
+        "1960": 16.77,
+        "1975": 24.2816,
+        "1980": 25.9122,
+        "1995": 29.2223,
+        "2000": 30.3026,
+        "2020": 33.6989
+      },
+      "sourceId": 6030,
+      "sourceLat": 35.66692213657491,
+      "sourceLon": 139.65422840114886,
+      "sourceName": "Tōkyō (Tokyo)"
+    },
+    "toronto": {
+      "country": "Canada",
+      "distanceKm": 11.2,
+      "population": {
+        "1960": 1.2451,
+        "1975": 1.9761,
+        "1980": 2.2545,
+        "1995": 3.4344,
+        "2000": 3.7935,
+        "2020": 5.2437
+      },
+      "sourceId": 2925,
+      "sourceLat": 43.72656641034488,
+      "sourceLon": -79.47913294723527,
+      "sourceName": "Toronto"
+    },
+    "tunis": {
+      "country": "Tunisia",
+      "distanceKm": 3.1,
+      "population": {
+        "1960": 0.4576,
+        "1975": 0.7024,
+        "1980": 0.8251,
+        "1995": 1.605,
+        "2000": 1.6807,
+        "2020": 2.4211
+      },
+      "sourceId": 1378,
+      "sourceLat": 36.817993759440306,
+      "sourceLon": 10.185656065569844,
+      "sourceName": "Tunis"
+    },
+    "ulanbator": {
+      "country": "Mongolia",
+      "distanceKm": 3,
+      "population": {
+        "1960": 0.1242,
+        "1975": 0.236,
+        "1980": 0.2855,
+        "1995": 0.5096,
+        "2000": 0.6088,
+        "2020": 1.4631
+      },
+      "sourceId": 320,
+      "sourceLat": 47.92652728108482,
+      "sourceLon": 106.8746332096901,
+      "sourceName": "Ulaanbaatar"
+    },
+    "urumqi": {
+      "country": "China",
+      "distanceKm": 4.5,
+      "population": {
+        "1960": 0.4537,
+        "1975": 0.8844,
+        "1980": 1.1116,
+        "1995": 1.6452,
+        "2000": 1.8989,
+        "2020": 3.6576
+      },
+      "sourceId": 2715,
+      "sourceLat": 43.83049186481296,
+      "sourceLon": 87.59270289129223,
+      "sourceName": "Ürümqi"
+    },
+    "vancouver": {
+      "country": "Canada",
+      "distanceKm": 6.6,
+      "population": {
+        "1960": 0.2974,
+        "1975": 0.5025,
+        "1980": 0.5443,
+        "1995": 1.0709,
+        "2000": 1.1826,
+        "2020": 1.6354
+      },
+      "sourceId": 341,
+      "sourceLat": 49.247965244446014,
+      "sourceLon": -123.03535483945068,
+      "sourceName": "Vancouver"
+    },
+    "vienna": {
+      "country": "Austria",
+      "distanceKm": 4.2,
+      "population": {
+        "1960": 1.5044,
+        "1975": 1.56,
+        "1980": 1.5138,
+        "1995": 1.5383,
+        "2000": 1.5438,
+        "2020": 1.9766
+      },
+      "sourceId": 1054,
+      "sourceLat": 48.20021656541479,
+      "sourceLon": 16.362782163574575,
+      "sourceName": "Wien (Vienna)"
+    },
+    "warsaw": {
+      "country": "Poland",
+      "distanceKm": 2.7,
+      "population": {
+        "1960": 1.1225,
+        "1975": 1.4015,
+        "1980": 1.5497,
+        "1995": 1.6374,
+        "2000": 1.7045,
+        "2020": 1.8612
+      },
+      "sourceId": 3660,
+      "sourceLat": 52.22294346494681,
+      "sourceLon": 21.000588836383034,
+      "sourceName": "Warszawa (Warsaw)"
+    },
+    "washington": {
+      "country": "United States of America",
+      "distanceKm": 8.5,
+      "population": {
+        "1960": 0.6742,
+        "1975": 1.0553,
+        "1980": 1.0273,
+        "1995": 1.548,
+        "2000": 1.9072,
+        "2020": 3.063
+      },
+      "sourceId": 8123,
+      "sourceLat": 38.90352104665052,
+      "sourceLon": -77.09763125908913,
+      "sourceName": "Washington, D.C."
+    },
+    "wellington": {
+      "country": "New Zealand",
+      "distanceKm": 3.6,
+      "population": {
+        "1975": 0.0776,
+        "1980": 0.0812,
+        "1995": 0.0877,
+        "2000": 0.0917,
+        "2020": 0.1472
+      },
+      "sourceId": 486,
+      "sourceLat": -41.30384506995189,
+      "sourceLon": 174.7815444892661,
+      "sourceName": "Wellington"
+    },
+    "wuhan": {
+      "country": "China",
+      "distanceKm": 3.8,
+      "population": {
+        "1960": 1.2448,
+        "1975": 1.6658,
+        "1980": 1.9836,
+        "1995": 3.9689,
+        "2000": 5.6372,
+        "2020": 7.5587
+      },
+      "sourceId": 10474,
+      "sourceLat": 30.566268637667516,
+      "sourceLon": 114.29426890981122,
+      "sourceName": "Wuhan"
+    },
+    "xian": {
+      "country": "China",
+      "distanceKm": 7.2,
+      "population": {
+        "1960": 1.1509,
+        "1975": 1.5401,
+        "1980": 1.682,
+        "1995": 3.4021,
+        "2000": 3.982,
+        "2020": 5.2752
+      },
+      "sourceId": 8371,
+      "sourceLat": 34.257213293686966,
+      "sourceLon": 108.94603586277236,
+      "sourceName": "Xi'an"
+    },
+    "zurich": {
+      "country": "Switzerland",
+      "distanceKm": 2.9,
+      "population": {
+        "1960": 0.1863,
+        "1975": 0.2463,
+        "1980": 0.2407,
+        "1995": 0.5113,
+        "2000": 0.5334,
+        "2020": 0.6651
+      },
+      "sourceId": 1668,
+      "sourceLat": 47.38178912631212,
+      "sourceLon": 8.536891236250476,
+      "sourceName": "Zurich"
+    }
+  }
+}

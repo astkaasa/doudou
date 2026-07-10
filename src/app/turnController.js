@@ -1,5 +1,6 @@
 import { applyAngelInvestment } from '../domain/angelInvestment.js';
 import { continueEraInSandbox, hasPendingEraSettlement, retireAtEraEnd } from '../domain/eraSettlement.js';
+import { getPendingAirportRelocations, hasPendingAirportRelocation, resolveAirportRelocation, syncAirportRelocations } from '../domain/airportRelocations.js';
 import { fmt, getCity } from '../domain/helpers.js';
 import { hasPendingContracts, setOpsTier, signBonusContract, signRecruitContract } from '../domain/operations.js';
 import { updateRouteMetrics } from '../domain/routes.js';
@@ -12,6 +13,7 @@ import { BANNER_TONES, closeModalRoot, showBanner, showModal } from '../ui/modal
 import {
   closeDeliveryPopup,
   showDeliveryPopup,
+  showAirportRelocationModal,
   showGameOver,
   showNewspaper,
   showReportAlone,
@@ -99,6 +101,11 @@ export function createTurnController(app) {
       showEraSettlement(game);
       return;
     }
+    syncAirportRelocations(game);
+    if (hasPendingAirportRelocation(game)) {
+      showAirportRelocationModal(game);
+      return;
+    }
     if (hasPendingContracts(game)) {
       showAdvanceContractGuide(game);
       return;
@@ -136,6 +143,14 @@ export function createTurnController(app) {
     }
     if (report.branchCompleted.length > 0) {
       showBanner(`分部完工：${report.branchCompleted.map((cityId) => getCity(cityId)?.name || cityId).join('、')}`, BANNER_TONES.accent);
+    }
+    if (report.airportContractsCompleted?.length > 0) {
+      showBanner(`完成 ${report.airportContractsCompleted.length} 份机场开发合同`, BANNER_TONES.success);
+    } else if (report.airportContractsBreached?.length > 0) {
+      showBanner(`${report.airportContractsBreached.length} 份机场开发合同违约`, BANNER_TONES.danger);
+    }
+    if (report.newAirportRelocations?.length > 0) {
+      showBanner('新的机场迁移事项已进入待处理队列', BANNER_TONES.warning);
     }
     const showQuarterSummary = () => {
       showTurnSummary(game, report);
@@ -228,6 +243,23 @@ export function createTurnController(app) {
       },
       'advance-contract-guide': focusNextPendingContract,
       'advance-turn': () => advanceTurn(),
+      'resolve-airport-relocation': ({ target }) => {
+        const game = state();
+        if (!game) return;
+        const result = resolveAirportRelocation(game, target.dataset.relocationId, target.dataset.resolution);
+        if (!result.ok) {
+          showBanner(result.message, BANNER_TONES.danger);
+          showAirportRelocationModal(game);
+          return;
+        }
+        app.renderGame();
+        const next = getPendingAirportRelocations(game)[0];
+        if (next) showAirportRelocationModal(game, next);
+        else {
+          closeModalRoot();
+          showBanner(result.action === 'relocate' ? `机场迁移完成，支出 ${fmt(result.cost)}` : result.action === 'continue' ? '已选择继续使用旧机场' : '受影响航线已关闭', result.action === 'relocate' ? BANNER_TONES.success : BANNER_TONES.warning);
+        }
+      },
       'open-era-settlement': openEraSettlement,
       'continue-era-sandbox': continueEra,
       'retire-era': retireEra,

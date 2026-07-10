@@ -24,12 +24,14 @@ describe('application controllers', () => {
     });
 
     expect(Object.keys(controller.clickActions).sort()).toEqual([
+      'accept-airport-contract',
       'buy-stock',
       'confirm-loan',
       'confirm-sub-open',
       'confirm-sub-sell',
       'execute-sub-open',
       'execute-sub-sell',
+      'open-airport-program',
       'open-company-value',
       'open-loan-modal',
       'open-stock-market',
@@ -38,6 +40,7 @@ describe('application controllers', () => {
       'select-stock',
       'sell-stock',
       'take-loan',
+      'upgrade-airport-investment',
     ]);
   });
 
@@ -62,6 +65,7 @@ describe('application controllers', () => {
       'open-contract-from-panel',
       'open-era-settlement',
       'open-operations-panel',
+      'resolve-airport-relocation',
       'retire-era',
       'select-contract-option',
       'set-ops-tier',
@@ -105,6 +109,7 @@ describe('application controllers', () => {
       'open-branch-modal',
       'open-buy-plane-modal',
       'open-fleet-panel',
+      'open-route-alternate',
       'open-route-change-plane',
       'open-route-detail',
       'open-route-from-warning',
@@ -119,6 +124,7 @@ describe('application controllers', () => {
       'sell-plane',
       'set-adjust-price-preset',
       'set-map-zoom',
+      'set-route-alternate',
       'set-route-price-preset',
       'start-branch-select',
       'toggle-route-suspend',

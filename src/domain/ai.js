@@ -1,7 +1,16 @@
 import { CITIES } from '../data/cities.js';
-import { baseDemand, distanceServiceMultiplier, ROUTE_REVENUE_DIVISOR, seasonModifier, suggestedPrice } from './economy.js';
+import { routePlanePerformance, routePlaneSeatCapacity } from './airportPerformance.js';
+import { getDefaultAirportIdForYear } from './airports.js';
+import {
+  baseDemand,
+  distanceServiceMultiplier,
+  routeOperatingDistance,
+  ROUTE_REVENUE_DIVISOR,
+  seasonModifier,
+  suggestedPrice,
+} from './economy.js';
 import { availablePlaneTemplates } from './fleet.js';
-import { cityDist, clamp, getCity, routeKey } from './helpers.js';
+import { clamp, getCity, routeKey } from './helpers.js';
 import { randomIntFrom, randomSource } from './random.js';
 import { aiSubDecide } from './subsidiaries.js';
 
@@ -17,22 +26,32 @@ export function aiTurn(state, ai, random = randomSource(state)) {
         const b = CITIES[j];
         const key = routeKey(a.id, b.id);
         if (ownRouteKeys.has(key)) continue;
-        const d = cityDist(a, b);
         const demand = baseDemand(a, b, state);
         const score = demand * (ai.riskAverse > 0.5 ? (a.level + b.level) : 1) / (1 + (competitorCounts.get(key) || 0));
         if (score > bestScore) {
+          const fromAirportId = getDefaultAirportIdForYear(a.id, state.year);
+          const toAirportId = getDefaultAirportIdForYear(b.id, state.year);
+          const routeDraft = { from: a.id, to: b.id, fromAirportId, toAirportId };
           bestScore = score;
-          best = { from: a.id, to: b.id, dist: d };
+          best = {
+            ...routeDraft,
+            dist: routeOperatingDistance(routeDraft, a, b),
+          };
         }
       }
     }
     if (best && ai.fleet.length > ai.routes.length) {
-      const suitablePlane = ai.fleet.find((p) => p.range >= best.dist && !p.assigned);
+      const suitablePlane = ai.fleet.find((plane) => plane.range >= best.dist
+        && !plane.assigned
+        && routePlanePerformance(best, plane, state).compatible);
       if (suitablePlane) {
         const sp = suggestedPrice(best.from, best.to);
         ai.routes.push({
+          uid: `${ai.name}-route-${ai.routes.length + 1}`,
           from: best.from,
           to: best.to,
+          fromAirportId: best.fromAirportId,
+          toAirportId: best.toAirportId,
           price: Math.round(sp * ai.priceMul),
           suggestedPrice: sp,
           serviceMultiplier: 1,
@@ -55,14 +74,16 @@ export function aiTurn(state, ai, random = randomSource(state)) {
   ai.routes.forEach((r) => {
     const cityA = getCity(r.from);
     const cityB = getCity(r.to);
-    const d = cityDist(cityA, cityB);
+    const d = routeOperatingDistance(r, cityA, cityB);
     const demand = baseDemand(cityA, cityB, state) * seasonModifier(state.quarter);
     const plane = ai.fleet.find((p) => p.uid === r.assignedPlane);
     if (!plane) return;
+    const seats = routePlaneSeatCapacity(r, plane, state);
+    if (seats <= 0) return;
     const serviceMultiplier = distanceServiceMultiplier(d);
-    const lf = clamp(demand / plane.seats * Math.pow(r.price / r.suggestedPrice, -0.8), 0, 1);
+    const lf = clamp(demand / seats * Math.pow(r.price / r.suggestedPrice, -0.8), 0, 1);
     r.loadFactor = lf;
-    aiRev += plane.seats * lf * r.price * serviceMultiplier / ROUTE_REVENUE_DIVISOR;
+    aiRev += seats * lf * r.price * serviceMultiplier / ROUTE_REVENUE_DIVISOR;
     aiCost += plane.fuel * (state.oilPrice / 80) * (d / 5000);
     aiCost += plane.maint * (1 + 0.05 * plane.age);
   });

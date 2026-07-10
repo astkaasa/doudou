@@ -1,4 +1,5 @@
 import { CITIES } from "./cities.js";
+import { cityPopulationForEra, cityPopulationQuarterlyRate } from './cityPopulation.js';
 
 const CITY_BY_ID = new Map(CITIES.map((city) => [city.id, city]));
 
@@ -631,6 +632,11 @@ export const CITY_ERA_DATA = {
       11,
       10
     ]
+  ],
+  "astana": [
+    [0.13, 8, 4],
+    [0.23, 12, 6],
+    [0.35, 25, 12]
   ],
   "london": [
     [
@@ -1838,6 +1844,76 @@ export const CITY_ERA_DATA = {
       15,
       10
     ]
+  ],
+  "guangzhou": [
+    [1.19, 18, 5],
+    [1.64, 32, 8],
+    [18.97, 65, 30]
+  ],
+  "shenzhen": [
+    [0.26, 5, 1],
+    [0.49, 12, 2],
+    [8.18, 72, 20]
+  ],
+  "kualalumpur": [
+    [0.09, 12, 8],
+    [0.17, 28, 14],
+    [4.14, 67, 45]
+  ],
+  "hochiminh": [
+    [1.46, 10, 8],
+    [2.38, 18, 12],
+    [6.01, 52, 38]
+  ],
+  "dhaka": [
+    [1.72, 8, 2],
+    [5.04, 15, 3],
+    [17.43, 35, 8]
+  ],
+  "bengaluru": [
+    [1.48, 12, 4],
+    [2.37, 24, 5],
+    [6.05, 70, 23]
+  ],
+  "doha": [
+    [0.02, 10, 4],
+    [0.04, 18, 5],
+    [0.3, 58, 28]
+  ],
+  "jeddah": [
+    [0.05, 16, 12],
+    [0.19, 25, 18],
+    [1.68, 45, 35]
+  ],
+  "frankfurt": [
+    [0.68, 50, 22],
+    [0.68, 60, 27],
+    [0.71, 78, 39]
+  ],
+  "toronto": [
+    [1.25, 42, 25],
+    [1.98, 52, 30],
+    [3.79, 70, 46]
+  ],
+  "panamacity": [
+    [0.15, 20, 17],
+    [0.28, 29, 23],
+    [0.86, 48, 38]
+  ],
+  "auckland": [
+    [0.18, 25, 20],
+    [0.27, 34, 26],
+    [0.66, 55, 48]
+  ],
+  "brisbane": [
+    [0.02, 20, 12],
+    [0.06, 30, 18],
+    [0.57, 52, 35]
+  ],
+  "accra": [
+    [0.49, 13, 8],
+    [0.86, 20, 12],
+    [2.61, 38, 28]
   ]
 };
 
@@ -1893,6 +1969,11 @@ export const SUB_REGION_GROWTH = {
       "tour": 0.1
     }
   },
+  "central_asia": {
+    "era1": { "pop": 0.006, "biz": 0.06, "tour": 0.04 },
+    "era2": { "pop": 0.008, "biz": 0.08, "tour": 0.06 },
+    "era3": { "pop": 0.01, "biz": 0.12, "tour": 0.1 }
+  },
   "mideast": {
     "era1": {
       "pop": 0.012,
@@ -1943,6 +2024,16 @@ export const SUB_REGION_GROWTH = {
       "biz": 0.05,
       "tour": 0.08
     }
+  },
+  "west_africa": {
+    "era1": { "pop": 0.01, "biz": 0.05, "tour": 0.04 },
+    "era2": { "pop": 0.013, "biz": 0.08, "tour": 0.06 },
+    "era3": { "pop": 0.015, "biz": 0.12, "tour": 0.1 }
+  },
+  "east_africa": {
+    "era1": { "pop": 0.011, "biz": 0.05, "tour": 0.05 },
+    "era2": { "pop": 0.014, "biz": 0.08, "tour": 0.08 },
+    "era3": { "pop": 0.016, "biz": 0.12, "tour": 0.12 }
   },
   "central_africa": {
     "era1": {
@@ -2112,8 +2203,10 @@ function eraSlot(eraId) {
 function cityRecord(city, eraId) {
   const rows = CITY_ERA_DATA[city.id];
   const row = Array.isArray(rows) ? rows[eraSlot(eraId)] : null;
-  if (!Array.isArray(row)) return fallbackCityState(city);
-  return { pop: row[0], biz: row[1], tour: row[2] };
+  const fallback = fallbackCityState(city);
+  const population = cityPopulationForEra(city.id, eraId);
+  if (!Array.isArray(row)) return { ...fallback, pop: population ?? fallback.pop };
+  return { pop: population ?? row[0], biz: row[1], tour: row[2] };
 }
 
 function normalizeMarketRecord(record, fallback) {
@@ -2166,10 +2259,11 @@ export function growCityStates(state, random = () => 0.5) {
   for (const city of CITIES) {
     const market = current[city.id];
     const region = growthProfile(city.subRegion, state.era, state.year);
+    const populationRate = cityPopulationQuarterlyRate(city.id, state.year, state.quarter);
     const bizDiminish = 1 - market.biz / 120;
     const tourDiminish = 1 - market.tour / 120;
     next[city.id] = {
-      pop: Math.round(market.pop * (1 + region.pop + (random() - 0.5) * 0.002) * 100) / 100,
+      pop: Math.round(market.pop * (1 + populationRate + (random() - 0.5) * 0.0005) * 10000) / 10000,
       biz: Math.round(clamp(market.biz + region.biz * Math.max(0.15, bizDiminish) + (random() - 0.5) * 0.1, 0, 100)),
       tour: Math.round(clamp(market.tour + region.tour * Math.max(0.15, tourDiminish) + (random() - 0.5) * 0.1, 0, 100)),
     };

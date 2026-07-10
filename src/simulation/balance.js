@@ -1,9 +1,12 @@
 import { CITIES } from '../data/cities.js';
 import { ERAS } from '../data/eras.js';
-import { calcLoadFactor, routeCost, routeRevenue, suggestedPrice } from '../domain/economy.js';
+import { routePlanePerformance } from '../domain/airportPerformance.js';
+import { getDefaultAirportIdForYear } from '../domain/airports.js';
+import { getPendingAirportRelocations, previewAirportRelocation, resolveAirportRelocation, syncAirportRelocations } from '../domain/airportRelocations.js';
+import { calcLoadFactor, routeCost, routeOperatingDistance, routeRevenue, suggestedPrice } from '../domain/economy.js';
 import { continueEraInSandbox } from '../domain/eraSettlement.js';
 import { availablePlaneTemplates, buyPlane, quotePlaneAcquisition } from '../domain/fleet.js';
-import { cityDist, getCity, routeKey } from '../domain/helpers.js';
+import { getCity, routeKey } from '../domain/helpers.js';
 import { assertGameState } from '../domain/invariants.js';
 import { maxLoanAmount, repayLoan, takeLoan } from '../domain/loans.js';
 import { getMainQuestStats } from '../domain/mainQuest.js';
@@ -66,6 +69,7 @@ export const BALANCE_POLICIES = Object.freeze({
     label: '激进扩张',
     trait: '辣',
     reserveCash: 8,
+    cashPressureReserveByEra: Object.freeze({ era1: 15 }),
     emergencyCash: 0,
     routeLimit: 90,
     routeGrowthInterval: 1,
@@ -140,6 +144,7 @@ export function simulateGame(options = {}) {
   assertGameState(state);
 
   while (!state.gameOver && state.turnsPlayed < maxTurns) {
+    resolveSimulationAirportRelocations(state, context.actions);
     settleContracts(state, policy, context.actions);
     applyOperatingPolicy(state, policy);
     manageExistingRoutes(state, policy, context);
@@ -165,7 +170,7 @@ export function simulateGame(options = {}) {
     context.maxCash = Math.max(context.maxCash, state.cash);
     context.peakCash = Math.max(context.peakCash, state.cash);
     context.maxCashDrawdown = Math.max(context.maxCashDrawdown, context.peakCash - state.cash);
-    if (state.cash < policy.reserveCash) context.belowReserveTurns += 1;
+    if (state.cash < cashPressureReserve(state, policy)) context.belowReserveTurns += 1;
     if (state.cash < 0) context.negativeCashTurns += 1;
     context.totalRevenue += grossInflows(report);
     context.totalProfit += report.profit;
@@ -175,6 +180,15 @@ export function simulateGame(options = {}) {
   }
 
   return buildSimulationResult(state, era, policy, seed, maxTurns, context);
+}
+
+function resolveSimulationAirportRelocations(state, actions) {
+  syncAirportRelocations(state);
+  getPendingAirportRelocations(state).forEach((relocation) => {
+    const preview = previewAirportRelocation(state, relocation);
+    const action = preview.canRelocate ? 'relocate' : preview.canContinue ? 'continue' : 'close';
+    if (resolveAirportRelocation(state, relocation.id, action).ok) actions.airportRelocations += 1;
+  });
 }
 
 export function simulateBatch(options = {}) {
@@ -317,7 +331,7 @@ function expandNetwork(state, policy, actions) {
     const deliveringCount = state.fleet.filter((plane) => plane.delivering).length;
     const requiredRange = Math.min(...state.routes
       .filter((route) => (route.assignedPlanes || []).length === 0)
-      .map((route) => cityDist(getCity(route.from), getCity(route.to))));
+      .map((route) => routeOperatingDistance(route)));
     const deficit = Math.max(0, unservedCount - deliveringCount);
     if (deficit > 0) acquireExpansionPlane(state, policy, actions, requiredRange, deficit);
     restoreUnservedRoutes(state, actions);
@@ -331,7 +345,7 @@ function expandNetwork(state, policy, actions) {
   while (state.routes.length < targetRoutes && opened < policy.maxRoutesPerTurn) {
     const candidate = bestRouteCandidate(state, policy);
     if (!candidate) break;
-    const result = openRoute(state, candidate.from, candidate.to, candidate.plane.uid, candidate.price);
+    const result = openRoute(state, candidate.from, candidate.to, candidate.plane.uid, candidate.price, candidate);
     if (!result.ok) break;
     actions.routesOpened += 1;
     opened += 1;
@@ -352,7 +366,7 @@ function expandNetwork(state, policy, actions) {
   acquireExpansionPlane(state, policy, actions, 0, requestedCount);
   while (state.routes.length < targetRoutes && opened < policy.maxRoutesPerTurn) {
     const candidate = bestRouteCandidate(state, policy);
-    if (!candidate || !openRoute(state, candidate.from, candidate.to, candidate.plane.uid, candidate.price).ok) break;
+    if (!candidate || !openRoute(state, candidate.from, candidate.to, candidate.plane.uid, candidate.price, candidate).ok) break;
     actions.routesOpened += 1;
     opened += 1;
   }
@@ -405,9 +419,9 @@ function restoreUnservedRoutes(state, actions) {
     const from = getCity(route.from);
     const to = getCity(route.to);
     if (!from || !to) return;
-    const distance = cityDist(from, to);
+    const distance = routeOperatingDistance(route, from, to);
     const plane = availablePlanes(state)
-      .filter((item) => item.range >= distance)
+      .filter((item) => item.range >= distance && routePlanePerformance(route, item, state).compatible)
       .sort((a, b) => a.seats - b.seats || a.range - b.range)[0];
     if (plane && changeRoutePlane(state, route.from, route.to, plane.uid).ok) actions.planesReassigned += 1;
   });
@@ -419,7 +433,7 @@ function requiredRangeForUncoveredRegion(state, policy) {
   const coveredRegions = new Set(bases.map((city) => city.region));
   const candidates = CITIES.filter((city) => !coveredRegions.has(city.region));
   if (candidates.length === 0) return 0;
-  return Math.min(...bases.flatMap((base) => candidates.map((city) => cityDist(base, city))));
+  return Math.min(...bases.flatMap((base) => candidates.map((city) => defaultRouteDistance(base.id, city.id, state))));
 }
 
 function bestRouteCandidate(state, policy) {
@@ -432,16 +446,19 @@ function bestRouteCandidate(state, policy) {
   bases.forEach((from) => {
     CITIES.forEach((city) => {
       if (city.id === from || existing.has(routeKey(from, city.id))) return;
-      const openCost = routeOpenCost(from, city.id);
-      if (state.cash - openCost < policy.reserveCash) return;
+      const airportPair = defaultAirportPair(from, city.id, state);
+      const routeDraft = { from, to: city.id, ...airportPair, serviceMultiplier: 1 };
+      const operatingDistance = defaultRouteDistance(from, city.id, state, airportPair);
       planes.forEach((plane) => {
-        if (plane.range < cityDist(getCity(from), city)) return;
-        const estimate = bestEstimatedRoute(state, from, city.id, plane, policy.priceFactors);
+        if (plane.range < operatingDistance || !routePlanePerformance(airportPair, plane, state).compatible) return;
+        const openCost = routeOpenCost(from, city.id, { state, route: routeDraft, plane });
+        if (state.cash - openCost < policy.reserveCash) return;
+        const estimate = bestEstimatedRoute(state, from, city.id, plane, policy.priceFactors, airportPair);
         const strategicRegion = policy.pursueRegions && !coveredRegions.has(city.region);
         const regionExpansionBonus = strategicRegion ? 1000 : 0;
         const score = estimate.profit - openCost / 12 + regionExpansionBonus;
         if (estimate.profit < policy.minRouteProfit && !strategicRegion) return;
-        if (!best || score > best.score) best = { ...estimate, from, to: city.id, plane, score };
+        if (!best || score > best.score) best = { ...estimate, from, to: city.id, plane, score, ...airportPair };
       });
     });
   });
@@ -451,10 +468,10 @@ function bestRouteCandidate(state, policy) {
 function bestRoutePrice(state, route, factors) {
   const planes = state.fleet.filter((plane) => (route.assignedPlanes || []).includes(plane.uid));
   if (planes.length === 0) return route.price;
-  return bestEstimatedRoute(state, route.from, route.to, planes[0], factors).price;
+  return bestEstimatedRoute(state, route.from, route.to, planes[0], factors, route).price;
 }
 
-function bestEstimatedRoute(state, from, to, plane, factors) {
+function bestEstimatedRoute(state, from, to, plane, factors, airportPair = defaultAirportPair(from, to, state)) {
   const basePrice = suggestedPrice(from, to);
   let best = null;
   factors.forEach((factor) => {
@@ -462,6 +479,8 @@ function bestEstimatedRoute(state, from, to, plane, factors) {
     const route = {
       from,
       to,
+      fromAirportId: airportPair.fromAirportId,
+      toAirportId: airportPair.toAirportId,
       price,
       suggestedPrice: basePrice,
       serviceMultiplier: 1,
@@ -476,6 +495,17 @@ function bestEstimatedRoute(state, from, to, plane, factors) {
     if (!best || estimate.profit > best.profit) best = estimate;
   });
   return best;
+}
+
+function defaultAirportPair(from, to, state) {
+  return {
+    fromAirportId: getDefaultAirportIdForYear(from, state?.year),
+    toAirportId: getDefaultAirportIdForYear(to, state?.year),
+  };
+}
+
+function defaultRouteDistance(from, to, state, airportPair = defaultAirportPair(from, to, state)) {
+  return routeOperatingDistance({ from, to, ...airportPair });
 }
 
 function investExcessCash(state, policy, actions) {
@@ -516,7 +546,8 @@ function buildSimulationResult(state, era, policy, seed, maxTurns, context) {
     + contributions.faults;
   const nonRouteIncome = contributions.traitFund
     + contributions.stockDividends
-    + contributions.subsidiaryReturns;
+    + contributions.subsidiaryReturns
+    + contributions.airportContractIncome;
   const totalInflows = contributions.routeRevenue + nonRouteIncome;
   const avgLoadFactor = state.routes.length > 0
     ? mean(state.routes.map((route) => Number(route.loadFactor) || 0))
@@ -584,6 +615,7 @@ function createActionCounts() {
     loans: 0,
     repayments: 0,
     contracts: 0,
+    airportRelocations: 0,
   };
 }
 
@@ -601,6 +633,8 @@ function createEconomicContributions() {
     faults: 0,
     subsidiaryMaintenance: 0,
     subsidiaryValueChange: 0,
+    airportContractIncome: 0,
+    airportContractPenalty: 0,
     emergencyBorrowing: 0,
     forcedLiquidationProceeds: 0,
     rescueCapital: 0,
@@ -620,6 +654,8 @@ function accumulateEconomicContributions(contributions, report) {
   contributions.faults += number(report.faultLoss);
   contributions.subsidiaryMaintenance += number(report.subMaint);
   contributions.subsidiaryValueChange += number(report.subValueChange);
+  contributions.airportContractIncome += number(report.airportContractIncome);
+  contributions.airportContractPenalty += number(report.airportContractPenalty);
 }
 
 function accumulateBankruptcyContribution(contributions, action) {
@@ -632,7 +668,8 @@ function grossInflows(report) {
   return number(report.routeRevenue)
     + number(report.traitFund)
     + number(report.stockDividend)
-    + number(report.subReturn);
+    + number(report.subReturn)
+    + number(report.airportContractIncome);
 }
 
 function aggregateContributions(group) {
@@ -659,6 +696,11 @@ function normalizeSelection(selection, defaults) {
 function positiveInteger(value) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function cashPressureReserve(state, policy) {
+  const eraReserve = Number(policy?.cashPressureReserveByEra?.[state?.era]);
+  return Number.isFinite(eraReserve) ? eraReserve : Number(policy?.reserveCash) || 0;
 }
 
 function mean(values) {

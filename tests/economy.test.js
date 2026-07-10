@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
-import { baseDemand, calcLoadFactor, distanceServiceMultiplier, PASSENGER_SERVICE_COST_PER_PAX_1000KM, routeCost, routeRevenue, routeSeatCapacity, routeYieldPremium, suggestedPrice } from '../src/domain/economy.js';
+import { getDefaultAirportId, virtualAirportId } from '../src/domain/airports.js';
+import { baseDemand, calcLoadFactor, distanceServiceMultiplier, PASSENGER_SERVICE_COST_PER_PAX_1000KM, populationAviationPropensity, populationDemandScore, ROUTE_REVENUE_DIVISOR, routeCost, routeRevenue, routeSeatCapacity, routeYieldPremium, suggestedPrice } from '../src/domain/economy.js';
 import { cityDist, getCity } from '../src/domain/helpers.js';
 import { addSuspensionModifier, routeServiceMultiplier } from '../src/domain/modifiers.js';
 import { calcOpsBudgetCost } from '../src/domain/operations.js';
@@ -19,6 +20,23 @@ describe('economy model', () => {
   it('derives positive demand for major city pairs', () => {
     expect(baseDemand(getCity('beijing'), getCity('shanghai'))).toBeGreaterThan(100);
     expect(baseDemand(getCity('london'), getCity('newyork'))).toBeGreaterThan(10);
+  });
+
+  it('compresses factual population with a configurable concave market score', () => {
+    expect(populationDemandScore(10)).toBeCloseTo(5);
+    expect(populationDemandScore(40)).toBeLessThan(populationDemandScore(10) * 4);
+    expect(populationDemandScore(10, { exponent: 0.55 })).toBeCloseTo(5);
+    expect(populationDemandScore(40, { exponent: 0.55 })).toBeLessThan(populationDemandScore(40));
+    expect(populationDemandScore(-1)).toBe(0);
+  });
+
+  it('models increasing aviation participation without changing factual population', () => {
+    expect(populationAviationPropensity({ era: 'era1', year: 1960 })).toBeCloseTo(0.3);
+    expect(populationAviationPropensity({ era: 'era2', year: 1975 })).toBeCloseTo(1.6);
+    expect(populationAviationPropensity({ era: 'era3', year: 2000 })).toBeCloseTo(1.75);
+    expect(populationAviationPropensity({ era: 'era4', year: 1960 })).toBeCloseTo(0.7);
+    expect(populationAviationPropensity({ era: 'era4', year: 1980 })).toBeCloseTo(1.2);
+    expect(populationAviationPropensity({ era: 'era4', year: 2000 })).toBeCloseTo(1.7);
   });
 
   it('keeps load factor bounded and produces revenue/cost totals', () => {
@@ -60,7 +78,7 @@ describe('economy model', () => {
 
     expect(serviceMultiplier).toBe(4);
     expect(revenue.pax).toBe(pax);
-    expect(revenue.rev).toBeCloseTo(pax * route.price / 28000);
+    expect(revenue.rev).toBeCloseTo(pax * route.price / ROUTE_REVENUE_DIVISOR);
   });
 
   it('scales cabin service cost with carried passengers and distance', () => {
@@ -128,8 +146,8 @@ describe('economy model', () => {
     const yieldPremium = routeYieldPremium(getCity(route.from), getCity(route.to));
 
     expect(revenue.pax).toBe(pax);
-    expect(revenue.rev).toBeCloseTo(pax * route.price * yieldPremium / 28000);
-    expect(revenue.cargoRev).toBeCloseTo(pax * 0.02 * route.price * 0.3 * yieldPremium / 28000);
+    expect(revenue.rev).toBeCloseTo(pax * route.price * yieldPremium / ROUTE_REVENUE_DIVISOR);
+    expect(revenue.cargoRev).toBeCloseTo(pax * 0.02 * route.price * 0.3 * yieldPremium / ROUTE_REVENUE_DIVISOR);
   });
 
   it('keeps route service multiplier out of seat capacity and applies it once as service volume', () => {
@@ -251,5 +269,33 @@ describe('economy model', () => {
     expect(subLf).toBeGreaterThan(baseLf);
     expect(subCost.landing).toBeCloseTo(baseCost.landing * 0.85);
     expect(subCost.total).toBeLessThan(baseCost.total);
+  });
+
+  it('applies airport fee tiers exactly once on top of the city landing baseline', () => {
+    const state = initState('london', 'era3');
+    const plane = { ...PLANES.find((item) => item.id === 'b777'), uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 };
+    state.fleet.push(plane);
+    const route = {
+      from: 'london',
+      to: 'newyork',
+      price: suggestedPrice('london', 'newyork'),
+      suggestedPrice: suggestedPrice('london', 'newyork'),
+      serviceMultiplier: 1,
+      assignedPlanes: [1],
+      loadFactor: 0.5,
+    };
+    const neutral = routeCost(state, {
+      ...route,
+      fromAirportId: virtualAirportId('london'),
+      toAirportId: virtualAirportId('newyork'),
+    });
+    const hub = routeCost(state, {
+      ...route,
+      fromAirportId: getDefaultAirportId('london'),
+      toAirportId: getDefaultAirportId('newyork'),
+    });
+
+    expect(hub.landing / neutral.landing).toBeGreaterThan(1.18);
+    expect(hub.landing / neutral.landing).toBeLessThan(1.22);
   });
 });

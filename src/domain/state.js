@@ -3,6 +3,8 @@ import { initCityStates } from '../data/cityEraData.js';
 import { ERAS } from '../data/eras.js';
 import { DEFAULT_COMPANY_NAME } from './constants.js';
 import { createEraSettlementState } from './eraSettlement.js';
+import { createAirportManagementState } from './airportManagement.js';
+import { createAirportRelocationState } from './airportRelocations.js';
 import { availablePlaneTemplates } from './fleet.js';
 import { createMainQuestState } from './mainQuest.js';
 import { STAFF_HQ_BASE, calcStaffNeeded, syncStaffToNeeded } from './operations.js';
@@ -34,6 +36,8 @@ export function createSetupState(companyName, eraId, options = {}) {
 function createBaseState(era, overrides = {}) {
   const stockState = initStockState(era.id);
   const subsidiaryState = createSubsidiaryState();
+  const airportManagementState = createAirportManagementState();
+  const airportRelocationState = createAirportRelocationState();
   const state = {
     companyName: DEFAULT_COMPANY_NAME,
     hq: null,
@@ -63,6 +67,8 @@ function createBaseState(era, overrides = {}) {
     portfolio: stockState.portfolio,
     stockEvents: stockState.stockEvents,
     ...subsidiaryState,
+    ...airportManagementState,
+    ...airportRelocationState,
     ftpShown: {},
     activeModifiers: [],
     activeMegaEvents: [],
@@ -96,6 +102,7 @@ function createBaseState(era, overrides = {}) {
     bankruptRescued: false,
     gameOver: false,
     selectedCity: null,
+    routeIdCounter: 1,
     planeIdCounter: 1,
     history: [],
     mapZoom: 1,

@@ -1,4 +1,7 @@
-export const CITIES = [
+import { cityPopulation2020 } from './cityPopulation.js';
+import { CITY_ADDITIONS, normalizeCityMetadata } from './cityMetadata.js';
+
+const BASE_CITIES = [
   {
     "id": "beijing",
     "name": "北京",
@@ -1199,6 +1202,15 @@ export const CITIES = [
     "capital": true
   }
 ];
+
+export const CITIES = [...BASE_CITIES, ...CITY_ADDITIONS].map((city) => {
+  const normalized = normalizeCityMetadata(city);
+  const populationM = cityPopulation2020(normalized.id);
+  return {
+    ...normalized,
+    pop: Number.isFinite(populationM) ? Math.round(populationM * 1000) : normalized.pop,
+  };
+});
 
 export const HQ_RECOMMENDED_CITY_IDS = [
   'beijing',

@@ -19,11 +19,11 @@ describe('state initialization', () => {
     const game = initState('beijing', 'era3');
 
     expect(game.cash).toBe(150);
-    expect(game.cityStates.beijing).toEqual({ pop: 10.5, biz: 68, tour: 47 });
+    expect(game.cityStates.beijing).toEqual({ pop: 9.6354, biz: 68, tour: 47 });
 
     growCityStates(game, () => 0.5);
 
-    expect(game.cityStates.beijing.pop).toBeGreaterThan(10.5);
+    expect(game.cityStates.beijing.pop).toBeGreaterThan(9.6354);
     expect(game.cityStates.beijing.biz).toBeGreaterThanOrEqual(68);
     expect(game.cityStates.beijing.tour).toBeGreaterThanOrEqual(47);
   });

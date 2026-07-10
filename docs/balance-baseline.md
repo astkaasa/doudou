@@ -150,17 +150,17 @@ The final era 1 cabin-cost multiplier is 0.10. This represents the lower onboard
 
 ## Final acceptance matrix
 
-The completed M2.4 acceptance run used four eras, four policies, five headquarters, and 20 deterministic seeds per combination: 1,600 full campaigns and 80/80 covered combinations. Eight workers completed the run in 435.50 seconds. Every quarter passed the game-state invariant checks and the strict acceptance command returned `PASS`.
+The v1.5 airport-and-city-system acceptance run used four eras, four policies, five headquarters, and 20 deterministic seeds per combination: 1,600 full campaigns and 80/80 covered combinations. Eight workers completed the run in 688.14 seconds. Every quarter passed the game-state invariant checks and the strict acceptance command returned `PASS`.
 
 | Era | All-policy survival | Aggressive victory | Victory turn | Route margin | Profit margin | Cash pressure | Non-route income | Rescue / 100 turns | Liquidations / 100 turns | Viable policies |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| era1 | 99.3% | 45.0% | 70.1 | 16.1% | 18.6% | 11.4% | 3.3% | 0.0 | 0.4 | 4 |
-| era2 | 99.8% | 59.0% | 65.5 | 23.7% | 26.0% | 8.8% | 3.0% | 0.0 | 0.1 | 4 |
-| era3 | 99.5% | 85.0% | 57.3 | 31.7% | 33.6% | 5.3% | 2.7% | 0.0 | 0.1 | 4 |
-| era4 | 79.3% | 64.0% | 192.0 | 32.2% | 34.6% | 17.7% | 3.1% | 0.2 | 0.5 | 4 |
+| era1 | 100.0% | 41.0% | 63.9 | 15.1% | 17.6% | 14.2% | 3.1% | 0.0 | 0.4 | 4 |
+| era2 | 99.0% | 63.0% | 69.7 | 26.3% | 28.5% | 6.1% | 2.9% | 0.1 | 0.7 | 4 |
+| era3 | 99.8% | 80.0% | 60.8 | 32.4% | 34.2% | 5.5% | 2.7% | 0.0 | 0.0 | 4 |
+| era4 | 76.0% | 61.0% | 202.6 | 28.2% | 30.7% | 16.0% | 3.2% | 0.2 | 0.4 | 4 |
 
 Reproduce the strict run with:
 
 ```bash
-npm run balance:acceptance -- --workers 8 --strict --output /tmp/doudou-balance-final.json
+npm run balance:acceptance -- --workers 8 --strict --output /tmp/doudou-balance-airport-city-final.json
 ```

@@ -29,6 +29,13 @@ import {
   SUBSIDIARY_TYPE_ORDER,
 } from '../data/subsidiaries.js';
 import { isBase } from './bases.js';
+import {
+  getAirportInvestment,
+  getAirportInvestmentTargets,
+  getAirportLandingDiscount,
+  normalizeAirportInvestmentFields,
+} from './airportManagement.js';
+import { airportServesCity, getDefaultAirportIdForYear, isAirportActive } from './airports.js';
 import { MEGA_EVENT_SPILLOVER } from './constants.js';
 import { clamp, getCity } from './helpers.js';
 import { syncStaffToNeeded } from './operations.js';
@@ -58,13 +65,11 @@ export function normalizeSubsidiaryState(state) {
     if (!city || !Array.isArray(entries)) return;
     const seenTypes = new Set();
     entries.forEach((entry) => {
-      if (!isPlainObject(entry) || !SUB_TYPES[entry.type] || seenTypes.has(entry.type)) return;
-      seenTypes.add(entry.type);
+      if (!isPlainObject(entry) || !SUB_TYPES[entry.type]) return;
       const fallbackCost = calcSubOpenCost(entry.type, cityId);
       const openCost = positiveNumber(entry.openCost) ? Number(entry.openCost) : fallbackCost;
       const currentValue = positiveNumber(entry.currentValue) ? Number(entry.currentValue) : openCost;
-      if (!normalized[cityId]) normalized[cityId] = [];
-      normalized[cityId].push({
+      const normalizedEntry = {
         type: entry.type,
         openCost,
         currentValue,
@@ -72,7 +77,23 @@ export function normalizeSubsidiaryState(state) {
         quarterAcquired: Number.isFinite(Number(entry.quarterAcquired)) ? Math.floor(Number(entry.quarterAcquired)) : Number(state.turnsPlayed) || 0,
         cityLevelAtAcquire: Number.isFinite(Number(entry.cityLevelAtAcquire)) ? Number(entry.cityLevelAtAcquire) : city.level,
         isNew: Boolean(entry.isNew),
-      });
+      };
+      if (entry.type === 'airport') {
+        normalizedEntry.airportId = entry.airportId;
+        normalizedEntry.migratedFromCity = entry.migratedFromCity;
+        normalizedEntry.migratedFromAirportId = entry.migratedFromAirportId
+          && airportServesCity(entry.migratedFromAirportId, cityId)
+          ? entry.migratedFromAirportId
+          : null;
+        normalizedEntry.landingDiscount = entry.landingDiscount;
+        normalizedEntry.upgrades = entry.upgrades;
+        normalizeAirportInvestmentFields(normalizedEntry, cityId, state.year);
+      }
+      const uniqueKey = entry.type === 'airport' ? `airport:${normalizedEntry.airportId}` : entry.type;
+      if (seenTypes.has(uniqueKey)) return;
+      seenTypes.add(uniqueKey);
+      if (!normalized[cityId]) normalized[cityId] = [];
+      normalized[cityId].push(normalizedEntry);
     });
   });
   state.subsidiaries = normalized;
@@ -136,7 +157,9 @@ export function getAvailableSubTypes(state, cityId) {
   const existing = new Set(getCitySubTypes(state, cityId));
   const market = getCityMarketState(state, cityId);
   return SUBSIDIARY_TYPE_ORDER.filter((type) => {
-    if (existing.has(type)) return false;
+    if (type === 'airport') {
+      if (getAirportInvestmentTargets(state, cityId).length === 0) return false;
+    } else if (existing.has(type)) return false;
     const cfg = SUB_TYPES[type];
     if (city.level < cfg.minLevel) return false;
     if (market.tour < cfg.minTour) return false;
@@ -146,7 +169,7 @@ export function getAvailableSubTypes(state, cityId) {
   });
 }
 
-export function canOpenSubType(state, type, cityId) {
+export function canOpenSubType(state, type, cityId, options = {}) {
   const cfg = SUB_TYPES[type];
   const city = getCity(cityId);
   if (!cfg || !city) return { ok: false, message: '城市或子公司类型不存在' };
@@ -155,13 +178,21 @@ export function canOpenSubType(state, type, cityId) {
   if (market.tour < cfg.minTour) return { ok: false, message: '旅游指数不足' };
   if (market.biz < cfg.minBiz) return { ok: false, message: '商业指数不足' };
   if (cfg.requiresBase && !isBase(state, cityId)) return { ok: false, message: '仅总部或分部城市可投资机场' };
-  if (hasSubType(state, cityId, type)) return { ok: false, message: '该城市已有同类子公司' };
+  if (type === 'airport') {
+    const airportId = options.airportId || getAirportInvestmentTargets(state, cityId)[0]?.id || getDefaultAirportIdForYear(cityId, state.year);
+    if (!airportServesCity(airportId, cityId)) return { ok: false, message: '所选机场不服务该城市' };
+    if (!isAirportActive(airportId, state.year)) return { ok: false, message: '所选机场当前不可投资' };
+    if (getAirportInvestment(state, airportId)) return { ok: false, message: '该机场已有投资项目' };
+  } else if (hasSubType(state, cityId, type)) return { ok: false, message: '该城市已有同类子公司' };
   return { ok: true };
 }
 
-export function openSubsidiary(state, type, cityId) {
+export function openSubsidiary(state, type, cityId, options = {}) {
   normalizeSubsidiaryState(state);
-  const validation = canOpenSubType(state, type, cityId);
+  const airportId = type === 'airport'
+    ? (options.airportId || getAirportInvestmentTargets(state, cityId)[0]?.id || getDefaultAirportIdForYear(cityId, state.year))
+    : null;
+  const validation = canOpenSubType(state, type, cityId, { airportId });
   if (!validation.ok) return validation;
   const cost = calcSubOpenCost(type, cityId);
   const fee = Math.round(cost * SUB_FEE_RATE * 10) / 10;
@@ -169,7 +200,7 @@ export function openSubsidiary(state, type, cityId) {
   if (state.cash < totalCost) return { ok: false, message: '资金不足' };
   state.cash -= totalCost;
   if (!state.subsidiaries[cityId]) state.subsidiaries[cityId] = [];
-  state.subsidiaries[cityId].push({
+  const entry = {
     type,
     openCost: cost,
     currentValue: cost,
@@ -177,8 +208,16 @@ export function openSubsidiary(state, type, cityId) {
     quarterAcquired: Number(state.turnsPlayed) || 0,
     cityLevelAtAcquire: getCity(cityId).level,
     isNew: true,
-  });
-  return { ok: true, type, cityId, cost, fee, totalCost };
+  };
+  if (type === 'airport') {
+    entry.airportId = airportId;
+    entry.migratedFromCity = null;
+    entry.landingDiscount = SUB_LANDING_DISCOUNT;
+    entry.upgrades = {};
+    normalizeAirportInvestmentFields(entry, cityId, state.year);
+  }
+  state.subsidiaries[cityId].push(entry);
+  return { ok: true, type, cityId, airportId, cost, fee, totalCost };
 }
 
 export function acquireSubsidiary(state, type, cityId) {
@@ -205,11 +244,11 @@ export function acquireSubsidiary(state, type, cityId) {
   return { ok: true, type, cityId, cost, fee, totalCost, baseCost };
 }
 
-export function sellSubsidiary(state, cityId, type) {
+export function sellSubsidiary(state, cityId, type, airportId = null) {
   normalizeSubsidiaryState(state);
   const list = state.subsidiaries[cityId];
   if (!Array.isArray(list)) return { ok: false, message: '子公司不存在' };
-  const index = list.findIndex((sub) => sub.type === type);
+  const index = list.findIndex((sub) => sub.type === type && (type !== 'airport' || !airportId || sub.airportId === airportId));
   if (index < 0) return { ok: false, message: '子公司不存在' };
   const sub = list[index];
   const grossPrice = type === 'airport'
@@ -220,7 +259,7 @@ export function sellSubsidiary(state, cityId, type) {
   state.cash += sellPrice;
   list.splice(index, 1);
   if (list.length === 0) delete state.subsidiaries[cityId];
-  return { ok: true, cityId, type, sellPrice, fee, originalCost: sub.openCost, profit: sellPrice - sub.openCost };
+  return { ok: true, cityId, type, airportId: sub.airportId || null, sellPrice, fee, originalCost: sub.openCost, profit: sellPrice - sub.openCost };
 }
 
 export function updateSubsidiaryValues(state) {
@@ -291,17 +330,22 @@ export function settleSubsidiaryQuarter(state) {
   };
 }
 
-export function hasSubType(state, cityId, type) {
+export function hasSubType(state, cityId, type, airportId = null) {
   normalizeSubsidiaryState(state);
-  return Boolean(state.subsidiaries?.[cityId]?.some((sub) => sub.type === type));
+  return Boolean(state.subsidiaries?.[cityId]?.some((sub) => sub.type === type
+    && (type !== 'airport' || !airportId || sub.airportId === airportId)));
 }
 
 export function getSubLFBonus(state, cityId) {
   return hasSubType(state, cityId, 'travel') ? SUB_ROUTE_LF_BONUS : 0;
 }
 
-export function getSubLandingDiscount(state, cityId) {
-  return hasSubType(state, cityId, 'airport') ? SUB_LANDING_DISCOUNT : 0;
+export function getSubLandingDiscount(state, cityId, airportId = null) {
+  normalizeSubsidiaryState(state);
+  if (airportId) return getAirportLandingDiscount(state, airportId, cityId);
+  return (state.subsidiaries?.[cityId] || [])
+    .filter((sub) => sub.type === 'airport')
+    .reduce((maximum, sub) => Math.max(maximum, Number(sub.landingDiscount) || SUB_LANDING_DISCOUNT), 0);
 }
 
 export function getAllSubsidiaries(state) {
@@ -315,7 +359,7 @@ export function getTotalSubValue(state) {
 
 export function getCitySubTypes(state, cityId) {
   normalizeSubsidiaryState(state);
-  return (state.subsidiaries?.[cityId] || []).map((sub) => sub.type);
+  return [...new Set((state.subsidiaries?.[cityId] || []).map((sub) => sub.type))];
 }
 
 export function calcCompanyValue(state) {
@@ -422,12 +466,12 @@ function forceSellStocks(state) {
 
 function forceSellSubsidiaries(state) {
   const entries = getAllSubsidiaries(state)
-    .map((sub) => ({ cityId: sub.cityId, type: sub.type, value: Number(sub.currentValue) || 0 }))
+    .map((sub) => ({ cityId: sub.cityId, type: sub.type, airportId: sub.airportId || null, value: Number(sub.currentValue) || 0 }))
     .sort((a, b) => b.value - a.value);
   let sold = 0;
   entries.forEach((entry) => {
     if (state.cash >= 0) return;
-    const result = sellSubsidiary(state, entry.cityId, entry.type);
+    const result = sellSubsidiary(state, entry.cityId, entry.type, entry.airportId);
     if (result.ok) sold += result.sellPrice;
   });
   return { ok: state.cash >= 0 && sold > 0, amount: sold };

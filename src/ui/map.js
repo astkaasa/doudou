@@ -1,4 +1,5 @@
 import { CITIES, HQ_RECOMMENDED_CITY_IDS, projectCity, projectLonLat } from '../data/cities.js';
+import { airportDisplayCode, getAirport, getPlayableAirportsForCity, isPrimaryAirportInYear } from '../domain/airports.js';
 import { WORLD_BOUNDARY_PATH, WORLD_LAND_PATH } from '../data/worldMapPaths.js';
 import { byId, cityDist, clamp, fmt, getCity } from '../domain/helpers.js';
 import terrainMapUrl from '../assets/natural-earth-2-50m.jpg';
@@ -70,8 +71,8 @@ export function renderMap(state, uiState) {
 
   state.ai.forEach((ai) => {
     ai.routes.forEach((r) => {
-      const a = getCity(r.from);
-      const b = getCity(r.to);
+      const a = getAirport(r.fromAirportId) || getCity(r.from);
+      const b = getAirport(r.toAirportId) || getCity(r.to);
       if (!a || !b) return;
       worldOffsets.forEach((offset) => {
         svg += renderRouteLine(a, b, offset, ai.color, 'route-line route-line-ai');
@@ -80,8 +81,8 @@ export function renderMap(state, uiState) {
   });
 
   state.routes.forEach((r) => {
-    const a = getCity(r.from);
-    const b = getCity(r.to);
+    const a = getAirport(r.fromAirportId) || getCity(r.from);
+    const b = getAirport(r.toAirportId) || getCity(r.to);
     if (!a || !b) return;
     const lineColor = r.profit >= 0 ? '#e2f1ff' : '#fca5a5';
     worldOffsets.forEach((offset) => {
@@ -91,6 +92,35 @@ export function renderMap(state, uiState) {
     });
   });
 
+  let airportTouchTargets = '';
+  if (zoom >= 1.5) {
+    const visibleAirportCityIds = new Set([
+      state.hq,
+      state.selectedCity,
+      ...(state.branches || []),
+      ...state.routes.flatMap((route) => [route.from, route.to]),
+    ].filter(Boolean));
+    const renderedAirportIds = new Set();
+    visibleAirportCityIds.forEach((cityId) => {
+      getPlayableAirportsForCity(cityId, { year: state.year }).forEach((airport) => {
+        if (renderedAirportIds.has(airport.id)) return;
+        renderedAirportIds.add(airport.id);
+        const projected = projectLonLat(airport.lat, airport.lon);
+        const ay = projected.y * MAP_HEIGHT;
+        const primary = isPrimaryAirportInYear(airport, state.year);
+        worldOffsets.forEach((offset) => {
+          const ax = projected.x * MAP_WIDTH + offset;
+          if (!isPointNearViewport(ax, ay, ox, oy, vw, vh)) return;
+          const xPct = ((ax - ox) / vw) * 100;
+          const yPct = ((ay - oy) / vh) * 100;
+          const code = airportDisplayCode(airport);
+          svg += `<circle cx="${ax}" cy="${ay}" r="${scaleRadiusForZoom(primary ? 2.1 : 1.65, zoom)}" class="airport-point${primary ? ' airport-point-primary' : ''}" data-action="city-click" data-city-id="${cityId}" data-airport-id="${airport.id}"><title>${escapeHtml(code)} · ${escapeHtml(airport.name)}</title></circle>`;
+          airportTouchTargets += `<button class="airport-touch-target" type="button"${touchTargetPosition(xPct, yPct)} data-action="city-click" data-city-id="${cityId}" data-airport-id="${airport.id}" aria-label="选择${escapeHtml(getCity(cityId)?.name || cityId)}机场 ${escapeHtml(code)}" title="${escapeHtml(code)} · ${escapeHtml(airport.name)}"></button>`;
+        });
+      });
+    });
+  }
+
   const labelSize = labelSizeForZoom(8.4, zoom);
   const hqLabelSize = labelSizeForZoom(7.2, zoom);
   const routedCities = new Set();
@@ -99,7 +129,7 @@ export function renderMap(state, uiState) {
     routedCities.add(r.to);
   });
   let cityLabels = '';
-  let cityTouchTargets = '<div class="city-touch-layer" aria-hidden="false">';
+  let cityTouchTargets = `<div class="city-touch-layer" aria-hidden="false">${airportTouchTargets}`;
   CITIES.forEach((c) => {
     const isHQ = (c.id === state.hq) || (uiState.hqSelectMode && uiState.selectedHQ === c.id);
     const isBranch = (state.branches || []).includes(c.id);
@@ -127,7 +157,7 @@ export function renderMap(state, uiState) {
       if (isRecommendedHQ) {
         svg += `<text x="${cx}" y="${cy - radiusAwareOffset(10, zoom)}" font-size="${labelSizeForZoom(9, zoom)}" text-anchor="middle" class="hq-recommended-marker">★</text>`;
       }
-      cityTouchTargets += `<button class="city-touch-target" type="button" style="left:${xPct}%;top:${yPct}%" data-action="city-click" data-city-id="${c.id}" data-city-touch-target="true" aria-label="选择${c.name}" title="${c.name}" data-hq-recommended="${isRecommendedHQ ? 'true' : 'false'}"></button>`;
+      cityTouchTargets += `<button class="city-touch-target" type="button"${touchTargetPosition(xPct, yPct)} data-action="city-click" data-city-id="${c.id}" data-city-touch-target="true" aria-label="选择${c.name}" title="${c.name}" data-hq-recommended="${isRecommendedHQ ? 'true' : 'false'}"></button>`;
       if (shouldShowCityLabel(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, zoom })) {
         cityLabels += renderCityLabel(c, { isHQ, isBranch, isBranchBuilding, isBranchSelected, isSelected, hasRoute, labelSize, offset, zoom });
       }
@@ -150,10 +180,10 @@ function hasRenderedMap(container) {
 }
 
 function mapRenderSignature(state, uiState, rect) {
-  const routes = (state.routes || []).map((route) => [route.from, route.to, visualRouteProfit(route.profit)]);
+  const routes = (state.routes || []).map((route) => [route.from, route.to, route.fromAirportId, route.toAirportId, visualRouteProfit(route.profit)]);
   const competitors = (state.ai || []).map((airline) => [
     airline.color,
-    (airline.routes || []).map((route) => [route.from, route.to]),
+    (airline.routes || []).map((route) => [route.from, route.to, route.fromAirportId, route.toAirportId]),
   ]);
   const subsidiaryCities = Object.entries(state.subsidiaries || {})
     .filter(([, subsidiaries]) => subsidiaries?.length)
@@ -162,6 +192,7 @@ function mapRenderSignature(state, uiState, rect) {
   return JSON.stringify({
     viewport: [rect.width, rect.height],
     camera: [state.mapZoom || 1, state.mapPanX || 0, state.mapPanY || 0],
+    year: state.year,
     network: [
       state.hq,
       state.selectedCity,
@@ -185,6 +216,10 @@ function mapRenderSignature(state, uiState, rect) {
 function visualRouteProfit(profit) {
   const value = Number(profit);
   return Number.isFinite(value) ? value.toFixed(1) : String(value);
+}
+
+function touchTargetPosition(xPct, yPct) {
+  return ` style="left:${xPct}%;top:${yPct}%"`;
 }
 
 function renderBaseMap(worldOffsets, showBoundaries, mapStyle) {

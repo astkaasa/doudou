@@ -6,7 +6,7 @@ import { PLANES } from '../src/data/planes.js';
 import { advanceTemporaryModifiers, eligibleNewsPool, generateEvents, isNewsAvailableInPeriod } from '../src/domain/events.js';
 import { clamp, getCity } from '../src/domain/helpers.js';
 import { megaEventNewsFor, syncMegaEventState } from '../src/domain/megaEvents.js';
-import { addDemandModifier, addDisasterDemandModifier, addSuspensionModifier, routeDemandMultiplier, selectRouteKeys } from '../src/domain/modifiers.js';
+import { addCostModifier, addDemandModifier, addDisasterDemandModifier, addSuspensionModifier, routeCostMultiplier, routeDemandMultiplier, selectRouteKeys } from '../src/domain/modifiers.js';
 import { openRoute, updateRouteMetrics } from '../src/domain/routes.js';
 import { initState } from '../src/domain/state.js';
 
@@ -87,7 +87,7 @@ describe('news event effects', () => {
     expect(marketExitNews.desc).toContain('现有机队仍可继续运营');
   });
 
-  it('adds soft disaster demand modifiers for matching sub-region routes', () => {
+  it('adds soft disaster demand modifiers for matching event-zone routes', () => {
     const eastAsiaTyphoon = NEWS_POOL.disaster.find((item) => item.title.includes('台风席卷东亚'));
     const outbound = stateWithRoute('beijing', 'tokyo');
     const inbound = stateWithRoute('tokyo', 'beijing');
@@ -99,13 +99,13 @@ describe('news event effects', () => {
       type: 'demand',
       mode: 'disasterDemand',
       turnsRemaining: 1,
-      scope: { kind: 'subRegion', subRegions: ['east_asia'] },
+      scope: { kind: 'eventZone', eventZones: ['east_asia'] },
     });
     expect(inbound.activeModifiers[0]).toMatchObject({
       type: 'demand',
       mode: 'disasterDemand',
       turnsRemaining: 1,
-      scope: { kind: 'subRegion', subRegions: ['east_asia'] },
+      scope: { kind: 'eventZone', eventZones: ['east_asia'] },
     });
     expect(routeDemandMultiplier(outbound, outbound.routes[0])).toBeCloseTo(0.1);
   });
@@ -146,6 +146,26 @@ describe('news event effects', () => {
     const recession = NEWS_POOL.economy.find((item) => item.title.includes('全球股市暴跌'));
 
     expect(recession.stockEffect).toEqual({ finance: -0.08, tech: -0.05, tourism: -0.04 });
+  });
+
+  it('targets airport maintenance events by stable airport id', () => {
+    const maintenance = NEWS_POOL.economy.find((item) => item.title.includes('枢纽机场启动临时跑道检修'));
+    const state = stateWithRoute('beijing', 'shanghai');
+    const route = state.routes[0];
+
+    maintenance.effectFn({ state, addCostModifier, random: () => 0 });
+
+    expect(state.activeModifiers[0]).toMatchObject({
+      type: 'cost',
+      multiplier: 1.12,
+      scope: { kind: 'airportIds', airportIds: [route.fromAirportId] },
+    });
+    expect(routeCostMultiplier(state, route)).toBeCloseTo(1.12);
+    expect(routeCostMultiplier(state, {
+      ...route,
+      fromAirportId: 'virtual-london',
+      toAirportId: 'virtual-newyork',
+    })).toBe(1);
   });
 
   it('builds active mega events and news metadata for the current quarter', () => {

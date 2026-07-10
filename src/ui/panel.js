@@ -1,5 +1,7 @@
 import { CITIES, HQ_RECOMMENDED_CITY_IDS } from '../data/cities.js';
+import { MARKET_ROLE_LABELS } from '../data/cityMetadata.js';
 import { isBase } from '../domain/bases.js';
+import { airportDisplayCode, getPlayableAirportsForCity } from '../domain/airports.js';
 import { availablePlanes } from '../domain/routes.js';
 import { byId, cityDist, fmt, fmtPct, getCity, routeKey } from '../domain/helpers.js';
 import { MODIFIER_TYPES } from '../domain/modifiers.js';
@@ -11,8 +13,10 @@ const REGION_NAMES = {
   asia: '亚洲',
   caribbean: '加勒比',
   central_africa: '中非',
+  central_asia: '中亚',
   central_namerica: '北美中部',
   east_asia: '东亚',
+  east_africa: '东非',
   east_namerica: '北美东部',
   europe: '欧洲',
   mideast: '中东',
@@ -24,15 +28,19 @@ const REGION_NAMES = {
   south_asia: '南亚',
   southeast_asia: '东南亚',
   west_namerica: '北美西部',
+  west_africa: '西非',
 };
 
 const REGION_ORDER = [
   'east_asia',
   'southeast_asia',
   'south_asia',
+  'central_asia',
   'mideast',
   'europe',
   'north_africa',
+  'west_africa',
+  'east_africa',
   'central_africa',
   'south_africa',
   'east_namerica',
@@ -43,6 +51,14 @@ const REGION_ORDER = [
   'oceania',
 ];
 const HQ_RECOMMENDED = new Set(HQ_RECOMMENDED_CITY_IDS);
+const AIRPORT_ROLE_LABELS = Object.freeze({
+  primary_hub: '主枢纽',
+  secondary: '次级机场',
+  regional: '支线机场',
+  remote: '偏远机场',
+  special: '特殊机场',
+  abstract: '兼容机场',
+});
 
 export function renderPanel(state, uiState) {
   const rs = byId('route-summary');
@@ -59,7 +75,7 @@ export function renderPanel(state, uiState) {
       const a = getCity(r.from);
       const b = getCity(r.to);
       const profitClass = r.profit >= 0 ? 'route-item-profit-positive' : 'route-item-profit-negative';
-      html += `<button class="route-item" type="button" data-action="open-route-detail" data-from="${escapeAttr(r.from)}" data-to="${escapeAttr(r.to)}"><span class="route-item-head"><span>${escapeHtml(a.name)} → ${escapeHtml(b.name)}</span><span class="route-item-profit ${profitClass}">${fmt(r.profit)}</span></span><span class="route-item-meta">客座率 ${fmtPct(r.loadFactor * 100)} | 票价 $${r.price}</span></button>`;
+      html += `<button class="route-item" type="button" data-action="open-route-detail" data-from="${escapeAttr(r.from)}" data-to="${escapeAttr(r.to)}"><span class="route-item-head"><span>${escapeHtml(a.name)} ${escapeHtml(airportDisplayCode(r.fromAirportId))} → ${escapeHtml(b.name)} ${escapeHtml(airportDisplayCode(r.toAirportId))}</span><span class="route-item-profit ${profitClass}">${fmt(r.profit)}</span></span><span class="route-item-meta">客座率 ${fmtPct(r.loadFactor * 100)} | 票价 $${r.price}</span></button>`;
     });
     if (state.routes.length > 6) html += `<div class="route-item-more">...共 ${state.routes.length} 条</div>`;
     renderHtml(rs, html);
@@ -110,7 +126,9 @@ export function renderRouteCityPicker(state, selectedCityId = null) {
   const planeHint = planes.length > 0
     ? `可用飞机 ${planes.length} 架，最大航程 ${Math.round(maxRange)} km`
     : '没有可用飞机，请先购买或等待交付';
-  const selectedMarket = selectedCity ? `<div class="route-city-market">${renderMarketCard(state, selectedCity)}</div>` : '';
+  const selectedMarket = selectedCity
+    ? `<div class="route-city-market">${renderMarketCard(state, selectedCity)}${renderCityAirports(state, selectedCity.id)}</div>`
+    : '';
   return `<div class="route-city-picker">
     <div class="route-city-status">
       <strong>${title}</strong>
@@ -131,6 +149,18 @@ export function renderRouteCityPicker(state, selectedCityId = null) {
       selectedCityId,
     )}
   </div>`;
+}
+
+function renderCityAirports(state, cityId) {
+  const airports = getPlayableAirportsForCity(cityId, { year: state.year });
+  if (airports.length === 0) return '';
+  return `<div class="city-airport-summary"><div class="city-airport-summary-title"><span>可用机场</span><small>${airports.length} 座</small></div><div class="city-airport-chips">${airports.map((airport) => {
+    const role = AIRPORT_ROLE_LABELS[airport.gameplay.role] || airport.gameplay.role;
+    const details = airport.source.provider === 'abstract'
+      ? role
+      : `${role} · 跑道 ${airport.factual.maxRunwayM || '—'}m · 费${airport.gameplay.feeTier}`;
+    return `<span class="city-airport-chip"><strong>${escapeHtml(airportDisplayCode(airport))}</strong><span>${escapeHtml(airport.name)}</span><small>${escapeHtml(details)}</small></span>`;
+  }).join('')}</div></div>`;
 }
 
 export function hideRouteCreateInfo() {
@@ -195,7 +225,14 @@ function groupCitiesByRegion(cities) {
     ...REGION_ORDER.filter((region) => byRegion.has(region)),
     ...[...byRegion.keys()].filter((region) => !REGION_ORDER.includes(region)).sort(),
   ];
-  return orderedRegions.map((region) => ({ region, cities: byRegion.get(region) }));
+  const roleOrder = { core: 0, event: 1, special: 2, regional: 3, remote: 4 };
+  return orderedRegions.map((region) => ({
+    region,
+    cities: [...byRegion.get(region)].sort((a, b) =>
+      (roleOrder[a.marketRole] ?? 9) - (roleOrder[b.marketRole] ?? 9)
+      || b.marketTier - a.marketTier
+      || a.name.localeCompare(b.name, 'zh-CN')),
+  }));
 }
 
 function routeRecommendedCities(state, selectedCityId) {
@@ -256,6 +293,6 @@ function renderCityButton(state, city, selectedCityId) {
   const recommended = HQ_RECOMMENDED.has(city.id) ? ' ★' : '';
   return `<button class="city-picker-btn${selectedClass}" type="button" data-action="city-click" data-city-id="${city.id}">
     <span>${city.name}${recommended}</span>
-    <small>${REGION_NAMES[city.subRegion] || REGION_NAMES[city.region] || city.region} · ${formatMarketLine(state, city.id)}</small>
+    <small>${REGION_NAMES[city.subRegion] || REGION_NAMES[city.region] || city.region} · ${MARKET_ROLE_LABELS[city.marketRole] || city.marketRole} · ${formatMarketLine(state, city.id)}</small>
   </button>`;
 }

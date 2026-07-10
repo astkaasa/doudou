@@ -1,4 +1,4 @@
-export const PLANES = [
+const PLANE_DEFINITIONS = [
   {
     "id": "b707-120",
     "name": "B707-120",
@@ -710,3 +710,14 @@ export const PLANES = [
     "serviceEnd": 1983
   }
 ];
+
+const AIRPORT_PERFORMANCE_BY_TYPE = {
+  narrow: { minRunwayM: 1400, requiredInfrastructureTier: 2, hardSurfaceRequired: false, hotHighPerformance: 0.85 },
+  wide: { minRunwayM: 2200, requiredInfrastructureTier: 3, hardSurfaceRequired: true, hotHighPerformance: 0.75 },
+  superjumbo: { minRunwayM: 2800, requiredInfrastructureTier: 4, hardSurfaceRequired: true, hotHighPerformance: 0.65 },
+};
+
+export const PLANES = PLANE_DEFINITIONS.map((plane) => ({
+  ...plane,
+  airportPerformance: { ...AIRPORT_PERFORMANCE_BY_TYPE[plane.type] },
+}));

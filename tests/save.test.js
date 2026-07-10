@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { getSaveSummaries, loadGameState, PERSISTED_GAME_STATE_FIELDS, SAVE_VERSION, saveGameState } from '../src/domain/save.js';
+import { getAirportByIdent, getDefaultAirportId } from '../src/domain/airports.js';
+import { syncAirportRelocations } from '../src/domain/airportRelocations.js';
+import { PLANES } from '../src/data/planes.js';
+import { openRoute } from '../src/domain/routes.js';
 import { initState } from '../src/domain/state.js';
 
 function memoryStorage(value) {
@@ -143,7 +147,7 @@ describe('save migration', () => {
     expect(result.state.loanRate).toBe(0.02);
     expect(result.state.branches).toEqual(['shanghai']);
     expect(result.state.branchesConstructing).toEqual([{ cityId: 'tokyo', constructIn: 2 }]);
-    expect(result.state.cityStates.beijing).toEqual({ pop: 5.5, biz: 30, tour: 22 });
+    expect(result.state.cityStates.beijing).toEqual({ pop: 4.1013, biz: 30, tour: 22 });
     expect(result.state.milestones).toEqual({ first_route: true });
     expect(result.state.mainQuest).toEqual({
       currentStage: 1,
@@ -159,6 +163,12 @@ describe('save migration', () => {
     expect(result.state.traitChosen).toBe(true);
     expect(result.state.pendingTraitChoices).toBeNull();
     expect(result.state.routes[0]).toMatchObject({ assignedPlanes: [], suspended: false, isNew: false, serviceMultiplier: 2 });
+    expect(result.state.routes[0]).toMatchObject({
+      uid: 1,
+      fromAirportId: 'virtual-beijing',
+      toAirportId: 'virtual-shanghai',
+    });
+    expect(result.state.routeIdCounter).toBe(2);
     expect(result.state.routes[0].frequency).toBeUndefined();
     expect(result.state.routes[0].suggestedPrice).toBeGreaterThan(0);
     expect(result.state.routes[0].price).toBe(result.state.routes[0].suggestedPrice);
@@ -284,8 +294,8 @@ describe('save migration', () => {
     const result = loadGameState(memoryStorage(raw));
 
     expect(result.ok).toBe(true);
-    expect(result.state.cityStates.rio).toEqual({ pop: 6.7, biz: 35, tour: 55 });
-    expect(result.state.cityStates.hannover).toEqual({ pop: 0.5, biz: 38, tour: 15 });
+    expect(result.state.cityStates.rio).toEqual({ pop: 8.4168, biz: 35, tour: 55 });
+    expect(result.state.cityStates.hannover).toEqual({ pop: 0.5799, biz: 38, tour: 15 });
     expect(result.state.activeMegaEvents.map((event) => event.id)).toEqual(expect.arrayContaining(['oly_s2000', 'expo_2000']));
     expect(result.state.activeModifiers.filter((modifier) => modifier.mode === 'megaEvent')).toHaveLength(2);
     expect(result.state.bankruptRescued).toBe(false);
@@ -342,6 +352,134 @@ describe('save migration', () => {
       settledTurn: 80,
       result: { eraId: 'era3', deadlineTurn: 80 },
     });
+  });
+
+  it('migrates v14 routes and fleet into stable airport-aware records', () => {
+    const raw = JSON.stringify({
+      v: 14,
+      g: {
+        hq: 'beijing',
+        era: 'era3',
+        year: 2000,
+        routes: [
+          { uid: 7, from: 'beijing', to: 'shanghai', assignedPlanes: [1] },
+          { uid: 7, from: 'beijing', to: 'tokyo', fromAirportId: 'missing', toAirportId: 'missing', assignedPlanes: [] },
+        ],
+        fleet: [{ id: 'b737-200', uid: 1 }],
+      },
+    });
+
+    const result = loadGameState(memoryStorage(raw));
+
+    expect(result.ok).toBe(true);
+    expect(result.state.routes.map((route) => route.uid)).toEqual([7, 8]);
+    expect(result.state.routes[0]).toMatchObject({
+      fromAirportId: 'virtual-beijing',
+      toAirportId: 'virtual-shanghai',
+    });
+    expect(result.state.routes[1].fromAirportId).not.toBe('missing');
+    expect(result.state.routes[1].toAirportId).not.toBe('missing');
+    expect(result.state.routeIdCounter).toBe(9);
+    expect(result.state.fleet[0].airportPerformance).toMatchObject({
+      minRunwayM: 1400,
+      requiredInfrastructureTier: 2,
+    });
+  });
+
+  it('migrates v15 city airport investments to a specific airport without reducing the discount', () => {
+    const raw = JSON.stringify({
+      v: 15,
+      g: {
+        hq: 'london',
+        era: 'era3',
+        year: 2000,
+        routes: [],
+        fleet: [],
+        subsidiaries: {
+          london: [{
+            type: 'airport',
+            openCost: 2250,
+            currentValue: 2400,
+            source: 'invest',
+            quarterAcquired: 4,
+            cityLevelAtAcquire: 3,
+          }],
+        },
+      },
+    });
+
+    const result = loadGameState(memoryStorage(raw));
+    const investment = result.state.subsidiaries.london[0];
+
+    expect(result.ok).toBe(true);
+    expect(investment).toMatchObject({
+      airportId: getDefaultAirportId('london'),
+      migratedFromCity: 'london',
+      landingDiscount: 0.15,
+      upgrades: {},
+      upgradeSlots: 3,
+    });
+    expect(result.state.airportRelations).toEqual({});
+    expect(result.state.airportContracts).toEqual([]);
+    expect(result.state.airportContractIdCounter).toBe(1);
+  });
+
+  it('persists a pending airport relocation without triggering it again after load', () => {
+    const storage = writableStorage();
+    const state = initState('beijing', 'era4');
+    state.year = 1998;
+    state.airportRelocations = [{
+      id: 'airport-relocation-1',
+      transitionId: 'hongkong-cheklapkok-1998',
+      cityId: 'hongkong',
+      fromAirportId: getAirportByIdent('KAI-TAK').id,
+      toAirportId: getAirportByIdent('VHHH').id,
+      triggerYear: 1998,
+      mandatory: true,
+      status: 'pending',
+      affectedRouteUids: [],
+      migrationCost: 0,
+      sourceRefs: [],
+      resolvedTurn: null,
+    }];
+    state.airportRelocationIdCounter = 2;
+    saveGameState(state, storage);
+
+    const loaded = loadGameState(storage);
+
+    expect(loaded.ok).toBe(true);
+    expect(loaded.state.airportRelocations).toHaveLength(1);
+    expect(loaded.state.airportRelocations[0].status).toBe('pending');
+    expect(syncAirportRelocations(loaded.state)).toHaveLength(0);
+    expect(loaded.state.airportRelocations).toHaveLength(1);
+  });
+
+  it('migrates v17 route alternates and clears an invalid primary duplicate', () => {
+    const state = initState('london', 'era3');
+    state.year = 2005;
+    state.cash = 10000;
+    state.fleet = [{
+      ...PLANES.find((plane) => plane.id === 'b777'),
+      uid: 1,
+      age: 0,
+      isLease: false,
+      leasePrice: 0,
+      delivering: false,
+      deliverIn: 0,
+    }];
+    const opened = openRoute(state, 'london', 'newyork', 1, 700, {
+      fromAirportId: getAirportByIdent('EGLL').id,
+      toAirportId: getAirportByIdent('KJFK').id,
+    });
+    opened.route.fromAlternateAirportId = getAirportByIdent('EGKK').id;
+    opened.route.toAlternateAirportId = opened.route.toAirportId;
+
+    const result = loadGameState(memoryStorage(JSON.stringify({ v: 17, g: state })));
+
+    expect(result.ok).toBe(true);
+    expect(result.migratedFrom).toBe(17);
+    expect(result.state.routes[0].fromAlternateAirportId).toBe(getAirportByIdent('EGKK').id);
+    expect(result.state.routes[0].toAlternateAirportId).toBeNull();
   });
 
   it('normalizes subsidiary fields from old saves', () => {

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "un-wup-2025",
+      "scope": "city-population",
+      "title": "United Nations World Urbanization Prospects 2025 / GHS-WUP-MTUC R2025A V1.1",
+      "url": "https://population.un.org/wup/downloads?tab=Cities",
+      "dataUrl": "https://jeodpp.jrc.ec.europa.eu/ftp/jrc-opendata/GHSL/GHS_WUP_MTUC_GLOBE_R2025A/V1-1/GHS_WUP_MTUC_GLOBE_R2025A_V1_1_statistics.zip",
+      "version": "R2025A V1.1",
+      "downloadSha256": "2195f3457d0fa016719d3bf1e51fc9928e1f33689e23122d20f23ec50c76c398",
+      "checkedAt": "2026-07-10"
+    },
+    {
+      "id": "world-bank-population-total",
+      "scope": "territory-market-population",
+      "title": "World Development Indicators: Population, total",
+      "url": "https://data.worldbank.org/indicator/SP.POP.TOTL",
+      "apiUrl": "https://api.worldbank.org/v2/country/GUM;MNP/indicator/SP.POP.TOTL",
+      "version": "last updated 2026-07-01",
+      "checkedAt": "2026-07-10"
+    },
+    {
+      "id": "ourairports-2026-07-09",
+      "scope": "airports-and-runways",
+      "title": "OurAirports open data",
+      "url": "https://ourairports.com/data/",
+      "airportsUrl": "https://davidmegginson.github.io/ourairports-data/airports.csv",
+      "runwaysUrl": "https://davidmegginson.github.io/ourairports-data/runways.csv",
+      "snapshotDate": "2026-07-09",
+      "airportsSha256": "36ac4d282811af7ad64a886fd0c1b030b777045d1ec7a4f56c81478f71828f0e",
+      "runwaysSha256": "9705464332f1bb2d4e1778c8ad167d8722116f0cee2473addde6e8f56d110351",
+      "license": "Public Domain",
+      "checkedAt": "2026-07-10"
+    },
+    {
+      "id": "official-airport-history-pages",
+      "scope": "airport-opening-closure-and-migration-history",
+      "title": "Official airport, civil-aviation and municipal history pages",
+      "urls": [
+        "https://www.narita-airport.jp/en/discover/history/",
+        "https://www.airport.kr/co_en/4382/subview.do",
+        "https://www.kansai-airports.co.jp/en/business/airports-kix/",
+        "https://www.hongkongairport.com/en/about-us/?section=our-history",
+        "https://suvarnabhumi.airportthai.co.th/about-us",
+        "https://www.changiairport.com/en/corporate/about-us.html",
+        "https://www.caac.gov.cn/English/News/202305/t20230515_219345.html",
+        "https://service.shanghai.gov.cn/sheninfo/specialdetail.aspx?Id=471fea6a-abec-471a-9882-7a10459f7044",
+        "https://www.parisaeroport.fr/docs/default-source/groupe-fichiers/presse/2009_04_16_presse_dp-cdg-35-ans_en.pdf",
+        "https://www.dfwairport.com/dfwnewsroom/golden-anniversary-dfw-airport-marks-50-years-of-serving-north-texas/"
+      ],
+      "checkedAt": "2026-07-10"
+    }
+  ]
+}

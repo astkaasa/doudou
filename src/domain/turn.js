@@ -1,4 +1,5 @@
 import { aiTurn } from './ai.js';
+import { settleAirportContracts } from './airportContracts.js';
 import { growCityStates } from '../data/cityEraData.js';
 import { advanceBranchConstruction } from './bases.js';
 import { advanceTemporaryModifiers, generateEvents } from './events.js';
@@ -13,9 +14,12 @@ import { updateRouteMetrics } from './routes.js';
 import { calcStockDividend } from './stocks.js';
 import { handleBankruptcy, settleSubsidiaryQuarter } from './subsidiaries.js';
 import { randomSource } from './random.js';
+import { getPendingAirportRelocations, hasPendingAirportRelocation, syncAirportRelocations } from './airportRelocations.js';
 
 export function advanceTurnState(state) {
   if (!state || state.gameOver || hasPendingEraSettlement(state)) return null;
+  syncAirportRelocations(state);
+  if (hasPendingAirportRelocation(state)) return null;
   const period = { year: state.year, quarter: state.quarter };
 
   const branchCompleted = advanceBranchConstruction(state);
@@ -23,10 +27,14 @@ export function advanceTurnState(state) {
   growCityStates(state, randomSource(state));
   prepareQuarterOperations(state);
   updateRouteMetrics(state);
+  const airportContractSettlement = settleAirportContracts(state);
   const faultLoss = settleOperationalFaultLosses(state);
   const traitFund = rollTraitFund(state);
   const financials = calculateTurnFinancials(state, traitFund);
-  const { totalRev, totalCost, profit, interest } = financials;
+  const totalRev = financials.totalRev + airportContractSettlement.income;
+  const totalCost = financials.totalCost + airportContractSettlement.penalty;
+  const profit = totalRev - totalCost;
+  const { interest } = financials;
   const stockDividend = calcStockDividend(state);
   const subsidiarySettlement = settleSubsidiaryQuarter(state);
   const netProfit = profit + stockDividend + subsidiarySettlement.subNet;
@@ -50,6 +58,7 @@ export function advanceTurnState(state) {
 
   advanceCalendar(state);
   const nextPeriod = { year: state.year, quarter: state.quarter };
+  const newAirportRelocations = syncAirportRelocations(state);
   advanceTemporaryModifiers(state);
   generateEvents(state);
   schedulePendingContracts(state);
@@ -72,6 +81,8 @@ export function advanceTurnState(state) {
     subMaint: subsidiarySettlement.subMaint,
     subNet: subsidiarySettlement.subNet,
     subValueChange: subsidiarySettlement.subValueChange,
+    airportContractIncome: airportContractSettlement.income,
+    airportContractPenalty: airportContractSettlement.penalty,
     opsCost: state._opsCostThisTurn || 0,
     faultLoss,
     routes: state.routes.length,
@@ -107,6 +118,12 @@ export function advanceTurnState(state) {
     traitFund,
     stockDividend,
     ...subsidiarySettlement,
+    airportContractIncome: airportContractSettlement.income,
+    airportContractPenalty: airportContractSettlement.penalty,
+    airportContractsCompleted: airportContractSettlement.completed,
+    airportContractsBreached: airportContractSettlement.breached,
+    newAirportRelocations: newAirportRelocations.map((record) => record.id),
+    pendingAirportRelocations: getPendingAirportRelocations(state).map((record) => record.id),
     opsCost: state._opsCostThisTurn || 0,
     faultLoss,
     branchCompleted,

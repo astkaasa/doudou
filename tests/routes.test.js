@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
+import { getDefaultAirportId } from '../src/domain/airports.js';
 import { advanceBranchConstruction, closeBranch, openBranch, previewCloseBranchImpact } from '../src/domain/bases.js';
 import { availablePlaneTemplates, buyPlane } from '../src/domain/fleet.js';
 import {
@@ -27,7 +28,15 @@ describe('route and fleet operations', () => {
     expect(openRoute(state, 'shanghai', 'beijing', 1, 120).ok).toBe(false);
     expect(openRoute(state, 'beijing', 'tokyo', 999, 120).ok).toBe(false);
     expect(availablePlanes(state)).toHaveLength(0);
-    expect(state.routes[0]).toMatchObject({ isNew: true, suspended: false, serviceMultiplier: 1 });
+    expect(state.routes[0]).toMatchObject({
+      uid: 1,
+      fromAirportId: getDefaultAirportId('beijing'),
+      toAirportId: getDefaultAirportId('shanghai'),
+      isNew: true,
+      suspended: false,
+      serviceMultiplier: 1,
+    });
+    expect(state.routeIdCounter).toBe(2);
     expect(state.routes[0].frequency).toBeUndefined();
 
     updateRouteMetrics(state);

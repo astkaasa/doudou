@@ -72,6 +72,27 @@ describe('map rendering', () => {
     expect(container.innerHTML).toContain('aria-label="选择北京"');
   });
 
+  it('reveals only relevant playable airport touch targets at higher zoom', () => {
+    const container = {
+      innerHTML: '',
+      getBoundingClientRect: () => ({ width: 1000, height: 500 }),
+    };
+    globalThis.document = {
+      getElementById: (id) => (id === 'map-container' ? container : null),
+    };
+    const state = initState('beijing', 'era3');
+    state.year = 2000;
+
+    renderMap(state, { showBoundaries: true, mapStyle: 'classic' });
+    expect(container.innerHTML).not.toContain('airport-touch-target');
+
+    state.mapZoom = 1.5;
+    renderMap(state, { showBoundaries: true, mapStyle: 'classic' });
+    expect(container.innerHTML).toContain('airport-point-primary');
+    expect(container.innerHTML).toContain('aria-label="选择北京机场 PEK"');
+    expect(container.innerHTML).not.toContain('aria-label="选择上海机场');
+  });
+
   it('renders route selection details with semantic styles and escaped city names', () => {
     const from = { name: '<北京>', lat: 39.9042, lon: 116.4074 };
     const to = { name: '东京 & 羽田', lat: 35.6762, lon: 139.6503 };

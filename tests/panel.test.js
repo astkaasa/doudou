@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { initState } from '../src/domain/state.js';
-import { renderPanel } from '../src/ui/panel.js';
+import { renderPanel, renderRouteCityPicker } from '../src/ui/panel.js';
 
 const originalDocument = globalThis.document;
 
@@ -57,5 +57,21 @@ describe('management panel rendering', () => {
 
     expect(elements['route-summary'].innerHTML).toContain('<button class="route-item" type="button"');
     expect(elements['route-summary'].innerHTML).toContain('data-action="open-route-detail"');
+  });
+
+  it('shows reviewed airport choices for the selected route city', () => {
+    const state = initState('beijing', 'era3');
+    state.year = 2000;
+
+    const historicalHtml = renderRouteCityPicker(state, 'beijing');
+    state.year = 2020;
+    const currentHtml = renderRouteCityPicker(state, 'beijing');
+
+    expect(historicalHtml).toContain('可用机场');
+    expect(historicalHtml).toContain('PEK');
+    expect(historicalHtml).not.toContain('PKX');
+    expect(currentHtml).toContain('PEK');
+    expect(currentHtml).toContain('PKX');
+    expect(currentHtml).not.toContain('CN-0006');
   });
 });

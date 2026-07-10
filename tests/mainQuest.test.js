@@ -44,13 +44,13 @@ describe('main quest progression', () => {
   it('counts active route regions without requiring matching branches', () => {
     const state = initState('beijing', 'era1');
     state.mainQuest.currentStage = 3;
-    addRoutePlaceholders(state, 35);
+    addRoutePlaceholders(state, 39);
     state.routes.push(
       { from: 'beijing', to: 'london', revenue: 0, cost: 0, profit: 0 },
       { from: 'beijing', to: 'cairo', revenue: 0, cost: 0, profit: 0 },
       { from: 'beijing', to: 'sydney', revenue: 0, cost: 0, profit: 0 },
     );
-    state.cash = 900;
+    state.cash = 1100;
     state.consecutiveProfit = 6;
 
     const progress = checkMainQuestProgress(state);

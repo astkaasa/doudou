@@ -120,9 +120,11 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
       <div class="report-row"><span>营业收入</span><span class="positive">${fmt(rev)}</span></div>
       ${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span class="positive">+${fmt(snapshot.traitFund)}</span></div>` : ''}
       ${stockDividend > 0 ? `<div class="report-row"><span>证券分红(Q4)</span><span class="warning">+${fmt(stockDividend)}</span></div>` : ''}
+      ${snapshot.airportContractIncome > 0 ? `<div class="report-row"><span>机场合同收入</span><span class="positive">+${fmt(snapshot.airportContractIncome)}</span></div>` : ''}
       <div class="report-row"><span>运营成本</span><span class="negative">-${fmt(cost)}</span></div>
       ${snapshot.opsCost > 0 ? `<div class="report-row"><span>其中运营预算</span><span class="negative">-${fmt(snapshot.opsCost)}</span></div>` : ''}
       ${snapshot.faultLoss > 0 ? `<div class="report-row"><span>其中故障损失</span><span class="negative">-${fmt(snapshot.faultLoss)}</span></div>` : ''}
+      ${snapshot.airportContractPenalty > 0 ? `<div class="report-row"><span>其中机场合同违约</span><span class="negative">-${fmt(snapshot.airportContractPenalty)}</span></div>` : ''}
       ${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span class="negative">-${fmt(interest)}</span></div>` : ''}
       <div class="report-total ${profitClass}">净利润: ${fmt(profit)}</div>
     </div>

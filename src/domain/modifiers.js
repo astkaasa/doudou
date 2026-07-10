@@ -1,5 +1,6 @@
 import { getCity, routeKey } from './helpers.js';
 import { DISASTER_BOTH_CITIES, DISASTER_ONE_CITY } from './constants.js';
+import { routeAirportDisruptionProtection } from './airportResilience.js';
 
 export const MODIFIER_TYPES = {
   demand: 'demand',
@@ -10,6 +11,7 @@ export const MODIFIER_TYPES = {
 export const MODIFIER_MODES = {
   disasterDemand: 'disasterDemand',
   megaEvent: 'megaEvent',
+  airportDisruption: 'airportDisruption',
 };
 
 export function addModifier(state, modifier) {
@@ -24,6 +26,7 @@ export function addModifier(state, modifier) {
     mode: modifier.mode,
     disaster: modifier.disaster,
     megaEvent: modifier.megaEvent,
+    airportDisruption: modifier.airportDisruption,
     turnsRemaining,
     scope: modifier.scope || { kind: 'all' },
   };
@@ -71,6 +74,27 @@ export function addMegaEventDemandModifier(state, source, megaEvent, turnsRemain
   });
 }
 
+export function addAirportDisruptionModifier(state, source, airportIds, turnsRemaining = 1) {
+  return addModifier(state, {
+    source,
+    type: MODIFIER_TYPES.demand,
+    mode: MODIFIER_MODES.airportDisruption,
+    scope: { kind: 'airportIds', airportIds: [...new Set(airportIds || [])] },
+    multiplier: 0.25,
+    airportDisruption: {
+      unprotectedDemandMultiplier: 0.25,
+      alternateDemandMultiplier: 0.75,
+      resilienceDemandMultiplier: 0.55,
+      combinedDemandMultiplier: 0.85,
+      unprotectedCostMultiplier: 1.35,
+      alternateCostMultiplier: 1.10,
+      resilienceCostMultiplier: 1.18,
+      combinedCostMultiplier: 1.06,
+    },
+    turnsRemaining,
+  });
+}
+
 export function removeMegaEventDemandModifiers(state) {
   if (!Array.isArray(state.activeModifiers)) return;
   state.activeModifiers = state.activeModifiers.filter((modifier) => modifier.mode !== MODIFIER_MODES.megaEvent);
@@ -83,13 +107,20 @@ export function routeDemandMultiplier(state, route) {
   const disasterMultiplier = routeDisasterDemandMultiplier(state, route, demandModifiers);
   const otherMultiplier = demandModifiers
     .filter((modifier) => modifier.mode !== MODIFIER_MODES.disasterDemand)
-    .reduce((value, modifier) => value * demandModifierMultiplier(route, modifier), 1);
+    .reduce((value, modifier) => value * demandModifierMultiplier(state, route, modifier), 1);
   return disasterMultiplier * otherMultiplier;
 }
 
 export function routeCostMultiplier(state, route) {
-  return matchingModifiers(state, route, MODIFIER_TYPES.cost)
+  const standard = matchingModifiers(state, route, MODIFIER_TYPES.cost)
     .reduce((value, modifier) => value * (modifier.multiplier ?? 1), 1);
+  const disruption = (state.activeModifiers || [])
+    .filter((modifier) => modifier.type === MODIFIER_TYPES.demand
+      && modifier.mode === MODIFIER_MODES.airportDisruption
+      && modifier.turnsRemaining > 0
+      && routeMatchesScope(route, modifier.scope))
+    .reduce((value, modifier) => value * airportDisruptionFactors(state, route, modifier).cost, 1);
+  return standard * disruption;
 }
 
 export function isRouteSuspended(state, route) {
@@ -124,8 +155,14 @@ export function routeMatchesScope(route, scope = { kind: 'all' }) {
       return routeCities(route).some((city) => (scope.regions || []).includes(city.region));
     case 'subRegion':
       return routeCities(route).some((city) => (scope.subRegions || []).includes(city.subRegion));
+    case 'eventZone':
+      return routeCities(route).some((city) =>
+        (city.eventZones || [city.subRegion]).some((zone) => (scope.eventZones || []).includes(zone)));
     case 'cityIds':
       return (scope.cityIds || []).includes(route.from) || (scope.cityIds || []).includes(route.to);
+    case 'airportIds':
+      return (scope.airportIds || []).includes(route.fromAirportId)
+        || (scope.airportIds || []).includes(route.toAirportId);
     case 'connectsCitySets':
       return connectsCitySets(route, scope.setA || [], scope.setB || []);
     case 'crossRegion':
@@ -157,9 +194,28 @@ function routeCities(route) {
   return [getCity(route.from), getCity(route.to)].filter(Boolean);
 }
 
-function demandModifierMultiplier(route, modifier) {
+function demandModifierMultiplier(state, route, modifier) {
   if (modifier.mode === MODIFIER_MODES.megaEvent) return megaEventRouteMultiplier(route, modifier);
+  if (modifier.mode === MODIFIER_MODES.airportDisruption) return routeMatchesScope(route, modifier.scope)
+    ? airportDisruptionFactors(state, route, modifier).demand
+    : 1;
   return routeMatchesScope(route, modifier.scope) ? (modifier.multiplier ?? 1) : 1;
+}
+
+function airportDisruptionFactors(state, route, modifier) {
+  const affectedAirportId = (modifier.scope?.airportIds || []).find((airportId) => route.fromAirportId === airportId || route.toAirportId === airportId);
+  const protection = routeAirportDisruptionProtection(state, route, affectedAirportId);
+  const config = modifier.airportDisruption || {};
+  if (protection.alternate && protection.resilience > 0) {
+    return { demand: config.combinedDemandMultiplier ?? 0.85, cost: config.combinedCostMultiplier ?? 1.06 };
+  }
+  if (protection.alternate) {
+    return { demand: config.alternateDemandMultiplier ?? 0.75, cost: config.alternateCostMultiplier ?? 1.10 };
+  }
+  if (protection.resilience > 0) {
+    return { demand: config.resilienceDemandMultiplier ?? 0.55, cost: config.resilienceCostMultiplier ?? 1.18 };
+  }
+  return { demand: config.unprotectedDemandMultiplier ?? 0.25, cost: config.unprotectedCostMultiplier ?? 1.35 };
 }
 
 function routeDisasterDemandMultiplier(state, route, modifiers) {
@@ -192,6 +248,8 @@ function cityMatchesScope(city, scope = { kind: 'all' }) {
       return (scope.regions || []).includes(city.region);
     case 'subRegion':
       return (scope.subRegions || []).includes(city.subRegion);
+    case 'eventZone':
+      return (city.eventZones || [city.subRegion]).some((zone) => (scope.eventZones || []).includes(zone));
     case 'cityIds':
       return (scope.cityIds || []).includes(city.id);
     default:

@@ -1,4 +1,9 @@
 import { getCity, routeKey, STORAGE_KEYS } from './helpers.js';
+import { getDefaultAirportIdForYear, normalizeAirportIdForCity } from './airports.js';
+import { normalizeAirportContractState } from './airportContracts.js';
+import { normalizeAirportManagementState } from './airportManagement.js';
+import { normalizeAirportRelocationState } from './airportRelocations.js';
+import { normalizeRouteAlternateState } from './airportResilience.js';
 import { normalizeCityStates } from '../data/cityEraData.js';
 import { suggestedPrice } from './economy.js';
 import { normalizeEraSettlementState } from './eraSettlement.js';
@@ -10,9 +15,10 @@ import { normalizeOperationsState } from './operations.js';
 import { normalizeStockState } from './stocks.js';
 import { normalizeSubsidiaryState } from './subsidiaries.js';
 import { PLAYER_TRAIT_SYMBOLS, normalizePlayerTrait } from '../data/playerTraits.js';
+import { PLANES } from '../data/planes.js';
 import { legacyRandomSeed, normalizeRandomState } from './random.js';
 
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 18;
 
 export const PERSISTED_GAME_STATE_FIELDS = Object.freeze([
   'companyName',
@@ -43,6 +49,14 @@ export const PERSISTED_GAME_STATE_FIELDS = Object.freeze([
   'portfolio',
   'stockEvents',
   'subsidiaries',
+  'airportRelations',
+  'airportContracts',
+  'airportContractIdCounter',
+  'airportContractOfferPeriod',
+  '_lastAirportContractIncome',
+  '_lastAirportContractPenalty',
+  'airportRelocations',
+  'airportRelocationIdCounter',
   '_subReturnThisTurn',
   '_subMaintThisTurn',
   '_subValueChangeThisTurn',
@@ -79,6 +93,7 @@ export const PERSISTED_GAME_STATE_FIELDS = Object.freeze([
   'eraSettlement',
   'bankruptRescued',
   'gameOver',
+  'routeIdCounter',
   'planeIdCounter',
   'history',
   'mapZoom',
@@ -112,6 +127,10 @@ const SAVE_MIGRATIONS = Object.freeze({
   11: migrateV11ToV12,
   12: migrateV12ToV13,
   13: migrateV13ToV14,
+  14: migrateV14ToV15,
+  15: migrateV15ToV16,
+  16: migrateV16ToV17,
+  17: migrateV17ToV18,
 });
 
 export function saveGameState(state, storage = localStorage) {
@@ -232,6 +251,27 @@ function migrateV13ToV14(state) {
   return state;
 }
 
+function migrateV14ToV15(state) {
+  normalizeRouteAirportState(state);
+  return state;
+}
+
+function migrateV15ToV16(state) {
+  normalizeAirportManagementState(state);
+  normalizeSubsidiaryState(state);
+  return state;
+}
+
+function migrateV16ToV17(state) {
+  normalizeAirportRelocationState(state);
+  return state;
+}
+
+function migrateV17ToV18(state) {
+  normalizeRouteAlternateState(state);
+  return state;
+}
+
 function saveSummary(result) {
   const state = result.state;
   return {
@@ -280,7 +320,10 @@ function normalizeUpstreamStateFields(state) {
   normalizeEraSettlementState(state);
   normalizeStockState(state);
   normalizeOperationsState(state);
+  normalizeAirportManagementState(state);
+  normalizeAirportRelocationState(state);
   normalizeSubsidiaryState(state);
+  normalizeAirportContractState(state);
   if (!state.ftpShown || typeof state.ftpShown !== 'object' || Array.isArray(state.ftpShown)) state.ftpShown = {};
   if (state.onboardStep === undefined) state.onboardStep = 0;
   if (state._onboardReportShown === undefined) state._onboardReportShown = (state.turnsPlayed || 0) > 0;
@@ -319,11 +362,54 @@ function normalizeUpstreamStateFields(state) {
     if (!isFiniteNumber(route.cost)) route.cost = 0;
     if (!isFiniteNumber(route.profit)) route.profit = 0;
   });
+  normalizeRouteAirportState(state);
+  normalizeAirportRelocationState(state);
+  normalizeAirportContractState(state);
   state.fleet.forEach((plane) => {
     if (plane.leaseTurns === undefined) plane.leaseTurns = 0;
     if (plane.maxLeaseTurns === undefined) plane.maxLeaseTurns = 40;
     if (plane.delivering === undefined) plane.delivering = false;
     if (plane.deliverIn === undefined) plane.deliverIn = 0;
+    if (!plane.airportPerformance || typeof plane.airportPerformance !== 'object') {
+      const template = PLANES.find((item) => item.id === (plane.templateId || plane.id));
+      if (template?.airportPerformance) plane.airportPerformance = { ...template.airportPerformance };
+    }
+  });
+  normalizeRouteAlternateState(state);
+}
+
+function normalizeRouteAirportState(state) {
+  if (!Array.isArray(state.routes)) state.routes = [];
+  const usedUids = new Set();
+  let nextUid = 1;
+  state.routes.forEach((route) => {
+    const currentUid = Number(route.uid);
+    if (Number.isInteger(currentUid) && currentUid > 0 && !usedUids.has(currentUid)) {
+      route.uid = currentUid;
+      usedUids.add(currentUid);
+      nextUid = Math.max(nextUid, currentUid + 1);
+    } else {
+      while (usedUids.has(nextUid)) nextUid++;
+      route.uid = nextUid;
+      usedUids.add(nextUid);
+      nextUid++;
+    }
+    route.fromAirportId = normalizeAirportIdForCity(route.fromAirportId, route.from, {
+      legacyFallback: !route.fromAirportId,
+    });
+    route.toAirportId = normalizeAirportIdForCity(route.toAirportId, route.to, {
+      legacyFallback: !route.toAirportId,
+    });
+  });
+  const savedCounter = Number(state.routeIdCounter);
+  state.routeIdCounter = Number.isInteger(savedCounter) && savedCounter >= nextUid ? savedCounter : nextUid;
+
+  (state.ai || []).forEach((ai) => {
+    (ai.routes || []).forEach((route, index) => {
+      if (route.uid === undefined || route.uid === null || route.uid === '') route.uid = `${ai.name}-route-${index + 1}`;
+      route.fromAirportId = normalizeAirportIdForCity(route.fromAirportId || getDefaultAirportIdForYear(route.from, state.year), route.from, { year: state.year });
+      route.toAirportId = normalizeAirportIdForCity(route.toAirportId || getDefaultAirportIdForYear(route.to, state.year), route.to, { year: state.year });
+    });
   });
 }
 

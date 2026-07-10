@@ -25,6 +25,8 @@ export function createFinancialReportSnapshot(state) {
     oilPrice: state.oilPrice,
     traitFund: state._lastTraitFund || 0,
     stockDividend: state._lastStockDividend || 0,
+    airportContractIncome: state._lastAirportContractIncome || 0,
+    airportContractPenalty: state._lastAirportContractPenalty || 0,
     opsEfficiency: state.opsEfficiency || 0,
     staffCount: state.staffCount || 0,
     staffNeeded: state.staffNeeded || 0,

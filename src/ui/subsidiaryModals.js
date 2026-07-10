@@ -1,5 +1,13 @@
 import { CITIES } from '../data/cities.js';
 import { getCityMarketState } from '../data/cityEraData.js';
+import { airportDisplayCode, getAirport } from '../domain/airports.js';
+import {
+  AIRPORT_UPGRADES,
+  airportUpgradeCost,
+  getAirportInvestmentTargets,
+  getAirportUpgradeCount,
+  getAvailableAirportUpgrades,
+} from '../domain/airportManagement.js';
 import {
   SUB_TYPES,
   acquireSubsidiary,
@@ -68,14 +76,16 @@ export function showCompanyValueModal(state) {
   </div>`);
 }
 
-export function showSubsidiaryConfirm(state, mode, cityId, type) {
+export function showSubsidiaryConfirm(state, mode, cityId, type, airportId = null) {
   const city = getCity(cityId);
   const cfg = SUB_TYPES[type];
   if (!state || !city || !cfg) return;
   const isAcquire = mode === 'acquire';
   const isSell = mode === 'sell';
-  const cost = isSell ? calcSellPreview(state, cityId, type).sellPrice : isAcquire ? getAcquirePrice(state, type, cityId) : calcSubOpenCost(type, cityId);
-  const fee = isSell ? calcSellPreview(state, cityId, type).fee : Math.round(cost * 0.01 * 10) / 10;
+  const airport = type === 'airport' ? getAirport(airportId) : null;
+  const sellPreview = isSell ? calcSellPreview(state, cityId, type, airportId) : null;
+  const cost = isSell ? sellPreview.sellPrice : isAcquire ? getAcquirePrice(state, type, cityId) : calcSubOpenCost(type, cityId);
+  const fee = isSell ? sellPreview.fee : Math.round(cost * 0.01 * 10) / 10;
   const title = isSell
     ? `${type === 'airport' ? '退出投资' : '出售'}${cfg.name}`
     : `${isAcquire ? '收购' : type === 'airport' ? '投资共建' : '新设'}${cfg.name}`;
@@ -84,32 +94,32 @@ export function showSubsidiaryConfirm(state, mode, cityId, type) {
   const action = isSell ? 'execute-sub-sell' : 'execute-sub-open';
   const label = isSell ? `${type === 'airport' ? '确认回购' : '确认出售'} ${fmt(cost)}` : `确认${isAcquire ? '收购' : type === 'airport' ? '投资' : '新设'} ${fmt(cost + fee)}`;
   showModal(`<div class="sub-confirm">
-    <h2>${escapeHtml(cfg.icon)} ${escapeHtml(title)} — ${escapeHtml(city.name)}</h2>
+    <h2>${escapeHtml(cfg.icon)} ${escapeHtml(title)} — ${escapeHtml(city.name)}${airport ? ` ${escapeHtml(airportDisplayCode(airport))}` : ''}</h2>
     <div class="report-section">
       <div class="report-row"><span>${isSell ? '实得金额' : isAcquire ? '收购价格' : '基础成本'}</span><span>${fmt(cost)}</span></div>
       <div class="report-row"><span>手续费</span><span>${fmt(fee)}</span></div>
       <div class="report-row"><span>操作后现金</span><span class="${cashClass}">${fmt(cashAfter)}</span></div>
       ${type === 'airport' && isSell ? '<div class="sub-note">机场投资按当前估值 60% 回购退出。</div>' : ''}
-      ${type === 'airport' && !isSell ? '<div class="sub-note">机场建设仅可在总部或分部城市投资，可降低同城航线着陆费。</div>' : ''}
+      ${type === 'airport' && !isSell ? `<div class="sub-note">投资将绑定 ${escapeHtml(airport?.name || '所选机场')}，起降费 -15%，并解锁 3 个升级槽位。</div>` : ''}
     </div>
     <div class="sub-confirm-actions">
       <button class="btn" type="button" data-action="open-subsidiary-overview" data-city-id="${escapeAttr(cityId)}">取消</button>
-      <button class="btn btn-primary" type="button" data-action="${action}" data-sub-mode="${escapeAttr(mode)}" data-city-id="${escapeAttr(cityId)}" data-sub-type="${escapeAttr(type)}">${escapeHtml(label)}</button>
+      <button class="btn btn-primary" type="button" data-action="${action}" data-sub-mode="${escapeAttr(mode)}" data-city-id="${escapeAttr(cityId)}" data-sub-type="${escapeAttr(type)}"${airportId ? ` data-airport-id="${escapeAttr(airportId)}"` : ''}>${escapeHtml(label)}</button>
     </div>
   </div>`);
 }
 
-export function executeSubsidiaryOpen(state, mode, cityId, type) {
+export function executeSubsidiaryOpen(state, mode, cityId, type, airportId = null) {
   const result = mode === 'acquire'
     ? acquireSubsidiary(state, type, cityId)
-    : openSubsidiary(state, type, cityId);
+    : openSubsidiary(state, type, cityId, { airportId });
   selectedCityId = cityId;
   showSubsidiaryOverview(state, cityId);
   return result;
 }
 
-export function executeSubsidiarySell(state, cityId, type) {
-  const result = sellSubsidiary(state, cityId, type);
+export function executeSubsidiarySell(state, cityId, type, airportId = null) {
+  const result = sellSubsidiary(state, cityId, type, airportId);
   selectedCityId = cityId;
   showSubsidiaryOverview(state, cityId);
   return result;
@@ -139,16 +149,26 @@ function renderCityPanel(state, city) {
 function renderExistingSub(state, cityId, sub) {
   const cfg = SUB_TYPES[sub.type];
   const ret = sub.isNew ? null : calcSubReturn(state, sub, cityId);
-  const sell = calcSellPreview(state, cityId, sub.type);
+  const sell = calcSellPreview(state, cityId, sub.type, sub.airportId);
   const sourceLabel = sub.source === 'invest' ? '投资' : sub.source === 'acquire' ? '收购' : '新设';
+  const airport = sub.type === 'airport' ? getAirport(sub.airportId) : null;
+  const airportMeta = airport
+    ? `${airportDisplayCode(airport)} · ${airport.name} · 升级 ${getAirportUpgradeCount(state, airport.id)}/3`
+    : '';
+  const upgrades = airport ? getAvailableAirportUpgrades(state, airport.id) : [];
   return `<div class="sub-card ${sub.type === 'airport' ? 'sub-card-airport' : ''}">
     <div class="sub-card-main">
-      <strong>${escapeHtml(cfg.icon)} ${escapeHtml(cfg.name)}</strong>
-      <span>${sourceLabel} · 成本 ${fmt(sub.openCost)} · 估值 ${fmt(sub.currentValue)}</span>
+      <strong>${escapeHtml(cfg.icon)} ${escapeHtml(cfg.name)}${airport ? ` ${escapeHtml(airportDisplayCode(airport))}` : ''}</strong>
+      <span>${airportMeta ? `${escapeHtml(airportMeta)}<br>` : ''}${sourceLabel}${sub.migratedFromCity ? '迁移' : ''} · 成本 ${fmt(sub.openCost)} · 估值 ${fmt(sub.currentValue)}</span>
+      ${upgrades.length > 0 ? `<div class="airport-upgrade-actions">${upgrades.map((upgradeId) => {
+        const upgrade = AIRPORT_UPGRADES[upgradeId];
+        const cost = airportUpgradeCost(state, airport.id, upgradeId);
+        return `<button class="btn btn-sm" type="button" data-action="upgrade-airport-investment" data-airport-id="${escapeAttr(airport.id)}" data-upgrade-id="${escapeAttr(upgradeId)}" title="${escapeAttr(upgrade.description)}"${state.cash < cost ? ' disabled' : ''}>${escapeHtml(upgrade.name)} ${fmt(cost)}</button>`;
+      }).join('')}</div>` : airport ? '<small class="airport-upgrade-complete">升级槽位已用完</small>' : ''}
     </div>
     <div class="sub-card-side">
       <b class="${ret && ret.net < 0 ? 'down' : 'up'}">${sub.isNew ? 'NEW' : `${ret.net >= 0 ? '+' : ''}${fmt(ret.net)}/Q`}</b>
-      <button class="btn btn-sm sub-sell" type="button" data-action="confirm-sub-sell" data-city-id="${escapeAttr(cityId)}" data-sub-type="${escapeAttr(sub.type)}">${sub.type === 'airport' ? '回购' : '出售'} ${fmt(sell.sellPrice)}</button>
+      <button class="btn btn-sm sub-sell" type="button" data-action="confirm-sub-sell" data-city-id="${escapeAttr(cityId)}" data-sub-type="${escapeAttr(sub.type)}"${sub.airportId ? ` data-airport-id="${escapeAttr(sub.airportId)}"` : ''}>${sub.type === 'airport' ? '回购' : '出售'} ${fmt(sell.sellPrice)}</button>
     </div>
   </div>`;
 }
@@ -159,16 +179,16 @@ function renderAvailableSub(state, cityId, type) {
   const openFee = Math.round(openCost * 0.01 * 10) / 10;
   if (type === 'airport') {
     const disabled = state.cash < openCost + openFee;
-    return `<div class="sub-card sub-card-airport">
+    return getAirportInvestmentTargets(state, cityId).map((airport) => `<div class="sub-card sub-card-airport">
       <div class="sub-card-main">
-        <strong>${escapeHtml(cfg.icon)} ${escapeHtml(cfg.name)}</strong>
-        <span>机场投资 · 同城着陆费 -15%</span>
+        <strong>${escapeHtml(cfg.icon)} ${escapeHtml(cfg.name)} ${escapeHtml(airportDisplayCode(airport))}</strong>
+        <span>${escapeHtml(airport.name)} · 起降费 -15% · 3 个升级槽位</span>
       </div>
       <div class="sub-card-side">
         <b>${fmt(openCost + openFee)}</b>
-        <button class="btn btn-sm sub-invest" type="button" data-action="confirm-sub-open" data-sub-mode="open" data-city-id="${escapeAttr(cityId)}" data-sub-type="${escapeAttr(type)}" ${disabled ? 'disabled' : ''}>投资</button>
+        <button class="btn btn-sm sub-invest" type="button" data-action="confirm-sub-open" data-sub-mode="open" data-city-id="${escapeAttr(cityId)}" data-sub-type="${escapeAttr(type)}" data-airport-id="${escapeAttr(airport.id)}" ${disabled ? 'disabled' : ''}>投资</button>
       </div>
-    </div>`;
+    </div>`).join('');
   }
   const acquireCost = getAcquirePrice(state, type, cityId);
   const acquireFee = Math.round(acquireCost * 0.01 * 10) / 10;
@@ -208,8 +228,9 @@ function cityScore(state, city, owned, bases, routed) {
     + market.biz + market.tour;
 }
 
-function calcSellPreview(state, cityId, type) {
-  const sub = state.subsidiaries?.[cityId]?.find((item) => item.type === type);
+function calcSellPreview(state, cityId, type, airportId = null) {
+  const sub = state.subsidiaries?.[cityId]?.find((item) => item.type === type
+    && (type !== 'airport' || !airportId || item.airportId === airportId));
   if (!sub) return { sellPrice: 0, fee: 0 };
   const gross = type === 'airport' ? Math.round(sub.currentValue * 0.6 * 10) / 10 : Math.round(sub.currentValue * 10) / 10;
   const fee = Math.round(gross * 0.01 * 10) / 10;

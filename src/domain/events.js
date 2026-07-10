@@ -2,7 +2,7 @@ import { NEWS_POOL } from '../data/news.js';
 import { PLANES } from '../data/planes.js';
 import { clamp, fmtPct, getCity } from './helpers.js';
 import { megaEventNewsFor, syncMegaEventState } from './megaEvents.js';
-import { addCostModifier, addDemandModifier, addDisasterDemandModifier, addSuspensionModifier, advanceActiveModifiers, selectRouteKeys } from './modifiers.js';
+import { addAirportDisruptionModifier, addCostModifier, addDemandModifier, addDisasterDemandModifier, addSuspensionModifier, advanceActiveModifiers, selectRouteKeys } from './modifiers.js';
 import { nextRandom, randomBetween, randomInt } from './random.js';
 import { updateStockPrices } from './stocks.js';
 
@@ -53,6 +53,7 @@ export function generateEvents(state) {
         getCity,
         clamp,
         addCostModifier,
+        addAirportDisruptionModifier,
         addDemandModifier,
         addDisasterDemandModifier,
         addSuspensionModifier,
@@ -120,6 +121,7 @@ function isDisasterProtectedByMegaEvent(state, category, news) {
   if (peakEvents.length === 0) return false;
   return peakEvents.some((event) => {
     const hostCity = getCity(event.cityId);
-    return hostCity && news.subRegion && hostCity.subRegion === news.subRegion;
+    return hostCity && news.eventZone
+      && (hostCity.eventZones || [hostCity.subRegion]).includes(news.eventZone);
   });
 }

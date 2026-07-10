@@ -1,4 +1,7 @@
-import { getCity, fmt } from '../domain/helpers.js';
+import { byId, getCity, fmt } from '../domain/helpers.js';
+import { acceptAirportContract } from '../domain/airportContracts.js';
+import { getAirport } from '../domain/airports.js';
+import { AIRPORT_UPGRADES, upgradeAirportInvestment } from '../domain/airportManagement.js';
 import { repayLoan, takeLoan } from '../domain/loans.js';
 import { updateHUD } from '../ui/hud.js';
 import { BANNER_TONES, showBanner } from '../ui/modal.js';
@@ -8,6 +11,7 @@ import {
   executeSubsidiarySell,
   sellStockFromModal,
   showCompanyValueModal,
+  showAirportProgramModal,
   showLoanConfirm,
   showLoanModal,
   showStockMarket,
@@ -77,7 +81,7 @@ export function createFinanceController(app) {
   function executeSubOpen(target) {
     const game = state();
     if (!game) return;
-    const result = executeSubsidiaryOpen(game, target.dataset.subMode, target.dataset.cityId, target.dataset.subType);
+    const result = executeSubsidiaryOpen(game, target.dataset.subMode, target.dataset.cityId, target.dataset.subType, target.dataset.airportId);
     if (!result.ok) {
       showBanner(result.message, BANNER_TONES.danger);
       return;
@@ -93,7 +97,7 @@ export function createFinanceController(app) {
   function executeSubSell(target) {
     const game = state();
     if (!game) return;
-    const result = executeSubsidiarySell(game, target.dataset.cityId, target.dataset.subType);
+    const result = executeSubsidiarySell(game, target.dataset.cityId, target.dataset.subType, target.dataset.airportId);
     if (!result.ok) {
       showBanner(result.message, BANNER_TONES.danger);
       return;
@@ -140,16 +144,47 @@ export function createFinanceController(app) {
         const game = state();
         if (game) showCompanyValueModal(game);
       },
+      'open-airport-program': () => {
+        const game = state();
+        if (game) showAirportProgramModal(game);
+      },
+      'accept-airport-contract': ({ target }) => {
+        const game = state();
+        if (!game) return;
+        const select = byId(`contract-plane-${target.dataset.contractId}`);
+        const result = acceptAirportContract(game, target.dataset.contractId, Number(select?.value));
+        if (!result.ok) {
+          showBanner(result.message, BANNER_TONES.danger);
+          showAirportProgramModal(game);
+          return;
+        }
+        app.renderGame();
+        showAirportProgramModal(game);
+        showBanner(`已接受机场合同并开通航线，获得补贴 ${fmt(result.subsidy)}`, BANNER_TONES.success);
+        app.updateMilestones();
+      },
       'confirm-sub-open': ({ target }) => {
         const game = state();
-        if (game) showSubsidiaryConfirm(game, target.dataset.subMode, target.dataset.cityId, target.dataset.subType);
+        if (game) showSubsidiaryConfirm(game, target.dataset.subMode, target.dataset.cityId, target.dataset.subType, target.dataset.airportId);
       },
       'confirm-sub-sell': ({ target }) => {
         const game = state();
-        if (game) showSubsidiaryConfirm(game, 'sell', target.dataset.cityId, target.dataset.subType);
+        if (game) showSubsidiaryConfirm(game, 'sell', target.dataset.cityId, target.dataset.subType, target.dataset.airportId);
       },
       'execute-sub-open': ({ target }) => executeSubOpen(target),
       'execute-sub-sell': ({ target }) => executeSubSell(target),
+      'upgrade-airport-investment': ({ target }) => {
+        const game = state();
+        if (!game) return;
+        const result = upgradeAirportInvestment(game, target.dataset.airportId, target.dataset.upgradeId);
+        if (!result.ok) {
+          showBanner(result.message, BANNER_TONES.danger);
+          return;
+        }
+        app.renderGame();
+        showSubsidiaryOverview(game, getAirport(result.airportId)?.cityId || game.hq);
+        showBanner(`${getAirport(result.airportId)?.name || result.airportId} 完成${AIRPORT_UPGRADES[result.upgradeId].name}，投入 ${fmt(result.cost)}`, BANNER_TONES.success);
+      },
     },
   };
 }

@@ -1,4 +1,5 @@
 import { getCityMarketState, initCityStates } from '../data/cityEraData.js';
+import { populationDemandScore } from '../domain/economy.js';
 import { escapeAttr, escapeHtml } from './html.js';
 
 const LEVELS = [
@@ -14,7 +15,7 @@ export function marketScore(market) {
   const pop = Number.isFinite(market?.pop) ? market.pop : 0;
   const biz = Number.isFinite(market?.biz) ? market.biz : 0;
   const tour = Number.isFinite(market?.tour) ? market.tour : 0;
-  return Math.round(Math.max(0, Math.min(100, pop * 4 + biz * 0.55 + tour * 0.35)));
+  return Math.round(Math.max(0, Math.min(100, populationDemandScore(pop) * 4 + biz * 0.55 + tour * 0.35)));
 }
 
 export function cityMarketSummary(state, cityId) {
@@ -61,7 +62,7 @@ export function renderMarketCard(state, city) {
     </div>
     <div class="market-score"><span>热度</span><strong>${summary.score}</strong><small>${summary.trend === 0 ? '持平' : summary.trendLabel}</small></div>
     <div class="market-bars">
-      ${renderMarketBar('人口', Math.min(100, summary.pop * 5), `${summary.pop.toFixed(1)}M`)}
+      ${renderMarketBar('人口', Math.min(100, populationDemandScore(summary.pop) * 5), `${summary.pop.toFixed(1)}M`)}
       ${renderMarketBar('商务', summary.biz, summary.biz)}
       ${renderMarketBar('旅游', summary.tour, summary.tour)}
     </div>

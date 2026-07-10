@@ -29,8 +29,8 @@ export const MAIN_QUEST_STAGES = [
     subtitle: '航空帝国已成',
     icon: '👑',
     targets: {
-      cash: { era1: 900, era2: 2500, era3: 3000, era4: 10000 },
-      routes: { era1: 38, era2: 45, era3: 52, era4: 80 },
+      cash: { era1: 1100, era2: 2500, era3: 2800, era4: 9000 },
+      routes: { era1: 42, era2: 45, era3: 50, era4: 76 },
       branch: { type: 'networkRegion', min: { era1: 4, era2: 6, era3: 6, era4: 6 } },
       profit: { consecutive: { era1: 6, era2: 4, era3: 4, era4: 12 } },
     },

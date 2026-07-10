@@ -1,4 +1,8 @@
-import { calcLoadFactor, getRouteAssignedPlanes, routeCost, routeRevenue, suggestedPrice } from './economy.js';
+import { calcLoadFactor, getRouteAssignedPlanes, routeCost, routeOperatingDistance, routeRevenue, suggestedPrice } from './economy.js';
+import { airportServesCity, getDefaultAirportIdForYear, isAirportActive, normalizeAirportIdForCity, operatingDistanceForRoute } from './airports.js';
+import { routePlanePerformance } from './airportPerformance.js';
+import { normalizeRouteAlternateState } from './airportResilience.js';
+import { routeOpeningCapacityMultiplier } from './airportCapacity.js';
 import { isBase } from './bases.js';
 import { cityDist, getCity, routeKey } from './helpers.js';
 import { syncStaffToNeeded } from './operations.js';
@@ -39,17 +43,19 @@ export function updateRouteMetrics(state) {
   });
 }
 
-export function routeOpenCost(from, to) {
+export function routeOpenCost(from, to, options = {}) {
   const cityA = getCity(from);
   const cityB = getCity(to);
   if (!cityA || !cityB) return Infinity;
   const avgLevel = (cityA.level + cityB.level) / 2;
   const d = cityDist(cityA, cityB);
   const distFactor = d > 8000 ? 2 : d > 3000 ? 1.5 : 1;
-  return Math.round(avgLevel * distFactor);
+  const baseCost = Math.round(avgLevel * distFactor);
+  if (!options.state || !options.route || !options.plane) return baseCost;
+  return Math.round(baseCost * routeOpeningCapacityMultiplier(options.state, options.route, options.plane) * 10) / 10;
 }
 
-export function openRoute(state, from, to, planeUid, price) {
+export function openRoute(state, from, to, planeUid, price, airportSelection = {}) {
   if (!state || !from || !to || from === to) return routeFailure('航线城市无效');
   const cityA = getCity(from);
   const cityB = getCity(to);
@@ -59,16 +65,44 @@ export function openRoute(state, from, to, planeUid, price) {
   if (!Number.isFinite(parsedPrice) || !Number.isInteger(parsedPrice) || parsedPrice <= 0) return routeFailure('票价必须是有效的正整数');
   const key = routeKey(from, to);
   if (state.routes.find((r) => routeKey(r.from, r.to) === key)) return routeFailure('航线已开通');
+  if (airportSelection.fromAirportId && !airportServesCity(airportSelection.fromAirportId, from)) {
+    return routeFailure('起飞机场不服务该城市');
+  }
+  if (airportSelection.toAirportId && !airportServesCity(airportSelection.toAirportId, to)) {
+    return routeFailure('到达机场不服务该城市');
+  }
+  const sp = suggestedPrice(from, to);
+  const fromAirportId = normalizeAirportIdForCity(
+    airportSelection.fromAirportId || getDefaultAirportIdForYear(from, state.year),
+    from,
+    { year: state.year },
+  );
+  const toAirportId = normalizeAirportIdForCity(
+    airportSelection.toAirportId || getDefaultAirportIdForYear(to, state.year),
+    to,
+    { year: state.year },
+  );
+  if (!isAirportActive(fromAirportId, state.year) || !isAirportActive(toAirportId, state.year)) {
+    return routeFailure('所选机场当前不可用');
+  }
   const plane = availablePlanes(state).find((p) => p.uid === planeUid);
   if (!plane) return routeFailure('飞机不可用');
-  if (plane.range < cityDist(cityA, cityB)) return routeFailure('航程不足，无法执飞该航线');
-  const openCost = routeOpenCost(from, to);
+  const routeDraft = { from, to, fromAirportId, toAirportId };
+  const operatingDistance = operatingDistanceForRoute(routeDraft);
+  if (!Number.isFinite(operatingDistance) || plane.range < operatingDistance) return routeFailure('航程不足，无法执飞该航线');
+  const performance = routePlanePerformance(routeDraft, plane, state);
+  if (!performance.compatible) return routeFailure(`机场条件不适配：${performance.reasons.join('、')}`);
+  const openCost = routeOpenCost(from, to, { state, route: routeDraft, plane });
   if (state.cash < openCost) return routeFailure(`资金不足，需要 ${openCost.toFixed(1)}M`);
-  const sp = suggestedPrice(from, to);
   state.cash -= openCost;
   const route = {
+    uid: state.routeIdCounter++,
     from,
     to,
+    fromAirportId,
+    toAirportId,
+    fromAlternateAirportId: null,
+    toAlternateAirportId: null,
     price: parsedPrice,
     suggestedPrice: sp,
     serviceMultiplier: 1,
@@ -84,7 +118,7 @@ export function openRoute(state, from, to, planeUid, price) {
   state.routes.push(route);
   syncStaffToNeeded(state, 0.85);
   updateRouteMetrics(state);
-  return { ok: true, route, cost: openCost };
+  return { ok: true, route, cost: openCost, operatingDistance, performance };
 }
 
 export function adjustRoutePrice(state, from, to, price) {
@@ -145,14 +179,15 @@ export function changeRoutePlane(state, from, to, newUid) {
   const parsedUid = parseInt(newUid, 10);
   if (!Array.isArray(route.assignedPlanes)) route.assignedPlanes = [];
   if (route.assignedPlanes.includes(parsedUid)) return { ok: false, message: '该飞机已在此航线执飞' };
-  const cityA = getCity(from);
-  const cityB = getCity(to);
   const plane = availablePlanes(state).find((p) => p.uid === parsedUid);
   if (!plane) return { ok: false, message: '该飞机不可用' };
-  if (plane.range < cityDist(cityA, cityB)) return { ok: false, message: '航程不足，无法执飞该航线' };
+  if (plane.range < routeOperatingDistance(route)) return { ok: false, message: '航程不足，无法执飞该航线' };
+  const performance = routePlanePerformance(route, plane, state);
+  if (!performance.compatible) return { ok: false, message: `机场条件不适配：${performance.reasons.join('、')}` };
   route._lastLf = route.loadFactor || 0;
   route._lastProfit = route.profit || 0;
   route.assignedPlanes = [parsedUid];
+  normalizeRouteAlternateState(state);
   route._planeChanged = true;
   updateRouteMetrics(state);
   return { ok: true, route, plane };

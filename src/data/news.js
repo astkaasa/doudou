@@ -1,12 +1,14 @@
-const CHINA_CITY_IDS = ['beijing', 'shanghai', 'hongkong', 'chengdu', 'wuhan', 'urumqi', 'lhasa', 'harbin', 'xian', 'taipei'];
+const CHINA_CITY_IDS = ['beijing', 'shanghai', 'guangzhou', 'shenzhen', 'hongkong', 'chengdu', 'wuhan', 'urumqi', 'lhasa', 'harbin', 'xian', 'taipei'];
 const US_CITY_IDS = ['newyork', 'losangeles', 'chicago', 'miami', 'washington', 'dallas', 'denver', 'atlanta', 'houston', 'seattle', 'sanfrancisco'];
-const SEA_CITY_IDS = ['singapore', 'bangkok', 'manila', 'jakarta', 'brunei', 'hanoi'];
+const SEA_CITY_IDS = ['singapore', 'bangkok', 'manila', 'jakarta', 'kualalumpur', 'hochiminh', 'brunei', 'hanoi'];
 const ISLAND_CITY_IDS = ['male', 'guam', 'saipan', 'okinawa', 'singapore', 'wellington'];
 const WORLD_CUP_YEARS = [1962, 1966, 1970, 1974, 1978, 1982, 1986, 1990, 1994, 1998, 2002, 2006, 2010, 2014, 2018];
 const scopeAll = () => ({ kind: 'all' });
 const scopeRegion = (...regions) => ({ kind: 'region', regions });
 const scopeSubRegion = (...subRegions) => ({ kind: 'subRegion', subRegions });
+const scopeEventZone = (...eventZones) => ({ kind: 'eventZone', eventZones });
 const scopeCityIds = (cityIds) => ({ kind: 'cityIds', cityIds });
+const scopeAirportIds = (airportIds) => ({ kind: 'airportIds', airportIds });
 const scopeConnects = (setA, setB) => ({ kind: 'connectsCitySets', setA, setB });
 const scopeCrossRegion = () => ({ kind: 'crossRegion' });
 const scopeRouteKeys = (routeKeys) => ({ kind: 'routeKeys', routeKeys });
@@ -21,9 +23,10 @@ function regionalDisaster({ title, desc, subRegion, label }) {
     desc,
     effect: `${label}航线遭受巨大影响`,
     subRegion,
+    eventZone: subRegion,
     stockEffect: disasterStockEffect(title),
     effectFn: ({ state: G, addDisasterDemandModifier }) => {
-      addDisasterDemandModifier(G, title, scopeSubRegion(subRegion), 1);
+      addDisasterDemandModifier(G, title, scopeEventZone(subRegion), 1);
     },
   };
 }
@@ -55,6 +58,7 @@ export const NEWS_POOL = {
     {title:'国际电子竞技总决赛吸引全球观众',desc:'赛事在亚洲举行，数万粉丝跨国观赛，周边酒店一房难求。',effect:'亚洲航线短期需求上升',startYear:2000,stockEffect:{culture:0.05,tourism:0.02,tech:0.02},effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'电竞总决赛',scopeRegion('asia'),1.1);}},
   ],
   disaster: [
+    {title:'枢纽机场遭遇极端天气中断',desc:'一座正在运营的机场遭遇强对流天气，跑道和地面保障能力骤降。预先指定备降机场或建设灾害韧性设施的航线可以显著减少损失。',effect:'目标机场航线需求与成本受韧性方案影响',stockEffect:{tourism:-0.05,finance:-0.02},effectFn:({state:G,addAirportDisruptionModifier,random})=>{const routes=(G.routes||[]).filter((route)=>!route.suspended&&route.fromAirportId&&route.toAirportId);if(routes.length===0||!addAirportDisruptionModifier)return;const route=routes[Math.floor((random?.()??0.5)*routes.length)%routes.length];const airportId=(random?.()??0.5)<0.5?route.fromAirportId:route.toAirportId;addAirportDisruptionModifier(G,'机场极端天气中断',[airportId],1);}},
     regionalDisaster({title:'超强台风席卷东亚沿海',desc:'连续超强台风登陆东亚沿岸，多个国际机场被迫关闭超过48小时，大量航班延误或取消。',subRegion:'east_asia',label:'东亚'}),
     regionalDisaster({title:'东亚暴雪致大面积航班取消',desc:'罕见暴风雪袭击东亚多国，跑道积雪严重，数百航班被迫取消。',subRegion:'east_asia',label:'东亚'}),
     regionalDisaster({title:'沙尘暴笼罩东亚空域',desc:'大规模沙尘暴从内陆席卷而来，能见度骤降，多个机场被迫关闭。',subRegion:'east_asia',label:'东亚'}),
@@ -64,6 +68,7 @@ export const NEWS_POOL = {
     regionalDisaster({title:'南亚季风暴雨致航线受阻',desc:'持续季风暴雨袭击南亚次大陆，多个主要机场运营受阻，航班大量取消。',subRegion:'south_asia',label:'南亚'}),
     regionalDisaster({title:'南亚极端热浪冲击航空运营',desc:'罕见高温使空气密度下降，飞机无法满载起飞，多个机场限制航班密度。',subRegion:'south_asia',label:'南亚'}),
     regionalDisaster({title:'孟加拉湾气旋侵袭南亚',desc:'强气旋席卷南亚沿海，狂风暴雨导致机场关闭，航班全面停运。',subRegion:'south_asia',label:'南亚'}),
+    regionalDisaster({title:'中亚寒潮令机场大面积除冰',desc:'强寒潮覆盖中亚，跑道积雪和机体结冰导致航班延误与取消。',subRegion:'central_asia',label:'中亚'}),
     regionalDisaster({title:'中东特大沙尘暴瘫痪航空',desc:'巨型沙尘暴覆盖中东大部分地区，能见度降至近零，所有航班停飞。',subRegion:'mideast',label:'中东'}),
     regionalDisaster({title:'中东极端高温危及飞行安全',desc:'气温飙升至50度以上，空气密度不足导致飞机无法安全起降，航班大面积取消。',subRegion:'mideast',label:'中东'}),
     regionalDisaster({title:'中东罕见暴雨引发洪灾',desc:'多年未遇的暴雨袭击中东干旱地区，机场排水系统瘫痪，航班停运。',subRegion:'mideast',label:'中东'}),
@@ -73,6 +78,8 @@ export const NEWS_POOL = {
     regionalDisaster({title:'撒哈拉沙尘暴侵袭北非空域',desc:'大规模沙尘暴从撒哈拉沙漠席卷北非，多个机场因能见度过低而关闭。',subRegion:'north_africa',label:'北非'}),
     regionalDisaster({title:'北非极端热浪冲击航空',desc:'北非多地气温突破50度，高温导致飞机性能受限，航班大面积减少。',subRegion:'north_africa',label:'北非'}),
     regionalDisaster({title:'北非暴雨引发洪涝灾害',desc:'突发暴雨袭击北非干旱地区，机场被淹，航空运输暂时中断。',subRegion:'north_africa',label:'北非'}),
+    regionalDisaster({title:'西非季风洪灾冲击航空网络',desc:'季风暴雨导致西非多个机场跑道积水，区域航班大面积取消。',subRegion:'west_africa',label:'西非'}),
+    regionalDisaster({title:'东非火山灰云迫使航班绕飞',desc:'东非裂谷火山活动增强，火山灰云令周边机场关闭并触发大范围绕飞。',subRegion:'east_africa',label:'东非'}),
     regionalDisaster({title:'中部非洲暴雨洪灾致航空受阻',desc:'持续强降雨导致中非多国洪涝，机场跑道被淹，航班被迫取消。',subRegion:'central_africa',label:'中非'}),
     regionalDisaster({title:'中非热带风暴肆虐',desc:'强烈热带风暴席卷中部非洲，多个机场设施受损，运营受阻。',subRegion:'central_africa',label:'中非'}),
     regionalDisaster({title:'中非火山喷发冲击航空运输',desc:'尼拉贡戈火山剧烈喷发，火山灰威胁飞行安全，周边机场紧急关闭。',subRegion:'central_africa',label:'中非'}),
@@ -104,6 +111,7 @@ export const NEWS_POOL = {
     {title:'油价突破120美元，航空公司承压',desc:'地缘冲突叠加供给不足，原油价格持续攀升，航空业利润被大幅侵蚀。',effect:'运营成本上升8%',startYear:2008,stockEffect:{energy:0.08,tourism:-0.04},effectFn:({state:G,clamp})=>{G.oilPrice=clamp(G.oilPrice*1.15,30,180);}},
     {title:'多国央行同步降息，经济刺激方案出台',desc:'主要经济体进入宽松周期，消费和出行意愿回升，旅游行业率先受益。',effect:'整体需求回暖10%',startYear:1987,stockEffect:{finance:0.05,tourism:0.04,tech:0.02},effectFn:({state:G,addDemandModifier})=>{addDemandModifier(G,'全球降息刺激',scopeAll(),1.1);}},
     {title:'某大型航空公司破产重组',desc:'欧洲知名航司因长期亏损申请破产保护，释放大量时刻资源。',effect:'竞争减弱，市场份额机会',stockEffect:{finance:-0.03,tourism:0.02},effectFn:({state:G})=>{const ai=G.ai[0];ai.routes=ai.routes.slice(0,Math.ceil(ai.routes.length/2));}},
+    {title:'枢纽机场启动临时跑道检修',desc:'一座正在运营的枢纽机场临时关闭部分跑道，相关航线需要承担绕行、等待和调度成本。',effect:'受影响机场航线成本上升12%',stockEffect:{tourism:-0.02,finance:-0.01},effectFn:({state:G,addCostModifier,random})=>{const routes=(G.routes||[]).filter((route)=>route.fromAirportId&&route.toAirportId);if(routes.length===0)return;const route=routes[Math.floor((random?.()??0.5)*routes.length)%routes.length];const airportId=(random?.()??0.5)<0.5?route.fromAirportId:route.toAirportId;addCostModifier(G,'机场跑道临时检修',scopeAirportIds([airportId]),1.12);}},
   ],
   tech: [
     {title:'新一代航空电子设备投入使用',desc:'改进型气象雷达、导航设备和自动飞行系统提升了航班可靠性。',effect:'品牌形象小幅提升',stockEffect:{tech:0.03,finance:0.01},effectFn:({state:G,clamp})=>{G.brand=clamp(G.brand+0.03,1,10);}},

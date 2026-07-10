@@ -1,5 +1,7 @@
 import { closeBranch as closeBranchDomain, isBase, isBranchConstructing, openBranch } from '../domain/bases.js';
+import { airportDisplayCode } from '../domain/airports.js';
 import { buyPlane, returnLease, sellPlane } from '../domain/fleet.js';
+import { setRouteAlternateAirport } from '../domain/airportResilience.js';
 import { byId, cityDist, fmt, getCity, routeKey } from '../domain/helpers.js';
 import {
   adjustRoutePrice,
@@ -23,6 +25,7 @@ import {
   setAdjustPricePreset,
   setRoutePricePreset,
   showRouteChangePlaneModal,
+  showRouteAlternateModal,
   showRouteCloseConfirm,
   showRouteCreateModal,
   showRouteList,
@@ -73,15 +76,24 @@ export function createNetworkController(app) {
     if (!game) return;
     const select = byId('route-plane');
     const slider = byId('route-price');
-    if (!select || !slider) return;
-    const result = openRoute(game, from, to, parseInt(select.value, 10), parseInt(slider.value, 10));
+    const fromAirport = byId('route-from-airport');
+    const toAirport = byId('route-to-airport');
+    if (!select || !slider || !fromAirport || !toAirport) return;
+    const result = openRoute(
+      game,
+      from,
+      to,
+      parseInt(select.value, 10),
+      parseInt(slider.value, 10),
+      { fromAirportId: fromAirport.value, toAirportId: toAirport.value },
+    );
     if (!result.ok) {
       showBanner(result.message, BANNER_TONES.danger);
       return;
     }
     app.renderGame();
     app.closeModal();
-    showBanner(`航线开通：${getCity(from).name} → ${getCity(to).name}  开通费用 ${fmt(result.cost)}`, BANNER_TONES.success);
+    showBanner(`航线开通：${getCity(from).name} ${airportDisplayCode(result.route.fromAirportId)} → ${getCity(to).name} ${airportDisplayCode(result.route.toAirportId)}  开通费用 ${fmt(result.cost)}`, BANNER_TONES.success);
     completeOnboardingStep(game, game.routes.length > 1 ? 1 : 0);
     updateOnboarding(game, app.uiState);
     app.updateMilestones();
@@ -405,6 +417,25 @@ export function createNetworkController(app) {
     'open-route-change-plane': ({ target }) => {
       const game = state();
       if (game) showRouteChangePlaneModal(game, target.dataset.from, target.dataset.to);
+    },
+    'open-route-alternate': ({ target }) => {
+      const game = state();
+      if (game) showRouteAlternateModal(game, target.dataset.routeUid);
+    },
+    'set-route-alternate': ({ target }) => {
+      const game = state();
+      if (!game) return;
+      const result = setRouteAlternateAirport(game, target.dataset.routeUid, target.dataset.endpoint, target.dataset.airportId || null);
+      if (!result.ok) {
+        showBanner(result.message, BANNER_TONES.danger);
+        return;
+      }
+      app.renderGame();
+      showRouteAlternateModal(game, result.route.uid);
+      const message = result.airportId
+        ? (result.unchanged ? '备降方案未变更' : `备降方案已设置，规划费 ${fmt(result.cost)}`)
+        : '已清除备降方案';
+      showBanner(message, result.airportId ? BANNER_TONES.success : BANNER_TONES.warning);
     },
     'change-route-plane': ({ target }) => changeSelectedRoutePlane(target),
     'buy-plane': ({ target }) => buySelectedPlane(target),
