@@ -54,6 +54,8 @@ describe('financial report snapshots', () => {
     expect(html).toContain('北京 → 上海');
     expect(html).toContain('客座率 80.0%');
     expect(html).toContain('收 $9.0M / 成 $2.0M');
+    expect(html).toContain('<strong class="positive">$7.0M</strong>');
+    expect(html).not.toContain(' style=');
   });
 
   it('captures and renders stock portfolio values in report snapshots', () => {
@@ -70,6 +72,7 @@ describe('financial report snapshots', () => {
     expect(html).toContain('投资收益');
     expect(html).toContain('$60.0M');
     expect(html).toContain('+$8.0M');
+    expect(html).toContain('class="report-market-up"');
   });
 
   it('captures and renders operations report fields', () => {
@@ -88,6 +91,7 @@ describe('financial report snapshots', () => {
     expect(snapshot.faultLoss).toBe(2.5);
     expect(html).toContain('运营效能');
     expect(html).toContain('82%');
+    expect(html).toContain('class="warning">82%</span>');
     expect(html).toContain('其中运营预算');
     expect(html).toContain('其中故障损失');
     expect(html).toContain('员工退休');

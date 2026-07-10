@@ -5,6 +5,20 @@ import { calcNasdouIndex } from '../domain/stocks.js';
 import { escapeHtml } from './html.js';
 import { renderModalRoot, showModal } from './modal.js';
 
+const NEWSPAPER_CATEGORY_LABELS = {
+  politics: '时政',
+  entertainment: '娱乐',
+  culture: '文化',
+  disaster: '灾害',
+  economy: '财经',
+  tech: '科技',
+  sports: '体育',
+  health: '卫生',
+  ads: '广告',
+  aviation: '航空',
+  mega_event: '盛事',
+};
+
 function buildNewspaperHtml(state, includeFooter = true, period = null) {
   const reportPeriod = period || { year: state.year, quarter: state.quarter };
   const q = reportPeriod.quarter;
@@ -14,59 +28,60 @@ function buildNewspaperHtml(state, includeFooter = true, period = null) {
   let html = `<div class="newspaper">
     <div class="newspaper-header">
       <h2>环球航空报</h2>
-      <div class="date">${dateStr}</div>
+      <div class="date">${escapeHtml(dateStr)}</div>
     </div>
     <div class="newspaper-body">`;
   const headline = pickNewspaperHeadline(state, newsItems);
   if (headline) {
-    html += `<div class="newspaper-headline">${headline.category === 'mega_event' ? '🏆' : '⚡'} ${headline.title}</div>`;
+    html += `<div class="newspaper-headline">${headline.category === 'mega_event' ? '🏆' : '⚡'} ${escapeHtml(headline.title)}</div>`;
   }
   const oilChange = state.prevOilPrice > 0 ? ((state.oilPrice - state.prevOilPrice) / state.prevOilPrice * 100) : 0;
   const oilArrow = oilChange > 0.01 ? '↑' : oilChange < -0.01 ? '↓' : '→';
-  const oilColor = oilChange > 0.01 ? '#b91c1c' : oilChange < -0.01 ? '#166534' : '#555';
-  html += `<div class="newspaper-item" style="background:#ebe6d6;border:1px solid #8b7355;border-radius:4px;padding:10px;margin-bottom:14px">
+  const oilClass = paperChangeClass(oilChange, 0.01);
+  html += `<div class="newspaper-item newspaper-market">
     <span class="cat economy">行情</span>
     <div class="title">🛢 国际原油行情</div>
-    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:13px">
+    <div class="paper-market-row">
       <span>上季度: $${state.prevOilPrice.toFixed(1)}/桶</span>
       <span>本季度: <strong>$${state.oilPrice.toFixed(1)}/桶</strong></span>
-      <span style="color:${oilColor};font-weight:700">${oilArrow} ${oilChange >= 0 ? '+' : ''}${oilChange.toFixed(1)}%</span>
+      <span class="paper-market-change ${oilClass}">${oilArrow} ${oilChange >= 0 ? '+' : ''}${oilChange.toFixed(1)}%</span>
     </div>
-    <div style="margin-top:6px;font-size:11px;color:#4a4a3a;line-height:1.4">${Math.abs(oilChange) < 1 ? '原油价格保持平稳，市场供需基本均衡。' : oilChange > 0 ? '地缘政治紧张叠加季节性需求走强，油价上行压力明显。航空业燃油成本面临考验。' : '产油国增产预期增强，油价承压回落。航空业运营成本有望缓解。'}</div>
+    <div class="paper-market-explainer">${Math.abs(oilChange) < 1 ? '原油价格保持平稳，市场供需基本均衡。' : oilChange > 0 ? '地缘政治紧张叠加季节性需求走强，油价上行压力明显。航空业燃油成本面临考验。' : '产油国增产预期增强，油价承压回落。航空业运营成本有望缓解。'}</div>
   </div>`;
   if (state.stocks) {
     const nasdou = calcNasdouIndex(state);
-    const nasdouColor = nasdou > 0.001 ? '#b91c1c' : nasdou < -0.001 ? '#166534' : '#555';
+    const nasdouClass = paperChangeClass(nasdou, 0.001);
     const nasdouArrow = nasdou > 0.001 ? '↑' : nasdou < -0.001 ? '↓' : '→';
     const nasdouSign = nasdou > 0.001 ? '+' : '';
-    html += `<div class="newspaper-item" style="background:#ebe6d6;border:1px solid #8b7355;border-radius:4px;padding:10px;margin-bottom:14px">
+    html += `<div class="newspaper-item newspaper-market">
       <span class="cat stock">行情</span>
       <div class="title">📈 NASDOU 综合指数</div>
-      <div style="margin-top:6px;font-size:13px">
-        <span style="color:${nasdouColor};font-weight:700">${nasdouArrow} ${nasdouSign}${(nasdou * 100).toFixed(1)}%</span>
+      <div class="paper-market-row">
+        <span class="paper-market-change ${nasdouClass}">${nasdouArrow} ${nasdouSign}${(nasdou * 100).toFixed(1)}%</span>
       </div>
-      <div style="margin-top:6px;font-size:11px;color:#4a4a3a;line-height:1.4">${describeNasdouForPaper(nasdou)}</div>
+      <div class="paper-market-explainer">${describeNasdouForPaper(nasdou)}</div>
     </div>`;
   }
   newsItems.forEach((item) => {
-    const catName = { politics: '时政', entertainment: '娱乐', culture: '文化', disaster: '灾害', economy: '财经', tech: '科技', sports: '体育', health: '卫生', ads: '广告', aviation: '航空', mega_event: '盛事' }[item.category] || '综合';
-    const featured = item.category === 'aviation'
-      ? ' style="background:#ebe6d6;border:1px solid #0284c7;border-radius:4px;padding:10px;margin-bottom:14px"'
-      : item.category === 'mega_event'
-        ? ' style="background:#fdf6e3;border:2px solid #d4a017;border-radius:4px;padding:10px;margin-bottom:14px"'
+    const category = Object.hasOwn(NEWSPAPER_CATEGORY_LABELS, item.category) ? item.category : 'general';
+    const catName = NEWSPAPER_CATEGORY_LABELS[category] || '综合';
+    const featuredClass = category === 'aviation'
+      ? ' newspaper-feature-aviation'
+      : category === 'mega_event'
+        ? ' newspaper-feature-mega'
         : '';
-    html += `<div class="newspaper-item"${featured}>
-      <span class="cat ${item.category}">${catName}</span>
-      <div class="title">${item.category === 'mega_event' ? '🏆 ' : ''}${item.title}</div>
-      <div class="desc">${item.desc}</div>
-      ${item.effect ? `<div class="effect">→ ${item.effect}</div>` : ''}
+    html += `<div class="newspaper-item${featuredClass}">
+      <span class="cat ${category}">${catName}</span>
+      <div class="title">${category === 'mega_event' ? '🏆 ' : ''}${escapeHtml(item.title)}</div>
+      <div class="desc">${escapeHtml(item.desc)}</div>
+      ${item.effect ? `<div class="effect">→ ${escapeHtml(item.effect)}</div>` : ''}
     </div>`;
   });
   html += '</div>';
   if (includeFooter) {
     html += `
     <div class="newspaper-footer">
-      <button class="btn btn-primary" data-action="close-modal" style="padding:8px 32px">知道了，继续经营</button>
+      <button class="btn btn-primary btn-dialog-primary" data-action="close-modal">知道了，继续经营</button>
     </div>`;
   }
   html += '</div>';
@@ -89,53 +104,71 @@ function pickNewspaperHeadline(state, newsItems) {
 
 export function showNewspaper(state) {
   const html = buildNewspaperHtml(state, true, state?.lastReportData?.newsPeriod || state?.lastReportData?.nextPeriod || state?.lastReportData?.period || null);
-  renderModalRoot(`<div class="modal-overlay" data-action="modal-backdrop" style="align-items:flex-start;padding-top:40px">${html}</div>`);
+  renderModalRoot(`<div class="modal-overlay newspaper-overlay" data-action="modal-backdrop">${html}</div>`);
   const reread = byId('reread-news-btn');
   if (reread) reread.hidden = false;
 }
 
 export function buildFinancialReportHtml(state, rev, cost, profit, period = null, reportInterest = loanInterest(state), snapshot = createFinancialReportSnapshot(state)) {
   const reportPeriod = period || { year: state.year, quarter: state.quarter };
-  const color = profit >= 0 ? '#4ade80' : '#f87171';
+  const profitClass = valueClass(profit);
+  const opsClass = snapshot.opsEfficiency >= 1 ? 'positive' : snapshot.opsEfficiency >= 0.7 ? 'warning' : 'negative';
   const interest = reportInterest;
   const stockDividend = snapshot.stockDividend || 0;
   let html = `<h2>上季财报 — ${reportPeriod.year} Q${reportPeriod.quarter} ${seasonEmoji(reportPeriod.quarter)}${seasonName(reportPeriod.quarter)}</h2>
-    <div class="report-section"><div class="report-row"><span>营业收入</span><span style="color:#4ade80">${fmt(rev)}</span></div>${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span style="color:#4ade80">+${fmt(snapshot.traitFund)}</span></div>` : ''}${stockDividend > 0 ? `<div class="report-row"><span>证券分红(Q4)</span><span style="color:#fbbf24">+${fmt(stockDividend)}</span></div>` : ''}<div class="report-row"><span>运营成本</span><span style="color:#f87171">-${fmt(cost)}</span></div>${snapshot.opsCost > 0 ? `<div class="report-row"><span>其中运营预算</span><span style="color:#f87171">-${fmt(snapshot.opsCost)}</span></div>` : ''}${snapshot.faultLoss > 0 ? `<div class="report-row"><span>其中故障损失</span><span style="color:#f87171">-${fmt(snapshot.faultLoss)}</span></div>` : ''}${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span style="color:#f87171">-${fmt(interest)}</span></div>` : ''}<div class="report-total" style="color:${color}">净利润: ${fmt(profit)}</div></div>
-    <div class="report-section"><div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span style="color:#f87171">${fmt(snapshot.loan)}</span></div>` : ''}<div class="report-row"><span>航线数</span><span>${snapshot.routeCount}</span></div><div class="report-row"><span>机队规模</span><span>${snapshot.fleetCount} 架 (购${snapshot.boughtCount} / 租${snapshot.leasedCount})</span></div><div class="report-row"><span>运营效能</span><span style="color:${snapshot.opsEfficiency >= 1 ? '#4ade80' : snapshot.opsEfficiency >= 0.7 ? '#fbbf24' : '#f87171'}">${snapshot.opsEfficiency > 0 ? `${(snapshot.opsEfficiency * 100).toFixed(0)}%` : '--'}</span></div><div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5, Math.floor(snapshot.brand)))}</span></div><div class="report-row"><span>油价</span><span>$${snapshot.oilPrice.toFixed(0)}/桶</span></div></div>`;
+    <div class="report-section">
+      <div class="report-row"><span>营业收入</span><span class="positive">${fmt(rev)}</span></div>
+      ${snapshot.traitFund > 0 ? `<div class="report-row"><span>其中辣豆基金</span><span class="positive">+${fmt(snapshot.traitFund)}</span></div>` : ''}
+      ${stockDividend > 0 ? `<div class="report-row"><span>证券分红(Q4)</span><span class="warning">+${fmt(stockDividend)}</span></div>` : ''}
+      <div class="report-row"><span>运营成本</span><span class="negative">-${fmt(cost)}</span></div>
+      ${snapshot.opsCost > 0 ? `<div class="report-row"><span>其中运营预算</span><span class="negative">-${fmt(snapshot.opsCost)}</span></div>` : ''}
+      ${snapshot.faultLoss > 0 ? `<div class="report-row"><span>其中故障损失</span><span class="negative">-${fmt(snapshot.faultLoss)}</span></div>` : ''}
+      ${interest > 0 ? `<div class="report-row"><span>其中贷款利息</span><span class="negative">-${fmt(interest)}</span></div>` : ''}
+      <div class="report-total ${profitClass}">净利润: ${fmt(profit)}</div>
+    </div>
+    <div class="report-section">
+      <div class="report-row"><span>现金余额</span><span>${fmt(snapshot.cash)}</span></div>
+      ${snapshot.loan > 0 ? `<div class="report-row"><span>贷款余额</span><span class="negative">${fmt(snapshot.loan)}</span></div>` : ''}
+      <div class="report-row"><span>航线数</span><span>${snapshot.routeCount}</span></div>
+      <div class="report-row"><span>机队规模</span><span>${snapshot.fleetCount} 架 (购${snapshot.boughtCount} / 租${snapshot.leasedCount})</span></div>
+      <div class="report-row"><span>运营效能</span><span class="${opsClass}">${snapshot.opsEfficiency > 0 ? `${(snapshot.opsEfficiency * 100).toFixed(0)}%` : '--'}</span></div>
+      <div class="report-row"><span>品牌等级</span><span>${'★'.repeat(Math.min(5, Math.floor(snapshot.brand)))}</span></div>
+      <div class="report-row"><span>油价</span><span>$${snapshot.oilPrice.toFixed(0)}/桶</span></div>
+    </div>`;
   if (snapshot.portfolio && snapshot.portfolio.marketValue > 0) {
     const pnl = snapshot.portfolio.floatingPnL || 0;
-    const pnlColor = pnl >= 0 ? '#ef4444' : '#22c55e';
+    const pnlClass = pnl >= 0 ? 'report-market-up' : 'report-market-down';
     html += `<h3>投资收益</h3><div class="report-section">
       <div class="report-row"><span>持仓市值</span><span>$${snapshot.portfolio.marketValue.toFixed(1)}M</span></div>
-      <div class="report-row"><span>本季浮盈</span><span style="color:${pnlColor}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(1)}M</span></div>
+      <div class="report-row"><span>本季浮盈</span><span class="${pnlClass}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(1)}M</span></div>
     </div>`;
   }
   if (snapshot.subsidiaries?.count > 0) {
-    const subNetColor = snapshot.subsidiaries.net >= 0 ? '#4ade80' : '#f87171';
+    const subNetClass = valueClass(snapshot.subsidiaries.net);
     html += `<h3>子公司</h3><div class="report-section">
       <div class="report-row"><span>子公司数量</span><span>${snapshot.subsidiaries.count}</span></div>
       <div class="report-row"><span>子公司总值</span><span>${fmt(snapshot.subsidiaries.totalValue)}</span></div>
-      <div class="report-row"><span>回报收入</span><span style="color:#4ade80">+${fmt(snapshot.subsidiaries.return)}</span></div>
-      <div class="report-row"><span>维护支出</span><span style="color:#f87171">-${fmt(snapshot.subsidiaries.maint)}</span></div>
-      <div class="report-total" style="color:${subNetColor}">子公司净收益: ${snapshot.subsidiaries.net >= 0 ? '+' : ''}${fmt(snapshot.subsidiaries.net)}</div>
+      <div class="report-row"><span>回报收入</span><span class="positive">+${fmt(snapshot.subsidiaries.return)}</span></div>
+      <div class="report-row"><span>维护支出</span><span class="negative">-${fmt(snapshot.subsidiaries.maint)}</span></div>
+      <div class="report-total ${subNetClass}">子公司净收益: ${snapshot.subsidiaries.net >= 0 ? '+' : ''}${fmt(snapshot.subsidiaries.net)}</div>
     </div>`;
   }
   if (snapshot.companyValue) {
-    const netWorthColor = snapshot.companyValue.totalNetWorth >= 0 ? '#4ade80' : '#f87171';
+    const netWorthClass = valueClass(snapshot.companyValue.totalNetWorth);
     html += `<h3>公司市值</h3><div class="report-section">
-      <div class="report-row"><span>净资产 <button class="report-link-btn" type="button" data-action="open-company-value">详情</button></span><span style="color:${netWorthColor};font-weight:800">${fmt(snapshot.companyValue.totalNetWorth)}</span></div>
+      <div class="report-row"><span>净资产 <button class="report-link-btn" type="button" data-action="open-company-value">详情</button></span><span class="report-net-worth ${netWorthClass}">${fmt(snapshot.companyValue.totalNetWorth)}</span></div>
     </div>`;
   }
   if (snapshot.routes.length > 0) {
     html += '<h3>基地收益</h3><div class="report-section report-base-section">';
     getBaseRouteTotals(snapshot).forEach((base) => {
-      const rc = base.profit >= 0 ? '#4ade80' : '#f87171';
+      const baseProfitClass = valueClass(base.profit);
       const tag = base.isHQ ? '📍 总部' : '🏬 分部';
       const openAttr = snapshot.routes.length <= 4 && base.routeCount <= 4 ? ' open' : '';
       html += `<details class="report-base"${openAttr}>
         <summary>
           <span><strong>${tag} ${escapeHtml(base.name)}</strong><small>${base.routeCount}线 · 收 ${fmt(base.revenue)} / 成 ${fmt(base.cost)}</small></span>
-          <b style="color:${rc}">${fmt(base.profit)}</b>
+          <b class="${baseProfitClass}">${fmt(base.profit)}</b>
         </summary>
         <div class="report-route-list">
           ${base.routes.map(renderBaseRouteRow).join('')}
@@ -145,7 +178,7 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
     html += '</div>';
   }
   if (snapshot.deliveredThisTurn.length > 0) {
-    html += '<div style="text-align:center;margin:12px 0 0;position:relative;display:inline-block;width:100%"><button class="delivery-mail" type="button" data-action="show-delivery-popup" title="点击查看飞机交付通知">✉️<span>NEW</span></button></div>';
+    html += '<div class="report-delivery-trigger"><button class="delivery-mail" type="button" data-action="show-delivery-popup" title="点击查看飞机交付通知">✉️<span>NEW</span></button></div>';
   }
   if (snapshot.retiredThisTurn > 0) {
     html += `<div class="report-notice"><strong>员工退休</strong><span>本季退休 ${Math.round(snapshot.retiredThisTurn * 1000)} 人</span></div>`;
@@ -157,6 +190,16 @@ export function buildFinancialReportHtml(state, rev, cost, profit, period = null
     });
   }
   return html;
+}
+
+function paperChangeClass(value, threshold) {
+  if (value > threshold) return 'paper-change-up';
+  if (value < -threshold) return 'paper-change-down';
+  return 'paper-change-flat';
+}
+
+function valueClass(value) {
+  return value >= 0 ? 'positive' : 'negative';
 }
 
 function describeNasdouForPaper(value) {
@@ -199,17 +242,17 @@ function getBaseRouteTotals(snapshot) {
 
 function renderBaseRouteRow(route) {
   const profit = route.profit || 0;
-  const color = profit >= 0 ? '#4ade80' : '#f87171';
+  const profitClass = valueClass(profit);
   const status = route.suspended ? '<em>停飞</em>' : '';
   return `<div class="report-route-row">
     <span>${escapeHtml(route.fromName)} → ${escapeHtml(route.toName)} ${status}</span>
     <small>客座率 ${fmtPct((route.loadFactor || 0) * 100)} · 收 ${fmt(route.revenue || 0)} / 成 ${fmt(route.cost || 0)}</small>
-    <strong style="color:${color}">${fmt(profit)}</strong>
+    <strong class="${profitClass}">${fmt(profit)}</strong>
   </div>`;
 }
 
 export function showFinancialReport(state, rev, cost, profit, period = null, interest = loanInterest(state), snapshot = createFinancialReportSnapshot(state)) {
-  const html = `${buildFinancialReportHtml(state, rev, cost, profit, period, interest, snapshot)}<div style="margin-top:12px;text-align:center"><button class="btn btn-primary" data-action="close-modal" style="padding:8px 32px">继续经营</button></div>`;
+  const html = `${buildFinancialReportHtml(state, rev, cost, profit, period, interest, snapshot)}<div class="report-card-actions"><button class="btn btn-primary btn-dialog-primary" data-action="close-modal">继续经营</button></div>`;
   showModal(`<div class="report-card-standalone">${html}</div>`);
 }
 
@@ -223,7 +266,7 @@ export function showTurnSummary(state, report) {
   const overlayAction = isEraSettlement ? '' : ' data-action="modal-backdrop"';
   const buttonAction = isEraSettlement ? 'open-era-settlement' : 'close-modal';
   const buttonLabel = isEraSettlement ? '查看时代结算' : '知道了，继续经营';
-  renderModalRoot(`<div class="modal-overlay"${overlayAction} data-turn-summary="true"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary" data-action="${buttonAction}" style="padding:10px 40px;border-radius:8px">${buttonLabel}</button></div></div></div></div>`);
+  renderModalRoot(`<div class="modal-overlay"${overlayAction} data-turn-summary="true"><div class="turn-summary"><div>${newsHtml}</div><div class="report-card">${reportHtml}<div class="report-footer"><button class="btn btn-primary turn-summary-action" data-action="${buttonAction}">${buttonLabel}</button></div></div></div></div>`);
   const newsBtn = byId('reread-news-btn');
   const reportBtn = byId('reread-report-btn');
   if (newsBtn) newsBtn.hidden = false;
@@ -241,13 +284,13 @@ export function showDeliveryPopup(state) {
   if (items.length === 0) return;
   let html = `<div class="delivery-overlay" data-action="delivery-backdrop">
     <div class="delivery-modal">
-      <h2 style="font-size:20px;margin-bottom:12px;color:#4ade80">✈ 飞机交付通知</h2>
-      <p style="color:#7ba3cc;font-size:13px;margin-bottom:12px">以下飞机已完成交付，可以分配到航线运营。</p>
-      <div style="background:#0a1628;border:1px solid #16a34a60;border-radius:8px;padding:12px">`;
+      <h2 class="delivery-title">✈ 飞机交付通知</h2>
+      <p class="delivery-intro">以下飞机已完成交付，可以分配到航线运营。</p>
+      <div class="delivery-list">`;
   items.forEach((plane) => {
-    html += `<div class="report-row"><span style="color:#e0e8f0;font-weight:600">${plane.name}</span><span style="color:#4ade80">✓ 已就绪</span></div>`;
+    html += `<div class="report-row"><span class="delivery-plane-name">${escapeHtml(plane.name)}</span><span class="delivery-ready">✓ 已就绪</span></div>`;
   });
-  html += '</div><div style="margin-top:16px;text-align:center"><button class="btn btn-primary" data-action="close-delivery-popup" style="padding:8px 32px">知道了</button></div></div></div>';
+  html += '</div><div class="delivery-actions"><button class="btn btn-primary btn-dialog-primary" data-action="close-delivery-popup">知道了</button></div></div></div>';
   byId('delivery-root').innerHTML = html;
 }
 
@@ -257,5 +300,5 @@ export function closeDeliveryPopup() {
 }
 
 export function showGameOver(state) {
-  renderModalRoot(`<div class="modal-overlay"><div class="modal gameover"><h1>破产了</h1><p>你的航空公司因资金耗尽而倒闭。</p><p>存活了 ${state.turnsPlayed} 个季度</p><p>最高曾拥有 ${state.routes.length} 条航线、${state.fleet.length} 架飞机</p><button class="btn btn-primary" data-action="reload-page" style="margin-top:16px;padding:10px 32px">重新开始</button></div></div>`);
+  renderModalRoot(`<div class="modal-overlay"><div class="modal gameover"><h1>破产了</h1><p>你的航空公司因资金耗尽而倒闭。</p><p>存活了 ${state.turnsPlayed} 个季度</p><p>最高曾拥有 ${state.routes.length} 条航线、${state.fleet.length} 架飞机</p><button class="btn btn-primary gameover-action" data-action="reload-page">重新开始</button></div></div>`);
 }
