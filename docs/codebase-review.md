@@ -17,16 +17,19 @@
 | S2 | HUD 客座率把停飞航线和不同容量航线等权平均 | 只统计有有效座位的运营航线，并按有效座位加权 | `tests/economy.test.js` |
 | S2 | 服务、维修和广告档位只显示名称，不显示决策后果 | 档位直接展示需求倍率或故障倍率，数值读取领域常量 | 运营工作台 E2E |
 | S2 | 机龄退役和租约到期会解除航线飞机，但缺少提前预警和持久结果 | 集中 25 年退役与 40 季租期规则；采购、机队和财报分别提供事前、临近和事后反馈 | `tests/fleet.test.js`、`tests/report.test.js`、`tests/save.test.js` |
+| S2 | 80 架以上机队和密集航网缺少可扫描的异常与生命周期入口 | 航线增加统一诊断筛选；机队增加 8 季更新计划、影响航线和替代座位；底栏可打开下一季度固定风险预览 | 领域测试、200 季长局验收、双视口 E2E |
+| S2 | 批量操作容易隐藏航线、合同和现金后果 | 只实现可证明 0 航线影响的空闲机批量处置，执行前展示收入、租金节省和租赁比例，并整批二次校验 | `tests/fleet-batch.test.js`、双视口 E2E、`docs/batch-management-assessment.md` |
 | S2 | 长弹层在手机上可能裁切主操作，运营面板可能横向溢出 | 航线创建改为单一滚动正文与独立操作栏；修正运营面板宽度；手机快捷操作改为三列 | 双视口 E2E |
 | S2 | 投资完成后保留旧确认界面，允许对过期状态重复操作 | 成交后返回刷新后的投资总览，横幅移到弹层下方 | 管理工作台 E2E |
 | S3 | 航线弹层模块同时承担创建、列表、调价、停飞、换机和备降 | 创建流程拆到 `src/ui/routeCreationModal.js`，原有导出保持兼容 | 控制器、路由和构建测试 |
 | S3 | 模板中的 `data-action` 可能没有控制器处理器 | 静态扫描所有源码字面 action，并在测试中校验处理器集合 | `tests/controllers.test.js` |
+| S3 | 回合测试仍 mock `Math.random`，但游戏已迁移到存档内 RNG，导致主线阶段测试偶发失败 | 所有推进季度用例改用游戏 RNG 固定种子，不再依赖无效 mock | `tests/turn.test.js`、完整 `release:verify` |
 
 ## 当前约束
 
 ### 离线单文件体积
 
-生产 JavaScript 约 1.28 MB（gzip 约 270 KB），主要来源是约 1.57 MB 的 `src/data/airports.generated.js`。玩家入口必须是可直接双击的 `dist/standalone.html`，而当前构建器只内联入口模块；直接使用动态 `import()` 分块会破坏离线入口。因此 Vite 的 500 KB chunk 警告目前是已知约束，不是通过随意拆包即可修复的问题。
+生产 JavaScript 约 1.31 MB（gzip 约 278 KB），主要来源是约 1.57 MB 的 `src/data/airports.generated.js`。玩家入口必须是可直接双击的 `dist/standalone.html`，而当前构建器只内联入口模块；直接使用动态 `import()` 分块会破坏离线入口。因此 Vite 的 500 KB chunk 警告目前是已知约束，不是通过随意拆包即可修复的问题。
 
 只有在 standalone 构建器能够递归内联模块图，或机场数据改为可验证的紧凑编码且仍保持稳定 ID、来源审计和离线能力后，才应立项处理该警告。
 
@@ -60,6 +63,7 @@
 ```bash
 npm run check
 npm run data:audit
+npm run long-game:acceptance
 npm run test:e2e
 node scripts/verify-standalone-browser.mjs
 git diff --check
@@ -67,12 +71,13 @@ git diff --check
 
 本轮结果：
 
-- `npm run check`：44 个测试文件、248 项测试通过；生产构建、standalone 生成和发布清单校验通过。
+- `npm run check`：49 个测试文件、263 项测试通过；生产构建、standalone 生成和发布清单校验通过。
 - `npm run data:audit`：123 座城市、1,015 座机场通过审计，0 条警告。
-- `npm run test:e2e`：桌面与手机共 10 项浏览器测试通过。
+- `npm run long-game:acceptance`：固定 200 季状态达到 83 条航线、81 架飞机和 8 个分部；存档 169,127 bytes，季度推进与管理预览通过严格门槛。
+- `npm run test:e2e`：桌面与手机共 12 项浏览器测试通过。
 - `node scripts/verify-standalone-browser.mjs`：`file://` 单文件入口冒烟通过。
-- 人工视觉抽查：1280×720 与 390×844 的主界面、航线创建、运营管理和季度财报无横向溢出、遮挡或不可达操作；浏览器控制台无错误。
-- 经济与 AI 公式未改变；沿用事件与新闻阶段已通过的 1,600 局、80/80 组合严格平衡矩阵。
+- 人工视觉抽查：1280×720 与 390×844 的主界面、航线创建、航线诊断、季度预览、机队计划、批量确认、运营管理和季度财报无横向溢出、遮挡或不可达操作；浏览器控制台无错误。
+- 经济与 AI 公式未改变；本轮重新完成 1,600 局、80/80 组合严格平衡矩阵，四时代均有 4 个可行策略，验收结果为 PASS。
 
 经济公式、目标或 AI 策略发生变化时，额外执行：
 

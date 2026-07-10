@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { PLANES } from '../src/data/planes.js';
 import { suggestedPrice } from '../src/domain/economy.js';
@@ -7,14 +7,9 @@ import { advanceTurnState, calculateTurnFinancials, calcSpicyTraitFund, estimate
 import { initState } from '../src/domain/state.js';
 import { openBranch } from '../src/domain/bases.js';
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
 describe('turn progression', () => {
   it('returns the completed period while advancing the visible calendar', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'period-advance' });
     state.ai = [];
 
     const report = advanceTurnState(state);
@@ -72,8 +67,7 @@ describe('turn progression', () => {
   });
 
   it('adds spicy bean trait fund to quarterly revenue', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0);
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'spicy-fund' });
     state.ai = [];
     state.playerTrait = '辣';
 
@@ -92,8 +86,7 @@ describe('turn progression', () => {
   });
 
   it('settles stock dividends in Q4 profit without inflating operating revenue', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'stock-dividend' });
     state.ai = [];
     state.fleet = [];
     state.routes = [];
@@ -111,8 +104,7 @@ describe('turn progression', () => {
   });
 
   it('settles subsidiary returns as non-operating quarterly profit', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'subsidiary-return' });
     state.ai = [];
     state.subsidiaries = {
       beijing: [{ type: 'hotel', openCost: 150, currentValue: 150, source: 'open', quarterAcquired: 0, cityLevelAtAcquire: 3, isNew: false }],
@@ -129,8 +121,7 @@ describe('turn progression', () => {
   });
 
   it('schedules contract cards after Q3 and Q4 settlements', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'contract-schedule' });
     state.ai = [];
     state.quarter = 2;
 
@@ -146,7 +137,7 @@ describe('turn progression', () => {
   });
 
   it('does not turn spicy bean trait fund into a debt penalty', () => {
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'negative-spicy-fund' });
     state.ai = [];
     state.cash = -1;
     state.playerTrait = '辣';
@@ -171,7 +162,7 @@ describe('turn progression', () => {
   });
 
   it('completes branch construction when advancing a quarter', () => {
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'branch-completion' });
     state.ai = [];
     state.cash = 100;
     openBranch(state, 'shanghai');
@@ -185,8 +176,7 @@ describe('turn progression', () => {
   });
 
   it('emits main quest stage updates after profitable quarterly settlement', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'main-quest-stage' });
     const plane = { ...PLANES.find((item) => item.id === 'b777'), uid: 1, age: 0, isLease: false, leasePrice: 0, delivering: false, deliverIn: 0 };
     const price = suggestedPrice('beijing', 'shanghai');
     state.ai = [];
@@ -215,7 +205,7 @@ describe('turn progression', () => {
   });
 
   it('triggers one-time angel rescue before bankruptcy game over', () => {
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'angel-rescue' });
     state.ai = [];
     state.cash = -5;
     state.fleet = [];
@@ -236,8 +226,7 @@ describe('turn progression', () => {
   });
 
   it('tries emergency loan before angel rescue when net worth supports it', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    const state = initState('beijing', 'era3');
+    const state = initState('beijing', 'era3', { seed: 'emergency-loan' });
     state.ai = [];
     state.cash = -4;
     state.routes = [];
@@ -253,7 +242,7 @@ describe('turn progression', () => {
   });
 
   it('settles the era after the final advertised quarter', () => {
-    const state = initState('beijing', 'era1');
+    const state = initState('beijing', 'era1', { seed: 'era-settlement' });
     state.ai = [];
     state.cash = 1000;
     state.turnsPlayed = 79;
